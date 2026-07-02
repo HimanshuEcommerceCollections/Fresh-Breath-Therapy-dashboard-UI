@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import { leadsData, type Lead, type LeadStatus } from "@/src/data/leadsData/leadsData";
 import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
 import { locationOptions } from "@/src/data/leadsData/locationOptions";
@@ -64,14 +65,6 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
   const [status, setStatus] = useState<LeadStatus>("New Lead");
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
 
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
   function handleAddLead() {
     const newLead: Lead = {
       id: crypto.randomUUID(),
@@ -92,14 +85,8 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div
-      className="fixed inset-0 z-100 flex items-center justify-center bg-[rgba(15,23,42,0.5)] p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="flex w-full max-w-2xl flex-col rounded-2xl border border-[#C3C6D7] bg-white shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalOverlay onClose={onClose}>
+      <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[#C3C6D7] bg-white shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)]">
         <div className="flex items-center justify-between border-b border-[#C3C6D7] px-6 py-4">
           <h2 className="text-[22px] font-bold text-[#0F172A]">New Lead</h2>
           <button
@@ -220,7 +207,7 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="cursor-pointer rounded-lg px-4 py-2 text-xs font-semibold tracking-[0.6px] text-[#434655] transition-colors hover:bg-black/[0.04]"
+            className="cursor-pointer rounded-lg px-4 py-2 text-xs font-semibold tracking-[0.6px] text-[#434655] transition-colors hover:bg-black/4"
           >
             Cancel
           </button>
@@ -233,6 +220,6 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
       </div>
-    </div>
+    </ModalOverlay>
   );
 }

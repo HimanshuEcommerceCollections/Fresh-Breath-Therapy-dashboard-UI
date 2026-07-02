@@ -1,14 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import type { LeadStatus } from "@/src/data/leadsData/leadsData";
-import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 
-export default function StatusCombobox({ status }: { status: LeadStatus }) {
-  // Local-only status change for now — no backend call yet, the UI just
-  // reflects the newly selected status for this row.
-  const [currentStatus, setCurrentStatus] = useState<LeadStatus>(status);
+// Bordered status combobox used by the Leads table rows and reused by the
+// Sessions list table (with its own options list). Local-only status change
+// for now — no backend call yet, the UI just reflects the selection.
+export default function StatusCombobox({
+  status,
+  options,
+}: {
+  status: string;
+  options: string[];
+}) {
+  const [currentStatus, setCurrentStatus] = useState(status);
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -42,9 +47,9 @@ export default function StatusCombobox({ status }: { status: LeadStatus }) {
       </button>
       {isOpen && (
         <StatusDropdownMenu
-          options={leadStatusOptions}
+          options={options}
           selected={currentStatus}
-          onSelect={(value) => setCurrentStatus(value as LeadStatus)}
+          onSelect={setCurrentStatus}
           onClose={() => setIsOpen(false)}
         />
       )}
