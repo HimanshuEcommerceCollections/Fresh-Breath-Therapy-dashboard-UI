@@ -2,6 +2,7 @@
 
 import type { Lead } from "@/src/data/leadsData/leadsData";
 import { LEADS_TABLE_GRID } from "@/src/sections/leadsSections/leadsTableGrid";
+import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
 import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";
 
 export default function LeadsTableRow({ lead }: { lead: Lead }) {
@@ -40,7 +41,7 @@ export default function LeadsTableRow({ lead }: { lead: Lead }) {
       </div>
 
       <div className="px-2 py-2.5">
-        <StatusCombobox status={lead.status} />
+        <StatusCombobox status={lead.status} options={leadStatusOptions} />
       </div>
 
       <div className="flex items-center justify-end px-2 py-2.5">
@@ -50,7 +51,7 @@ export default function LeadsTableRow({ lead }: { lead: Lead }) {
           onClick={() => {
             // TODO: open the edit-lead modal once it exists.
           }}
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-[#071123] transition-colors hover:bg-black/[0.04]"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-[#071123] transition-colors hover:bg-black/4"
         >
           <svg
             width="16"
@@ -82,7 +83,7 @@ export default function LeadsTableRow({ lead }: { lead: Lead }) {
           onClick={() => {
             // TODO: open the delete confirmation once it exists.
           }}
-          className="flex h-9 w-9 items-center justify-center rounded-xl text-[#F22A36] transition-colors hover:bg-black/[0.04]"
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-[#F22A36] transition-colors hover:bg-black/4"
         >
           <svg
             width="16"
