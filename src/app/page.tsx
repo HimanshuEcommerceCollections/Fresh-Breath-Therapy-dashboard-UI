@@ -4,6 +4,7 @@ import SessionMetricsRow from "@/src/components/dashboardComponents/SessionMetri
 import RevenueMetricsRow from "@/src/components/dashboardComponents/RevenueMetricsRow";
 import ChartsRow from "@/src/components/dashboardComponents/ChartsRow";
 import FunnelSessionsRow from "@/src/components/dashboardComponents/FunnelSessionsRow";
+import FollowUpUtilizationRow from "@/src/components/dashboardComponents/FollowUpUtilizationRow";
 
 export default function Home() {
   return (
@@ -14,6 +15,7 @@ export default function Home() {
       <RevenueMetricsRow />
       <ChartsRow />
       <FunnelSessionsRow />
+      <FollowUpUtilizationRow />
     </div>
   );
 }
