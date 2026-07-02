@@ -2,6 +2,8 @@ import DashboardPageHeader from "@/src/components/dashboardComponents/DashboardP
 import LeadClientStatsRow from "@/src/components/dashboardComponents/LeadClientStatsRow";
 import SessionMetricsRow from "@/src/components/dashboardComponents/SessionMetricsRow";
 import RevenueMetricsRow from "@/src/components/dashboardComponents/RevenueMetricsRow";
+import ChartsRow from "@/src/components/dashboardComponents/ChartsRow";
+import FunnelSessionsRow from "@/src/components/dashboardComponents/FunnelSessionsRow";
 
 export default function Home() {
   return (
@@ -10,6 +12,8 @@ export default function Home() {
       <LeadClientStatsRow />
       <SessionMetricsRow />
       <RevenueMetricsRow />
+      <ChartsRow />
+      <FunnelSessionsRow />
     </div>
   );
 }
