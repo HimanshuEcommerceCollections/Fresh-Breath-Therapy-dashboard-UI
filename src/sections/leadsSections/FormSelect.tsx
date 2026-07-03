@@ -13,7 +13,7 @@ export default function FormSelect({
   onChange,
 }: {
   label: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   placeholder: string;
   options: string[];
   value: string;
@@ -25,18 +25,20 @@ export default function FormSelect({
         {label}
       </span>
       <div className="relative">
-        <span
-          aria-hidden
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"
-        >
-          {icon}
-        </span>
+        {icon && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#6B7280]"
+          >
+            {icon}
+          </span>
+        )}
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className={`h-10 w-full cursor-pointer appearance-none rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] pl-11 pr-10 text-base outline-none focus:ring-2 focus:ring-[#325A5E]/30 ${
-            value ? "text-[#0B1C30]" : "text-[#6B7280]"
-          }`}
+          className={`h-10 w-full cursor-pointer appearance-none rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] pr-10 text-base outline-none focus:ring-2 focus:ring-[#325A5E]/30 ${
+            icon ? "pl-11" : "pl-4"
+          } ${value ? "text-[#0B1C30]" : "text-[#6B7280]"}`}
         >
           <option value="" disabled>
             {placeholder}
