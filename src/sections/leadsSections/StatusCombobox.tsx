@@ -9,9 +9,11 @@ import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu"
 export default function StatusCombobox({
   status,
   options,
+  widthClass = "w-45",
 }: {
   status: string;
   options: string[];
+  widthClass?: string;
 }) {
   const [currentStatus, setCurrentStatus] = useState(status);
   const [isOpen, setIsOpen] = useState(false);
@@ -22,7 +24,7 @@ export default function StatusCombobox({
         type="button"
         onMouseDown={(e) => e.stopPropagation()}
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex h-8 w-45 cursor-pointer items-center justify-between rounded-xl border border-[#E0E5EB] bg-white px-3 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]"
+        className={`flex h-8 ${widthClass} cursor-pointer items-center justify-between rounded-xl border border-[#E0E5EB] bg-white px-3 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]`}
       >
         <span className="truncate text-sm font-normal text-[#071123]">
           {currentStatus}
