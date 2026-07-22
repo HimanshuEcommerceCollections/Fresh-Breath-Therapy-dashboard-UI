@@ -2,6 +2,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { signupService } from "@/src/services/authService";
 
 export interface SignupFormValues {
@@ -21,6 +22,7 @@ const initialValues: SignupFormValues = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const useSignupForm = () => {
+  const router = useRouter();
   const [values, setValues] = useState<SignupFormValues>(initialValues);
   const [errors, setErrors] = useState<SignupFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,7 +73,9 @@ export const useSignupForm = () => {
         return;
       }
 
-      // TODO: route to /signup/verify-otp (step 2 of 2) once wired
+      router.push(
+        `/verify-otp?email=${encodeURIComponent(values.email)}&flow=signup`
+      );
     } catch (err) {
       setServerError("Something went wrong. Please try again.");
     } finally {

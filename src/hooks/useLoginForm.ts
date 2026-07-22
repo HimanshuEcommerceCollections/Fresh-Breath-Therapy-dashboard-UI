@@ -2,6 +2,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import { loginService } from "@/src/services/authService";
 
 export interface LoginFormValues {
@@ -19,6 +20,7 @@ const initialValues: LoginFormValues = {
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const useLoginForm = () => {
+  const router = useRouter();
   const [values, setValues] = useState<LoginFormValues>(initialValues);
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +64,9 @@ export const useLoginForm = () => {
         return;
       }
 
-      // TODO: route to dashboard (or /verify-otp step) once wired to real auth
+      router.push(
+        `/verify-otp?email=${encodeURIComponent(values.email)}&flow=login`
+      );
     } catch (err) {
       setServerError("Something went wrong. Please try again.");
     } finally {
