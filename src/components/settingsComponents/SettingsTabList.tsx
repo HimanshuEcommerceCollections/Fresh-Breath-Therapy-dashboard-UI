@@ -6,9 +6,7 @@ import {
   Globe,
   Lock,
   Package,
-  Plug,
   UsersRound,
-  Zap,
 } from "lucide-react";
 import SettingsTab from "@/src/sections/settingsSections/SettingsTab";
 
@@ -16,9 +14,7 @@ export type SettingsTabName =
   | "Organization"
   | "Roles"
   | "Packages"
-  | "Automation"
   | "Notifications"
-  | "Integrations"
   | "SaaS"
   | "Security";
 
@@ -28,9 +24,7 @@ const TABS: { name: SettingsTabName; icon: typeof Building2 }[] = [
   { name: "Organization", icon: Building2 },
   { name: "Roles", icon: UsersRound },
   { name: "Packages", icon: Package },
-  { name: "Automation", icon: Zap },
   { name: "Notifications", icon: Bell },
-  { name: "Integrations", icon: Plug },
   { name: "SaaS", icon: Globe },
   { name: "Security", icon: Lock },
 ];
@@ -59,3 +53,4 @@ export default function SettingsTabList({
     </div>
   );
 }
+

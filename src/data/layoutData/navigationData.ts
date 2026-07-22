@@ -18,6 +18,7 @@ export const navigationGroups: NavGroup[] = [
       { label: "Dashboard", href: "/", icon: `${ICON_BASE}/dashboardicon.png` },
       { label: "Leads", href: "/leads", icon: `${ICON_BASE}/leadsicon.png` },
       { label: "Clients", href: "/clients", icon: `${ICON_BASE}/clientsicon.png` },
+      { label: "Signup Requests", href: "/signup-requests", icon: `${ICON_BASE}/signuprequestsicon.png` },
       { label: "Sessions", href: "/sessions", icon: `${ICON_BASE}/sessionsIcon.png` },
       { label: "Follow-Ups", href: "/follow-ups", icon: `${ICON_BASE}/followupicon.png` },
       { label: "Payments", href: "/payments", icon: `${ICON_BASE}/paymentsicon.png` },

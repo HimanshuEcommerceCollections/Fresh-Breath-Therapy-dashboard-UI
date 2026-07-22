@@ -5,18 +5,17 @@ import { Calendar, X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import FormField from "@/src/sections/leadsSections/FormField";
 import FormSelect from "@/src/sections/leadsSections/FormSelect";
+import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
 import {
-  paymentsData,
-  type Payment,
-  type PaymentMethod,
+  packageOptions,
+  type PackageOption,
+} from "@/src/data/paymentsData/packageOptions";
+import {
   type PaymentStatus,
 } from "@/src/data/paymentsData/paymentsData";
+import { clientsData } from "@/src/data/clientsData/clientsData";
 
-// Derived from the existing payments dataset so the modal stays in sync —
-// both will come from their own backend endpoints later.
-const CLIENT_OPTIONS = Array.from(new Set(paymentsData.map((p) => p.clientName)));
-const PACKAGE_OPTIONS = Array.from(new Set(paymentsData.map((p) => p.packageName)));
-const METHOD_OPTIONS: PaymentMethod[] = ["Credit Card", "ACH", "Cash", "Insurance"];
+const PACKAGE_LABELS = packageOptions.map((p) => p.label);
 
 export default function RecordPaymentModal({
   open,
@@ -25,28 +24,42 @@ export default function RecordPaymentModal({
   open: boolean;
   onClose: () => void;
 }) {
-  const [client, setClient] = useState("");
-  const [packageName, setPackageName] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [packageLabel, setPackageLabel] = useState("");
   const [amountDue, setAmountDue] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
   const [date, setDate] = useState("25/06/2026");
-  const [method, setMethod] = useState("");
 
   if (!open) return null;
+
+  // When a package is selected, auto-fill both amount fields with the
+  // package's price as a starting default (still editable).
+  function handlePackageChange(label: string) {
+    setPackageLabel(label);
+    const pkg: PackageOption | undefined = packageOptions.find(
+      (p) => p.label === label,
+    );
+    if (pkg) {
+      setAmountDue(String(pkg.price));
+      setAmountPaid(String(pkg.price));
+    }
+  }
 
   function handleRecord() {
     const due = Number(amountDue) || 0;
     const paid = Number(amountPaid) || 0;
     const status: PaymentStatus =
       paid >= due && due > 0 ? "Paid" : paid > 0 ? "Partially Paid" : "Pending";
-    const newPayment: Payment = {
+    const clientName =
+      clientsData.find((c) => c.id === clientId)?.name ?? clientId;
+
+    const newPayment = {
       id: crypto.randomUUID(),
-      clientName: client,
-      packageName,
+      clientName,
+      packageName: packageLabel,
       due,
       paid,
       balance: Math.max(0, due - paid),
-      method: (method || "Credit Card") as PaymentMethod,
       date,
       status,
     };
@@ -71,21 +84,25 @@ export default function RecordPaymentModal({
         </div>
 
         <div className="flex flex-col gap-4 p-6">
-          <FormSelect
+          {/* 1. Client — shared combobox */}
+          <ClientSelect
             label="Client"
-            placeholder="Select client"
-            options={CLIENT_OPTIONS}
-            value={client}
-            onChange={setClient}
+            value={clientId}
+            onChange={setClientId}
+            labelClassName="text-xs font-semibold tracking-[0.6px] text-[#434655]"
+            shellClassName="h-10 rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] focus:ring-2 focus:ring-[#325A5E]/30"
           />
+
+          {/* 2. Package — auto-fills Amount Due & Paid on select */}
           <FormSelect
             label="Package"
             placeholder="Select package"
-            options={PACKAGE_OPTIONS}
-            value={packageName}
-            onChange={setPackageName}
+            options={PACKAGE_LABELS}
+            value={packageLabel}
+            onChange={handlePackageChange}
           />
 
+          {/* 3. Amount Due + Amount Paid */}
           <div className="flex gap-4">
             <FormField
               label="Amount Due"
@@ -103,32 +120,24 @@ export default function RecordPaymentModal({
             />
           </div>
 
-          <div className="flex gap-4">
-            <div className="flex flex-1 flex-col gap-1.5">
-              <span className="text-xs font-semibold tracking-[0.6px] text-[#434655]">
-                Date
-              </span>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] pl-4 pr-10 text-base text-[#0B1C30] outline-none focus:ring-2 focus:ring-[#325A5E]/30"
-                />
-                <Calendar
-                  size={16}
-                  stroke="#434655"
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
-                />
-              </div>
+          {/* 4. Date — full width (Method removed) */}
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-semibold tracking-[0.6px] text-[#434655]">
+              Date
+            </span>
+            <div className="relative">
+              <input
+                type="text"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="h-10 w-full rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] pl-4 pr-10 text-base text-[#0B1C30] outline-none focus:ring-2 focus:ring-[#325A5E]/30"
+              />
+              <Calendar
+                size={16}
+                stroke="#434655"
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
+              />
             </div>
-            <FormSelect
-              label="Method"
-              placeholder="Select method"
-              options={METHOD_OPTIONS}
-              value={method}
-              onChange={setMethod}
-            />
           </div>
         </div>
 

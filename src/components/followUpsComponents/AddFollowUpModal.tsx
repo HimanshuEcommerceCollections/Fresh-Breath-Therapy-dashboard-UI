@@ -3,9 +3,8 @@
 import { useState } from "react";
 import { Calendar, X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
-import ModalSelectField from "@/src/sections/sessionsSections/ModalSelectField";
+import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
 import ReminderToggle from "@/src/sections/followUpsSections/ReminderToggle";
-import { clientsData } from "@/src/data/clientsData/clientsData";
 
 // This modal's palette (labels #434655, shells #F8F9FF/#EFF4FF, focus
 // #004AC6) is deliberately distinct from the Schedule Session modal's.
@@ -19,7 +18,7 @@ export default function AddFollowUpModal({
   open: boolean;
   onClose: () => void;
 }) {
-  const [client] = useState(clientsData[0].name);
+  const [clientId, setClientId] = useState("");
   const [dueDate, setDueDate] = useState("25/06/2026");
   const [notes, setNotes] = useState("");
   const [reminder, setReminder] = useState(true);
@@ -29,7 +28,7 @@ export default function AddFollowUpModal({
   function handleCreate() {
     // TODO: create a real follow-up record once followUpsData is stateful
     // (same open thread as leadsData/sessionsData).
-    console.log("New follow-up:", { client, dueDate, notes, reminder });
+    console.log("New follow-up:", { clientId, dueDate, notes, reminder });
     onClose();
   }
 
@@ -37,8 +36,6 @@ export default function AddFollowUpModal({
     <ModalOverlay onClose={onClose}>
       <div className="flex w-full max-w-[560px] flex-col rounded-2xl bg-white shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)]">
         <div className="flex items-center justify-between px-6 pt-5">
-          {/* Title inferred from the modal's purpose — the export's text layer
-              was generically named, so the literal string wasn't captured. */}
           <h2 className="text-xl font-semibold leading-7 text-[#0B1C30]">
             New follow-up
           </h2>
@@ -53,14 +50,13 @@ export default function AddFollowUpModal({
         </div>
 
         <div className="flex flex-col gap-4 p-6">
-          <ModalSelectField
+          {/* Client — shared combobox, follow-up palette */}
+          <ClientSelect
             label="Client"
-            value={client}
+            value={clientId}
+            onChange={setClientId}
             labelClassName={LABEL_CLASS}
             shellClassName="h-12 rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] focus:border-[#004AC6]"
-            valueClassName="text-base font-normal leading-6 text-[#0B1C30]"
-            chevronSize={16}
-            chevronColor="#434655"
           />
 
           <div className="flex flex-col gap-1.5">

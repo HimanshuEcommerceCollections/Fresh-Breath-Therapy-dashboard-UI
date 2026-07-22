@@ -22,7 +22,7 @@ const NotificationsSection = () => {
   const { summaryCards, tabs, emptyState } = notificationsPageContent;
 
   return (
-    <div className="flex w-full flex-col gap-6 p-8">
+    <div className="flex w-full flex-col gap-6 px-8 pb-12 pt-24">
       <NotificationsHeader
         heading={notificationsPageContent.heading}
         subheading={notificationsPageContent.subheading}

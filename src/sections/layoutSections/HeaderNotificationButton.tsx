@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import type { Notification } from "@/src/data/layoutData/notificationData";
 
 export default function HeaderNotificationButton({
@@ -8,12 +9,9 @@ export default function HeaderNotificationButton({
   notification: Notification;
 }) {
   return (
-    <button
-      type="button"
+    <Link
+      href="/notifications"
       aria-label="Notifications"
-      onClick={() => {
-        // TODO: open the notifications panel once it exists.
-      }}
       className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-[#071123] transition-colors hover:bg-black/[0.04]"
     >
       <svg
@@ -44,6 +42,6 @@ export default function HeaderNotificationButton({
           className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#F22A36]"
         />
       )}
-    </button>
+    </Link>
   );
 }

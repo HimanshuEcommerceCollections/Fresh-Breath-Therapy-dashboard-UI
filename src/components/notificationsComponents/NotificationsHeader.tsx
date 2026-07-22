@@ -19,8 +19,12 @@ const NotificationsHeader = ({
   return (
     <div className="flex w-full items-center justify-between">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold text-[#1E293B]">{heading}</h1>
-        <p className="text-sm text-[#64748B]">{subheading}</p>
+        <h1 className="text-3xl font-semibold tracking-[-0.75px] text-[#071123]">
+          {heading}
+        </h1>
+        <p className="text-sm font-normal tracking-[-0.154px] text-[#596475]">
+          {subheading}
+        </p>
       </div>
 
       <button

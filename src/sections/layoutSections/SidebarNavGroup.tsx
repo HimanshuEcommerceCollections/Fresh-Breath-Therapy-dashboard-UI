@@ -1,5 +1,6 @@
 import type { NavGroup } from "@/src/data/layoutData/navigationData";
 import SidebarNavItem from "@/src/sections/layoutSections/SidebarNavItem";
+import SidebarSignupRequestsItem from "@/src/sections/layoutSections/SidebarSignupRequestsItem";
 
 export default function SidebarNavGroup({ group }: { group: NavGroup }) {
   return (
@@ -8,9 +9,13 @@ export default function SidebarNavGroup({ group }: { group: NavGroup }) {
         {group.groupLabel}
       </div>
       <div className="flex flex-col gap-1">
-        {group.items.map((item) => (
-          <SidebarNavItem key={item.href} item={item} />
-        ))}
+        {group.items.map((item) =>
+          item.href === "/signup-requests" ? (
+            <SidebarSignupRequestsItem key={item.href} item={item} />
+          ) : (
+            <SidebarNavItem key={item.href} item={item} />
+          )
+        )}
       </div>
     </div>
   );

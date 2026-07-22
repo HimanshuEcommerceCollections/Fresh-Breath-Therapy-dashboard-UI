@@ -4,16 +4,14 @@
 //
 // Schedule Session modal — fully wired to useScheduleSessionForm (form state
 // + validation + service stub). Reuses ModalOverlay from leadsSections.
-// Client, Therapist, and Type fields are real interactive <select> elements;
-// Date and Time are free-text inputs with icon decorations.
+// Client uses the shared ClientSelect combobox; Therapist and Type are
+// native <select> elements populated from existing data sources.
 
 import { Calendar, Clock, User, X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
+import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
 import { useScheduleSessionForm } from "@/src/hooks/useScheduleSessionForm";
-import {
-  clientOptions,
-  therapistOptions,
-} from "@/src/data/sessionsData/scheduleModalOptionsData";
+import { therapistOptions } from "@/src/data/sessionsData/scheduleModalOptionsData";
 import { sessionTypeOptions } from "@/src/data/sessionsData/sessionTypeOptions";
 
 // Shared label style
@@ -21,6 +19,24 @@ const LABEL_CLASS = "text-sm font-semibold leading-5 text-[#0F172A]";
 // Shared select shell style
 const SELECT_CLASS =
   "h-13 w-full cursor-pointer appearance-none rounded-xl border border-[#E2E8F0] bg-[rgba(248,250,252,0.5)] px-4 text-base font-normal leading-6 text-[#0F172A] outline-none focus:border-2 focus:border-[#2563EB]";
+
+const ChevronIcon = () => (
+  <svg
+    className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
+    width="18"
+    height="18"
+    viewBox="0 0 18 18"
+    fill="none"
+  >
+    <path
+      d="M4.5 6.75L9 11.25L13.5 6.75"
+      stroke="#94A3B8"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 export default function ScheduleSessionModal({
   open,
@@ -53,40 +69,12 @@ export default function ScheduleSessionModal({
 
         {/* Fields */}
         <div className="flex flex-col gap-4 p-6">
-          {/* Client */}
-          <div className="flex flex-col gap-1.5">
-            <span className={LABEL_CLASS}>Client</span>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]">
-                <User size={18} />
-              </span>
-              <select
-                value={form.client}
-                onChange={(e) => form.setClient(e.target.value)}
-                className={`${SELECT_CLASS} pl-11 pr-11`}
-              >
-                <option value="" disabled>
-                  Select a client…
-                </option>
-                {clientOptions.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path
-                    d="M4.5 6.75L9 11.25L13.5 6.75"
-                    stroke="#94A3B8"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </div>
-          </div>
+          {/* Client — shared combobox */}
+          <ClientSelect
+            label="Client"
+            value={form.clientId}
+            onChange={form.setClientId}
+          />
 
           {/* Therapist */}
           <div className="flex flex-col gap-1.5">
@@ -104,25 +92,12 @@ export default function ScheduleSessionModal({
                   Select a therapist…
                 </option>
                 {therapistOptions.map((t) => (
-                  <option
-                    key={t.name}
-                    value={`${t.name} — ${t.location}`}
-                  >
+                  <option key={t.name} value={`${t.name} — ${t.location}`}>
                     {t.name} — {t.location}
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path
-                    d="M4.5 6.75L9 11.25L13.5 6.75"
-                    stroke="#94A3B8"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
+              <ChevronIcon />
             </div>
           </div>
 
@@ -164,7 +139,7 @@ export default function ScheduleSessionModal({
             </div>
           </div>
 
-          {/* Type — styled select with checkmark-on-selected via custom panel */}
+          {/* Type */}
           <div className="flex flex-col gap-1.5">
             <span className={LABEL_CLASS}>Type</span>
             <div className="relative">
@@ -182,17 +157,7 @@ export default function ScheduleSessionModal({
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-                  <path
-                    d="M4.5 6.75L9 11.25L13.5 6.75"
-                    stroke="#94A3B8"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
+              <ChevronIcon />
             </div>
           </div>
         </div>

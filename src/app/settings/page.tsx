@@ -8,9 +8,7 @@ import SettingsTabList, {
 import OrganizationSettings from "@/src/components/settingsComponents/OrganizationSettings";
 import RolesSettings from "@/src/components/settingsComponents/RolesSettings";
 import PackagesSettings from "@/src/components/settingsComponents/PackagesSettings";
-import AutomationSettings from "@/src/components/settingsComponents/AutomationSettings";
 import NotificationsSettings from "@/src/components/settingsComponents/NotificationsSettings";
-import IntegrationsSettings from "@/src/components/settingsComponents/IntegrationsSettings";
 import SaaSSettings from "@/src/components/settingsComponents/SaaSSettings";
 import SecuritySettings from "@/src/components/settingsComponents/SecuritySettings";
 
@@ -18,9 +16,7 @@ const TAB_CONTENT: Record<SettingsTabName, ReactNode> = {
   Organization: <OrganizationSettings />,
   Roles: <RolesSettings />,
   Packages: <PackagesSettings />,
-  Automation: <AutomationSettings />,
   Notifications: <NotificationsSettings />,
-  Integrations: <IntegrationsSettings />,
   SaaS: <SaaSSettings />,
   Security: <SecuritySettings />,
 };
@@ -36,3 +32,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

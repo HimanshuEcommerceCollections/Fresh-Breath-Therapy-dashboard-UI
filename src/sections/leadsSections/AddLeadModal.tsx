@@ -5,16 +5,15 @@ import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import { leadsData, type Lead, type LeadStatus } from "@/src/data/leadsData/leadsData";
 import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
 import { locationOptions } from "@/src/data/leadsData/locationOptions";
+import { referralSourceOptions } from "@/src/data/leadsData/referralSourceOptions";
 import FormField from "@/src/sections/leadsSections/FormField";
 import FormSelect from "@/src/sections/leadsSections/FormSelect";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 
 const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"];
 
-// Sources and therapists are derived from the existing leads dataset so the
-// modal stays in sync with the table's values — both will come from their own
-// backend endpoints later.
-const SOURCE_OPTIONS = Array.from(new Set(leadsData.map((l) => l.source)));
+// Therapists are derived from the existing leads dataset — will come from
+// the backend therapists endpoint later.
 const THERAPIST_OPTIONS = Array.from(new Set(leadsData.map((l) => l.therapist)));
 
 function PersonIcon() {
@@ -159,7 +158,7 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
               label="Referral Source"
               icon={<MegaphoneIcon />}
               placeholder="Select referral source"
-              options={SOURCE_OPTIONS}
+              options={referralSourceOptions}
               value={source}
               onChange={setSource}
             />

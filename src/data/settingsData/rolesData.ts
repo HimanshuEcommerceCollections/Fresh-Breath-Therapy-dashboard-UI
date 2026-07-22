@@ -3,7 +3,7 @@ export type Role = { name: string; permissions: string }; // "·"-joined string 
 
 export const rolesData: Role[] = [
   { name: "Admin", permissions: "Full access · Manage team · Reports · Revenue · Settings" },
-  { name: "Coordinator", permissions: "Leads · Clients · Schedule sessions · Follow-ups · Payments" },
-  { name: "Therapist", permissions: "View assigned clients · Sessions · Notes · PTO" },
-  { name: "Client (SaaS portal)", permissions: "Book · Reschedule · Pay invoices · Documents" },
+  { name: "Coordinator", permissions: "Full access for reading only not writing" },
+  { name: "Therapist", permissions: "Only their own clients and sessions, also PTO" },
 ];
+
