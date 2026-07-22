@@ -1,5 +1,4 @@
 import { clientsData } from "@/src/data/clientsData/clientsData";
-import { sessionsData } from "@/src/data/sessionsData/sessionsData";
 
 // Option lists for the Schedule Session modal, derived from the existing
 // datasets so they stay in sync. TODO: replace with dedicated backend
@@ -26,6 +25,6 @@ export const therapistOptions: TherapistOption[] = Array.from(
     .values(),
 );
 
-export const sessionTypeOptions: string[] = Array.from(
-  new Set(sessionsData.map((s) => s.type)),
-);
+// Re-export from canonical source — session types are fixed and not derived
+// from the data set (which may be missing types not yet in the mock data).
+export { sessionTypeOptions } from "@/src/data/sessionsData/sessionTypeOptions";

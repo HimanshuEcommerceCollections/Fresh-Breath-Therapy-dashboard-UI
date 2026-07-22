@@ -1,6 +1,12 @@
 import type { MonthDay } from "@/src/data/sessionsData/monthViewData";
 
-export default function MonthDayCell({ day }: { day: MonthDay | null }) {
+export default function MonthDayCell({
+  day,
+  onDayClick,
+}: {
+  day: MonthDay | null;
+  onDayClick?: (dateNumber: number) => void;
+}) {
   if (day === null) {
     // Leading blank grid cell for days before the 1st of the month.
     return <div className="min-h-[110px]" />;
@@ -8,9 +14,10 @@ export default function MonthDayCell({ day }: { day: MonthDay | null }) {
 
   return (
     <div
+      onClick={onDayClick ? () => onDayClick(day.date) : undefined}
       className={`flex min-h-[110px] flex-col gap-1 rounded-[4px] border p-1.5 ${
         day.isToday ? "border-[#376EF4]" : "border-[rgba(224,229,235,0.6)]"
-      }`}
+      } ${onDayClick ? "cursor-pointer transition-colors hover:bg-[rgba(55,110,244,0.04)]" : ""}`}
     >
       <span className="text-xs font-semibold leading-3.5 tracking-[0.12px] text-[#596475]">
         {day.date}

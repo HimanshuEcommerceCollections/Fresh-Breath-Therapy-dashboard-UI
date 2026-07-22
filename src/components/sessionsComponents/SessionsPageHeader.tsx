@@ -4,15 +4,47 @@ import { Plus } from "lucide-react";
 import ViewToggle, {
   type SessionsView,
 } from "@/src/sections/sessionsSections/ViewToggle";
+import TherapistFilterDropdown from "@/src/components/sessionsComponents/TherapistFilterDropdown";
+import type { Therapist } from "@/src/data/therapistsData/therapistsData";
 
 export default function SessionsPageHeader({
   activeView,
   onViewChange,
   onScheduleClick,
+  // Therapist filter props
+  therapistFilterLabel,
+  isAllTherapists,
+  selectedTherapistIds,
+  isDropdownOpen,
+  onDropdownOpen,
+  onDropdownClose,
+  therapistSearch,
+  onSearchChange,
+  pendingIds,
+  onTogglePending,
+  onSelectAll,
+  onReset,
+  onApply,
+  filteredTherapists,
 }: {
   activeView: SessionsView;
   onViewChange: (view: SessionsView) => void;
   onScheduleClick: () => void;
+  // Therapist filter
+  therapistFilterLabel: string;
+  isAllTherapists: boolean;
+  selectedTherapistIds: string[];
+  isDropdownOpen: boolean;
+  onDropdownOpen: () => void;
+  onDropdownClose: () => void;
+  therapistSearch: string;
+  onSearchChange: (v: string) => void;
+  pendingIds: string[];
+  onTogglePending: (id: string) => void;
+  onSelectAll: () => void;
+  onReset: () => void;
+  onApply: () => void;
+  filteredTherapists: Therapist[];
 }) {
   return (
     <div className="flex flex-row items-end justify-between">
@@ -26,7 +58,26 @@ export default function SessionsPageHeader({
       </div>
 
       <div className="flex items-center gap-3">
+        {/* Therapist filter pill — shared across all four views */}
+        <TherapistFilterDropdown
+          therapistFilterLabel={therapistFilterLabel}
+          isAllTherapists={isAllTherapists}
+          selectedTherapistIds={selectedTherapistIds}
+          isDropdownOpen={isDropdownOpen}
+          onOpen={onDropdownOpen}
+          onClose={onDropdownClose}
+          therapistSearch={therapistSearch}
+          onSearchChange={onSearchChange}
+          pendingIds={pendingIds}
+          onTogglePending={onTogglePending}
+          onSelectAll={onSelectAll}
+          onReset={onReset}
+          onApply={onApply}
+          filteredTherapists={filteredTherapists}
+        />
+
         <ViewToggle activeView={activeView} onChange={onViewChange} />
+
         <button
           type="button"
           onClick={onScheduleClick}

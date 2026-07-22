@@ -7,7 +7,12 @@ const WEEKDAY_LABELS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 // blank cell. TODO: derive from real date state once calendar math exists.
 const LEADING_BLANK_CELLS = 1;
 
-export default function SessionsMonthView() {
+export default function SessionsMonthView({
+  onDayClick,
+}: {
+  /** Called when the user clicks a day cell; receives the day number (1-30). */
+  onDayClick?: (dateNumber: number) => void;
+}) {
   const cells: (typeof monthViewData[number] | null)[] = [
     ...Array.from({ length: LEADING_BLANK_CELLS }, () => null),
     ...monthViewData,
@@ -27,7 +32,11 @@ export default function SessionsMonthView() {
       </div>
       <div className="grid grid-cols-7 gap-px">
         {cells.map((day, index) => (
-          <MonthDayCell key={day ? day.date : `blank-${index}`} day={day} />
+          <MonthDayCell
+            key={day ? day.date : `blank-${index}`}
+            day={day}
+            onDayClick={onDayClick}
+          />
         ))}
       </div>
     </div>
