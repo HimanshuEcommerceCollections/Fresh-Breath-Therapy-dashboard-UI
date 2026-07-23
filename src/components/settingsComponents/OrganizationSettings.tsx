@@ -1,16 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { organizationData } from "@/src/data/settingsData/organizationData";
+import { useEffect, useState } from "react";
+import { useOrganizationSettings } from "@/src/hooks/useOrganizationSettings";
+import { useLocations } from "@/src/hooks/useLocations";
 import SettingsField from "@/src/sections/settingsSections/SettingsField";
 import LocationChip from "@/src/sections/settingsSections/LocationChip";
 
 export default function OrganizationSettings() {
-  // Controlled/editable, initialized from data — no save action exists in
-  // the reference yet; submit wiring is a follow-up once clarified.
-  const [name, setName] = useState(organizationData.name);
-  const [primaryEmail, setPrimaryEmail] = useState(organizationData.primaryEmail);
-  const [timezone, setTimezone] = useState(organizationData.timezone);
+  const { organization, isSaving, save } = useOrganizationSettings();
+  const { locations } = useLocations();
+
+  const [name, setName] = useState("");
+  const [primaryEmail, setPrimaryEmail] = useState("");
+  const [timezone, setTimezone] = useState("America/New_York");
+
+  // Sync form fields once the real organization loads (fields start empty
+  // until then, since there may be no organization row yet — section 14.1).
+  useEffect(() => {
+    if (organization) {
+      setName(organization.name);
+      setPrimaryEmail(organization.primaryEmail);
+      setTimezone(organization.timezone);
+    }
+  }, [organization]);
 
   return (
     <div className="flex max-w-[630px] flex-col gap-3 rounded-[18px] border border-[#E0E5EB] bg-white p-5 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
@@ -28,12 +40,21 @@ export default function OrganizationSettings() {
       {/* Plain text input for now — a real timezone select is a future enhancement. */}
       <SettingsField label="Timezone" value={timezone} onChange={setTimezone} />
 
+      <button
+        type="button"
+        disabled={!name || !primaryEmail || isSaving}
+        onClick={() => save({ name, primaryEmail, timezone })}
+        className="self-start rounded-xl bg-[#376EF4] px-4 py-2 text-sm font-medium text-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-opacity hover:opacity-90 disabled:opacity-60"
+      >
+        {isSaving ? "Saving…" : "Save"}
+      </button>
+
       <h3 className="text-base font-semibold tracking-[-0.32px] text-[#071123]">
-        Locations ({organizationData.locations.length})
+        Locations ({locations.length})
       </h3>
       <div className="grid grid-cols-2 gap-2">
-        {organizationData.locations.map((location) => (
-          <LocationChip key={location} location={location} />
+        {locations.map((location) => (
+          <LocationChip key={location.id} location={location.name} />
         ))}
       </div>
     </div>

@@ -6,17 +6,24 @@ import {
   Globe,
   Lock,
   Package,
+  Plug,
   UsersRound,
+  Zap,
 } from "lucide-react";
 import SettingsTab from "@/src/sections/settingsSections/SettingsTab";
 
+// Automation and Integrations were previously fully built but disconnected
+// from this tab list (their categories/resource are real backend endpoints
+// per sections 14.4/14.5) — reconnected here rather than left unreachable.
 export type SettingsTabName =
   | "Organization"
   | "Roles"
   | "Packages"
+  | "Automation"
   | "Notifications"
   | "SaaS"
-  | "Security";
+  | "Security"
+  | "Integrations";
 
 // Icons are lucide line icons as stand-ins — swap for dedicated assets once
 // they're supplied.
@@ -24,9 +31,11 @@ const TABS: { name: SettingsTabName; icon: typeof Building2 }[] = [
   { name: "Organization", icon: Building2 },
   { name: "Roles", icon: UsersRound },
   { name: "Packages", icon: Package },
+  { name: "Automation", icon: Zap },
   { name: "Notifications", icon: Bell },
   { name: "SaaS", icon: Globe },
   { name: "Security", icon: Lock },
+  { name: "Integrations", icon: Plug },
 ];
 
 export default function SettingsTabList({

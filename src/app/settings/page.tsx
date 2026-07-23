@@ -8,17 +8,21 @@ import SettingsTabList, {
 import OrganizationSettings from "@/src/components/settingsComponents/OrganizationSettings";
 import RolesSettings from "@/src/components/settingsComponents/RolesSettings";
 import PackagesSettings from "@/src/components/settingsComponents/PackagesSettings";
+import AutomationSettings from "@/src/components/settingsComponents/AutomationSettings";
 import NotificationsSettings from "@/src/components/settingsComponents/NotificationsSettings";
 import SaaSSettings from "@/src/components/settingsComponents/SaaSSettings";
 import SecuritySettings from "@/src/components/settingsComponents/SecuritySettings";
+import IntegrationsSettings from "@/src/components/settingsComponents/IntegrationsSettings";
 
 const TAB_CONTENT: Record<SettingsTabName, ReactNode> = {
   Organization: <OrganizationSettings />,
   Roles: <RolesSettings />,
   Packages: <PackagesSettings />,
+  Automation: <AutomationSettings />,
   Notifications: <NotificationsSettings />,
   SaaS: <SaaSSettings />,
   Security: <SecuritySettings />,
+  Integrations: <IntegrationsSettings />,
 };
 
 export default function SettingsPage() {
