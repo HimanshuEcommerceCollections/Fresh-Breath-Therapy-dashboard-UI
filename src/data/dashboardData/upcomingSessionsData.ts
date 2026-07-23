@@ -1,4 +1,8 @@
-export type SessionStatus = "Scheduled" | "Completed" | "Cancelled" | "Missed";
+// MISMATCH: this used to be its own 4-value type ("Missed", no
+// "Rescheduled") that didn't match section 11's real 5-value session status
+// enum — now reuses the canonical SessionStatus from sessionsData.ts.
+export type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
+import type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
 
 export type UpcomingSession = {
   id: string;

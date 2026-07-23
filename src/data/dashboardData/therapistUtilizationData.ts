@@ -3,7 +3,10 @@ export type TherapistUtilization = {
   name: string;
   city: string;
   sessionsCount: number;
-  ptoHours: number;
+  // MISMATCH: /api/dashboard's therapist_utilization has no PTO field (PTO
+  // is a separate resource) — optional so real data can omit it rather than
+  // fabricate a number.
+  ptoHours?: number;
 };
 
 // TODO: replace with backend-fetched therapist utilization stats.

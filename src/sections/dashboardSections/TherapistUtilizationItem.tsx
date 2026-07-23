@@ -29,7 +29,8 @@ export default function TherapistUtilizationItem({
           </span>
         </span>
         <span className="shrink-0 text-xs font-normal text-[#596475]">
-          {therapist.sessionsCount} sess · {therapist.ptoHours}h PTO
+          {therapist.sessionsCount} sess
+          {therapist.ptoHours !== undefined ? ` · ${therapist.ptoHours}h PTO` : ""}
         </span>
       </div>
 

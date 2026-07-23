@@ -3,17 +3,19 @@
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
 import TherapistUtilizationItem from "@/src/sections/dashboardSections/TherapistUtilizationItem";
 import CardHeaderLink from "@/src/sections/dashboardSections/CardHeaderLink";
-import { therapistUtilizationData } from "@/src/data/dashboardData/therapistUtilizationData";
+import type { TherapistUtilization } from "@/src/data/dashboardData/therapistUtilizationData";
 import { useInView } from "@/src/hooks/useInView";
 
-export default function TherapistUtilizationList() {
+export default function TherapistUtilizationList({
+  therapists,
+}: {
+  therapists: TherapistUtilization[];
+}) {
   // Bar-growth animation only starts once the card scrolls into view,
   // consistent with the other animated cards on this page.
   const { ref, isInView } = useInView<HTMLDivElement>();
 
-  const maxSessions = Math.max(
-    ...therapistUtilizationData.map((t) => t.sessionsCount),
-  );
+  const maxSessions = Math.max(1, ...therapists.map((t) => t.sessionsCount));
 
   return (
     <ChartCard
@@ -22,7 +24,7 @@ export default function TherapistUtilizationList() {
       action={<CardHeaderLink label="All therapists" />}
     >
       <div ref={ref} className="flex flex-col gap-3">
-        {therapistUtilizationData.map((therapist, index) => (
+        {therapists.map((therapist, index) => (
           <TherapistUtilizationItem
             key={therapist.id}
             therapist={therapist}

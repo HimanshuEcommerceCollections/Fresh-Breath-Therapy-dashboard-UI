@@ -1,4 +1,7 @@
-export type FollowUpStatus = "Overdue" | "Upcoming" | "Completed";
+// MISMATCH: section 9's real follow-up status enum is
+// pending|overdue|completed — renamed from the old mock's "Upcoming" to
+// "Pending" to match reality (nothing else depends on the old wording).
+export type FollowUpStatus = "Overdue" | "Pending" | "Completed";
 
 export type FollowUpItem = {
   id: string;
