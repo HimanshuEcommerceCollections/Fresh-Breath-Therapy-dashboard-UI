@@ -1,13 +1,13 @@
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
-import { locationBreakdownData } from "@/src/data/ptoDashboardData/locationBreakdownData";
+import type { PTOLocationBreakdown } from "@/src/services/ptoService";
 
-export default function LocationBreakdownList() {
+export default function LocationBreakdownList({ items }: { items: PTOLocationBreakdown[] }) {
   return (
     <ChartCard title="Location Breakdown">
       <div className="flex flex-col divide-y divide-[rgba(224,229,235,0.6)]">
-        {locationBreakdownData.map((item) => (
+        {items.map((item) => (
           <div
-            key={item.location}
+            key={item.locationId}
             className="flex items-center justify-between py-2"
           >
             <span className="text-sm font-medium text-[#071123]">
