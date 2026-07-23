@@ -3,8 +3,13 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import RecordPaymentModal from "@/src/sections/paymentsSections/RecordPaymentModal";
+import type { CreatePaymentPayload } from "@/src/services/paymentsService";
 
-export default function PaymentsPageHeader() {
+export default function PaymentsPageHeader({
+  onCreate,
+}: {
+  onCreate: (payload: CreatePaymentPayload) => Promise<void>;
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -30,6 +35,7 @@ export default function PaymentsPageHeader() {
       <RecordPaymentModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onCreate={onCreate}
       />
     </div>
   );
