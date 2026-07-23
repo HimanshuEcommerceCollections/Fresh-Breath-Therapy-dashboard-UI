@@ -1,9 +1,9 @@
 // src/hooks/useClients.ts
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { leadsData, type Lead } from "@/src/data/leadsData/leadsData";
+import { useCallback, useEffect, useState } from "react";
 import { clientsService, type Client } from "@/src/services/clientsService";
+import { leadsService, type Lead } from "@/src/services/leadsService";
 import { showSuccessToast } from "@/src/lib/toast";
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -42,40 +42,48 @@ export const useClients = () => {
     return client;
   };
 
-  // Lead-search "Add Client" flow — unchanged mock behavior, see the
-  // MISMATCH note in clientsService.ts (no real convert-lead-to-client
-  // endpoint exists).
+  // Lead-search "Add Client" flow — real leads, real convert endpoint
+  // (POST /api/leads/{lead_id}/convert, section 7).
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [leadSearchQuery, setLeadSearchQuery] = useState("");
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [convertingLeadId, setConvertingLeadId] = useState<string | null>(null);
   const [convertedLeadIds, setConvertedLeadIds] = useState<Set<string>>(new Set());
 
-  const openLeadSearch = () => setIsAddingClient(true);
+  const fetchLeadsForSearch = useCallback(async (query: string) => {
+    try {
+      const data = await leadsService.fetchLeads({ search: query || undefined });
+      setLeads(data);
+    } catch {
+      // Error toast already surfaced by the apiClient interceptor.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAddingClient) return;
+    const timeout = setTimeout(() => fetchLeadsForSearch(leadSearchQuery), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+  }, [isAddingClient, leadSearchQuery, fetchLeadsForSearch]);
+
+  const openLeadSearch = () => {
+    setIsAddingClient(true);
+    fetchLeadsForSearch(leadSearchQuery);
+  };
   const cancelLeadSearch = () => {
     setIsAddingClient(false);
     setLeadSearchQuery("");
   };
 
-  const filteredLeads = useMemo(() => {
-    const query = leadSearchQuery.trim().toLowerCase();
-    if (!query) return leadsData;
-    return leadsData.filter((lead: Lead) =>
-      [lead.name, lead.email, lead.phone].some((field) =>
-        field.toLowerCase().includes(query)
-      )
-    );
-  }, [leadSearchQuery]);
-
   const handleAddLead = async (leadId: string) => {
     setConvertingLeadId(leadId);
     try {
-      const res = await clientsService.convertLeadToClient(leadId);
-      if (res.success) {
-        setConvertedLeadIds((prev) => new Set(prev).add(leadId));
-        // TODO: once a real convert-lead-to-client endpoint exists, refetch
-        // the real clients list here instead of just marking it locally.
-        console.log("Converted lead to client:", leadId);
-      }
+      const client = await clientsService.convertLeadToClient(leadId);
+      setConvertedLeadIds((prev) => new Set(prev).add(leadId));
+      showSuccessToast("Lead converted to client");
+      setClients((prev) => [client, ...prev]);
+      // Land back on the normal Clients table showing the new client — there
+      // is no per-client detail route in this app to navigate to instead.
+      cancelLeadSearch();
     } finally {
       setConvertingLeadId(null);
     }
@@ -94,7 +102,7 @@ export const useClients = () => {
     cancelLeadSearch,
     leadSearchQuery,
     setLeadSearchQuery,
-    filteredLeads,
+    filteredLeads: leads,
     convertingLeadId,
     convertedLeadIds,
     handleAddLead,

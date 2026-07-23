@@ -4,20 +4,14 @@
 // GET/POST here follow the same Title-Case-label-at-the-UI-boundary
 // convention as leadsService.ts.
 //
-// MISMATCH (flagged, not guessed — STOPPING here rather than inventing
-// behavior): the Clients page's entire "Add Client" flow (LeadSearchSection:
-// search existing leads, one-click "Add Lead →" to convert) has NO
-// backend counterpart. Section 8's only creation path is POST /api/clients
-// with {name, email, therapist_id, location_id, status?} — a direct client
-// create, not a lead-conversion endpoint. There is also no endpoint anywhere
-// in the docs that sets Lead.converted_client_id (Reports section 15
-// explicitly confirms this field "is not currently populated by any
-// automatic process"). convertLeadToClient() below is left as the original
-// mock stub — calling it does not create a real client or touch the real
-// leads list. The plain Clients table/search now use real data; the
-// lead-search-to-convert UI does not, until a real endpoint exists (or the
-// UI itself is redesigned as a direct "create client" form using the real
-// POST /api/clients).
+// UPDATE: the "Add Client" lead-search flow (LeadSearchSection: search
+// existing leads, one-click "Add Lead →" to convert) now has a real backend
+// endpoint — POST /api/leads/{lead_id}/convert (section 7). It takes no
+// request body and returns the full new ClientResponse, mapped below with
+// the same toClient() used by the rest of this service. The backend 400s if
+// the lead has no therapist_id assigned (Client.therapist_id is
+// non-nullable) — useClients.ts disables the "Add Lead" action up front for
+// leads without a therapist instead of relying on that error.
 
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
 import type { ClientStatus } from "@/src/data/clientsData/clientsData";
@@ -125,9 +119,12 @@ export const clientsService = {
     return toClient(res.data);
   },
 
-  // MISMATCH: no real "convert lead to client" endpoint exists — kept as the
-  // original mock stub. Does not create a real client or mutate real leads.
-  async convertLeadToClient(_leadId: string): Promise<{ success: boolean }> {
-    return new Promise((resolve) => setTimeout(() => resolve({ success: true }), 600));
+  async convertLeadToClient(leadId: string): Promise<Client> {
+    const res = await apiClient.post<ApiClient>(
+      `/api/leads/${leadId}/convert`,
+      undefined,
+      { idempotent: true, idempotencyKey: newIdempotencyKey() }
+    );
+    return toClient(res.data);
   },
 };

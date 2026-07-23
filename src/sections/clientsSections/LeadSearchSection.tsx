@@ -1,6 +1,6 @@
 "use client";
 
-import type { Lead } from "@/src/data/leadsData/leadsData";
+import type { Lead } from "@/src/services/leadsService";
 import LeadSearchInput from "@/src/components/clientsComponents/LeadSearchInput";
 import LeadStatusBadge from "@/src/components/clientsComponents/LeadStatusBadge";
 import { LEAD_SEARCH_TABLE_GRID } from "@/src/sections/clientsSections/leadSearchTableGrid";
@@ -86,6 +86,10 @@ export default function LeadSearchSection({
           {leads.map((lead) => {
             const isConverting = convertingLeadId === lead.id;
             const isConverted = convertedLeadIds.has(lead.id);
+            // Client.therapist_id is non-nullable — the backend 400s converting
+            // a lead with no therapist assigned. Disabled up front instead of
+            // relying on that error (section 7's own note on /convert).
+            const hasNoTherapist = !lead.therapistId;
             return (
               <div
                 key={lead.id}
@@ -114,9 +118,10 @@ export default function LeadSearchSection({
                 <div className="flex justify-end px-2 py-3">
                   <button
                     type="button"
-                    disabled={isConverting || isConverted}
+                    disabled={isConverting || isConverted || hasNoTherapist}
                     onClick={() => onAddLead(lead.id)}
-                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-[#E5E7EB] px-4 py-1.5 text-sm font-medium text-[#1E293B] transition-colors hover:bg-black/4 disabled:cursor-default disabled:opacity-60"
+                    title={hasNoTherapist ? "Assign a therapist first" : undefined}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-[#E5E7EB] px-4 py-1.5 text-sm font-medium text-[#1E293B] transition-colors hover:bg-black/4 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isConverted ? (
                       <>
@@ -125,6 +130,8 @@ export default function LeadSearchSection({
                       </>
                     ) : isConverting ? (
                       "Adding…"
+                    ) : hasNoTherapist ? (
+                      "Assign therapist first"
                     ) : (
                       <>Add Lead →</>
                     )}
