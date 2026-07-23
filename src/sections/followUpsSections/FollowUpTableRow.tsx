@@ -1,10 +1,16 @@
 "use client";
 
-import type { FollowUp } from "@/src/data/followUpsData/followUpsData";
+import type { FollowUpWithClient } from "@/src/services/followUpsService";
 import { FOLLOW_UPS_TABLE_GRID } from "@/src/sections/followUpsSections/followUpsTableGrid";
 import StatusPill from "@/src/sections/followUpsSections/StatusPill";
 
-export default function FollowUpTableRow({ followUp }: { followUp: FollowUp }) {
+export default function FollowUpTableRow({
+  followUp,
+  onMarkDone,
+}: {
+  followUp: FollowUpWithClient;
+  onMarkDone: (followUpId: string) => void;
+}) {
   return (
     <div
       className={`${FOLLOW_UPS_TABLE_GRID} min-h-[50px] border-b border-[#E0E5EB] px-4 last:border-b-0`}
@@ -28,9 +34,7 @@ export default function FollowUpTableRow({ followUp }: { followUp: FollowUp }) {
         {followUp.status !== "Completed" && (
           <button
             type="button"
-            onClick={() => {
-              // TODO: mark the follow-up done once followUpsData is stateful.
-            }}
+            onClick={() => onMarkDone(followUp.id)}
             className="h-8 cursor-pointer rounded-xl border border-[#E0E5EB] bg-[#F7FBFD] px-3 text-xs font-medium leading-4 text-[#071123] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-colors hover:bg-white"
           >
             Mark done

@@ -5,31 +5,52 @@ import { Calendar, X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
 import ReminderToggle from "@/src/sections/followUpsSections/ReminderToggle";
+import type { CreateFollowUpPayload } from "@/src/services/followUpsService";
 
 // This modal's palette (labels #434655, shells #F8F9FF/#EFF4FF, focus
 // #004AC6) is deliberately distinct from the Schedule Session modal's.
 const LABEL_CLASS =
   "text-xs font-semibold leading-4 tracking-[0.6px] text-[#434655]";
 
+// The date input is free-text DD/MM/YYYY (no date picker exists yet — a
+// pre-existing limitation, not introduced here). Converts to the ISO
+// "YYYY-MM-DD" the real API expects; returns null if unparseable so the
+// caller can avoid submitting a malformed date rather than 422'ing.
+function toIsoDate(ddmmyyyy: string): string | null {
+  const match = ddmmyyyy.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const [, day, month, year] = match;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
 export default function AddFollowUpModal({
   open,
   onClose,
+  onCreate,
 }: {
   open: boolean;
   onClose: () => void;
+  onCreate: (payload: CreateFollowUpPayload) => Promise<void>;
 }) {
   const [clientId, setClientId] = useState("");
   const [dueDate, setDueDate] = useState("25/06/2026");
   const [notes, setNotes] = useState("");
   const [reminder, setReminder] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!open) return null;
 
-  function handleCreate() {
-    // TODO: create a real follow-up record once followUpsData is stateful
-    // (same open thread as leadsData/sessionsData).
-    console.log("New follow-up:", { clientId, dueDate, notes, reminder });
-    onClose();
+  async function handleCreate() {
+    const isoDueDate = toIsoDate(dueDate);
+    if (!clientId || !isoDueDate) return;
+
+    setIsSubmitting(true);
+    try {
+      await onCreate({ clientId, dueDate: isoDueDate, notes: notes || undefined, reminder });
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -97,10 +118,11 @@ export default function AddFollowUpModal({
         <div className="flex justify-end px-6 pb-6">
           <button
             type="button"
+            disabled={!clientId || isSubmitting}
             onClick={handleCreate}
-            className="cursor-pointer rounded-lg bg-[#325A5E] px-8 py-2.5 text-xs font-semibold leading-4 tracking-[0.6px] text-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-opacity hover:opacity-90"
+            className="cursor-pointer rounded-lg bg-[#325A5E] px-8 py-2.5 text-xs font-semibold leading-4 tracking-[0.6px] text-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-50"
           >
-            Create
+            {isSubmitting ? "Creating…" : "Create"}
           </button>
         </div>
       </div>

@@ -1,20 +1,16 @@
-import { followUpsData } from "@/src/data/followUpsData/followUpsData";
+import type { FollowUpWithClient } from "@/src/services/followUpsService";
 import { FOLLOW_UPS_TABLE_GRID } from "@/src/sections/followUpsSections/followUpsTableGrid";
-import type { FollowUpFilter } from "@/src/sections/followUpsSections/FilterTabs";
 import FollowUpTableRow from "@/src/sections/followUpsSections/FollowUpTableRow";
 
 const COLUMNS = ["Client", "Due Date", "Notes", "Reminder", "Status", ""];
 
 export default function FollowUpsTable({
-  activeTab,
+  followUps,
+  onMarkDone,
 }: {
-  activeTab: FollowUpFilter;
+  followUps: FollowUpWithClient[];
+  onMarkDone: (followUpId: string) => void;
 }) {
-  const rows =
-    activeTab === "All"
-      ? followUpsData
-      : followUpsData.filter((f) => f.status === activeTab);
-
   return (
     <div className="rounded-[18px] border border-[#E0E5EB] bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
       <div className={`${FOLLOW_UPS_TABLE_GRID} border-b border-[#E0E5EB] px-4`}>
@@ -28,8 +24,8 @@ export default function FollowUpsTable({
         ))}
       </div>
       <div>
-        {rows.map((followUp) => (
-          <FollowUpTableRow key={followUp.id} followUp={followUp} />
+        {followUps.map((followUp) => (
+          <FollowUpTableRow key={followUp.id} followUp={followUp} onMarkDone={onMarkDone} />
         ))}
       </div>
     </div>
