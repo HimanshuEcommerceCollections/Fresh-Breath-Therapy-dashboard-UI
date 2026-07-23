@@ -4,6 +4,11 @@ import { useState } from "react";
 import Image from "next/image";
 import type { Therapist } from "@/src/services/therapistsService";
 
+// e.g. 600 → "$0.6k", 1100 → "$1.1k", 0 → "$0.0k"
+function formatRevenueK(dollars: number): string {
+  return `$${(dollars / 1000).toFixed(1)}k`;
+}
+
 export default function TherapistCard({
   therapist,
 }: {
@@ -53,13 +58,32 @@ export default function TherapistCard({
         )}
       </div>
 
+      <div className="flex justify-between">
+        {[
+          { value: therapist.activeClientCount, label: "Active" },
+          { value: therapist.ytdSessions, label: "YTD" },
+          { value: formatRevenueK(therapist.revenue), label: "Revenue" },
+        ].map((stat) => (
+          <div key={stat.label} className="flex flex-col items-center">
+            <span className="text-lg font-semibold tracking-[-0.45px] text-[#071123]">
+              {stat.value}
+            </span>
+            <span className="text-[10px] font-normal uppercase tracking-[0.12px] text-[#596475]">
+              {stat.label}
+            </span>
+          </div>
+        ))}
+      </div>
+
       {/*
-        MISMATCH (flagged, not guessed): GET /api/therapists doesn't return
-        activeClients/sessionsThisMonth/revenueThisMonth/utilizationPercent/
-        ytdSessions/ptoHours — those aren't documented as available from this
-        endpoint (they'd come from Dashboard/PTO/Reports aggregation instead).
-        Rather than fabricate zeros, this card no longer renders that section.
+        No utilization % — deliberately absent from GET /api/therapists since
+        there's no capacity/schedule field to compute a genuine percentage
+        against. PTO balance fills that slot instead of a fabricated number.
       */}
+      <div className="flex items-center justify-between text-xs font-normal text-[#596475]">
+        <span>PTO Balance</span>
+        <span className="font-medium text-[#071123]">{therapist.ptoBalance}h</span>
+      </div>
     </div>
   );
 }

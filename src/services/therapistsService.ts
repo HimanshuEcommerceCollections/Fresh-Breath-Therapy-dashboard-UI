@@ -3,13 +3,12 @@
 // Wired to the real backend per FBT_Backend_API_Reference.docx section 6 /
 // 6.1. None of these endpoints support Idempotency-Key per the docs.
 //
-// MISMATCH (flagged, not guessed): the real TherapistResponse only carries
-// { id, name, credential, email, avatar_url, is_active, location }. The old
-// mock also had activeClients/sessionsThisMonth/revenueThisMonth/
-// utilizationPercent/ytdSessions/ptoHours — those aren't returned by this
-// endpoint (they'd come from Dashboard/PTO/Reports aggregation, which isn't
-// documented as available per-therapist here). Not fabricated; see
-// TherapistCard.tsx for how the UI now handles their absence.
+// UPDATE: the real TherapistResponse now also carries active_client_count,
+// revenue, ytd_sessions, and pto_balance (computed server-side by reusing
+// the same logic that powers /api/pto and /api/reports/*). There is
+// deliberately NO utilization % field — no capacity/schedule field exists
+// on Therapist to compute a genuine percentage against, so TherapistCard.tsx
+// does not render one rather than fabricating a number.
 
 import { apiClient } from "@/src/lib/apiClient";
 
@@ -26,6 +25,10 @@ export interface Therapist {
   avatarUrl: string | null;
   isActive: boolean;
   location: TherapistLocation;
+  activeClientCount: number;
+  revenue: number;
+  ytdSessions: number;
+  ptoBalance: number;
 }
 
 // MISMATCH: the Add Therapist form also has "Specialization" and
@@ -49,6 +52,10 @@ interface ApiTherapist {
   avatar_url: string | null;
   is_active: boolean;
   location: TherapistLocation;
+  active_client_count: number;
+  revenue: number;
+  ytd_sessions: number;
+  pto_balance: number;
 }
 
 function toTherapist(raw: ApiTherapist): Therapist {
@@ -60,6 +67,10 @@ function toTherapist(raw: ApiTherapist): Therapist {
     avatarUrl: raw.avatar_url,
     isActive: raw.is_active,
     location: raw.location,
+    activeClientCount: raw.active_client_count,
+    revenue: raw.revenue,
+    ytdSessions: raw.ytd_sessions,
+    ptoBalance: raw.pto_balance,
   };
 }
 
