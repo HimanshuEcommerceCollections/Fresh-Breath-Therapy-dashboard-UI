@@ -1,13 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { therapistsData } from "@/src/data/therapistsData/therapistsData";
+import type { AddTherapistPayload, Therapist } from "@/src/services/therapistsService";
 import AddTherapistModal from "@/src/sections/therapistsSections/AddTherapistModal";
 
-export default function TherapistsPageHeader() {
+export default function TherapistsPageHeader({
+  therapists,
+  onCreate,
+}: {
+  therapists: Therapist[];
+  onCreate: (payload: AddTherapistPayload) => Promise<Therapist>;
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const count = therapistsData.length;
-  const clinicCount = new Set(therapistsData.map((t) => t.location)).size;
+  const count = therapists.length;
+  const clinicCount = new Set(therapists.map((t) => t.location.id)).size;
 
   return (
     <div className="flex flex-row items-end justify-between">
@@ -51,7 +57,12 @@ export default function TherapistsPageHeader() {
         Add Therapist
       </button>
 
-      {isModalOpen && <AddTherapistModal onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && (
+        <AddTherapistModal
+          onClose={() => setIsModalOpen(false)}
+          onCreate={onCreate}
+        />
+      )}
     </div>
   );
 }

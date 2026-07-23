@@ -1,14 +1,23 @@
 "use client";
 
+import { useRef } from "react";
+import Image from "next/image";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import Select from "@/src/components/sharedComponents/Select";
 import { useAddTherapistForm } from "@/src/hooks/useAddTherapistForm";
-import {
-  clinicOptions,
-  employmentStatusOptions,
-} from "@/src/data/therapistsData/therapistFormOptions";
+import { useLocations } from "@/src/hooks/useLocations";
+import { employmentStatusOptions } from "@/src/data/therapistsData/therapistFormOptions";
+import type { AddTherapistPayload, Therapist } from "@/src/services/therapistsService";
 
-export default function AddTherapistModal({ onClose }: { onClose: () => void }) {
+export default function AddTherapistModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void;
+  onCreate: (payload: AddTherapistPayload) => Promise<Therapist>;
+}) {
+  const { locations } = useLocations();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     fullName,
     setFullName,
@@ -18,14 +27,19 @@ export default function AddTherapistModal({ onClose }: { onClose: () => void }) 
     setCredential,
     specialization,
     setSpecialization,
-    clinic,
-    setClinic,
     employmentStatus,
     setEmploymentStatus,
+    locationId,
+    setLocationId,
+    avatarUrl,
+    isUploadingAvatar,
+    handleAvatarUpload,
     isValid,
     isSubmitting,
     handleSubmit,
-  } = useAddTherapistForm(onClose);
+  } = useAddTherapistForm(onCreate, onClose);
+
+  const selectedLocationName = locations.find((l) => l.id === locationId)?.name ?? "";
 
   return (
     <ModalOverlay onClose={onClose}>
@@ -53,20 +67,36 @@ export default function AddTherapistModal({ onClose }: { onClose: () => void }) 
 
         <div className="flex flex-col gap-6 px-6">
           <div className="flex items-center gap-4">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-[#E2E8F0] bg-[#F1F5F9] text-2xl text-[#94A3B8]">
-              ?
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#E2E8F0] bg-[#F1F5F9] text-2xl text-[#94A3B8]">
+              {avatarUrl ? (
+                <Image src={avatarUrl} alt="" width={80} height={80} className="h-full w-full object-cover" />
+              ) : (
+                "?"
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png,image/jpeg"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleAvatarUpload(file);
+                }}
+              />
               <button
                 type="button"
-                className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#CBD5E1] px-4 py-2 text-sm font-semibold text-[#334155] transition-colors hover:bg-black/4"
+                disabled={isUploadingAvatar}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#CBD5E1] px-4 py-2 text-sm font-semibold text-[#334155] transition-colors hover:bg-black/4 disabled:opacity-60"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
                   <path d="M2 11.333V12.667C2 13.02 2.14 13.359 2.39 13.61C2.64 13.86 2.98 14 3.33 14H12.67C13.02 14 13.36 13.86 13.61 13.61C13.86 13.359 14 13.02 14 12.667V11.333" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M11.333 5.333L8 2L4.667 5.333" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
                   <path d="M8 2V10" stroke="currentColor" strokeWidth="1.33" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
-                Upload photo
+                {isUploadingAvatar ? "Uploading…" : "Upload photo"}
               </button>
               <span className="text-xs text-[#94A3B8]">PNG or JPG · up to 5MB</span>
             </div>
@@ -105,6 +135,7 @@ export default function AddTherapistModal({ onClose }: { onClose: () => void }) 
                 className="rounded-lg border border-[#E2E8F0] py-3 pl-4 pr-4 text-base text-[#1E293B] outline-none placeholder:text-[#94A3B8] focus:ring-2 focus:ring-[#2563EB]/30"
               />
             </label>
+            {/* MISMATCH: no backend field for specialization — captured here but not sent on submit. */}
             <label className="flex flex-1 flex-col gap-1.5">
               <span className="text-sm font-bold text-[#1E293B]">Specialization</span>
               <input
@@ -121,10 +152,14 @@ export default function AddTherapistModal({ onClose }: { onClose: () => void }) 
             <Select
               label="Assigned Clinic"
               placeholder="Select clinic"
-              options={clinicOptions}
-              value={clinic}
-              onChange={setClinic}
+              options={locations.map((l) => l.name)}
+              value={selectedLocationName}
+              onChange={(name) => {
+                const match = locations.find((l) => l.name === name);
+                setLocationId(match?.id ?? "");
+              }}
             />
+            {/* MISMATCH: no backend field for employment status — captured here but not sent on submit. */}
             <Select
               label="Employment Status"
               placeholder="Select status"
