@@ -1,6 +1,5 @@
 "use client";
 
-import { clientsData } from "@/src/data/clientsData/clientsData";
 import type { Lead } from "@/src/data/leadsData/leadsData";
 import LeadSearchInput from "@/src/components/clientsComponents/LeadSearchInput";
 import LeadStatusBadge from "@/src/components/clientsComponents/LeadStatusBadge";
@@ -26,6 +25,7 @@ function CheckIcon() {
 }
 
 export default function LeadSearchSection({
+  clientCount,
   searchQuery,
   onSearchQueryChange,
   leads,
@@ -34,6 +34,7 @@ export default function LeadSearchSection({
   convertingLeadId,
   convertedLeadIds,
 }: {
+  clientCount: number;
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   leads: Lead[];
@@ -50,7 +51,7 @@ export default function LeadSearchSection({
             Clients
           </h1>
           <p className="text-sm font-normal leading-5 tracking-[-0.154px] text-[#596475]">
-            {clientsData.length} active clients across the practice
+            {clientCount} active clients across the practice
           </p>
         </div>
         <button

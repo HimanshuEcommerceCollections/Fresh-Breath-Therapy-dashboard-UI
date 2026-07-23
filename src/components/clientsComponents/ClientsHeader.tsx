@@ -1,8 +1,8 @@
-import { clientsData } from "@/src/data/clientsData/clientsData";
-
 export default function ClientsHeader({
+  count,
   onAddClient,
 }: {
+  count: number;
   onAddClient: () => void;
 }) {
   return (
@@ -12,7 +12,7 @@ export default function ClientsHeader({
           Clients
         </h1>
         <p className="text-sm font-normal leading-5 tracking-[-0.154px] text-[#596475]">
-          {clientsData.length} active clients across the practice
+          {count} active clients across the practice
         </p>
       </div>
 

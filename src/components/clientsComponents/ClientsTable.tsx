@@ -1,4 +1,4 @@
-import { clientsData } from "@/src/data/clientsData/clientsData";
+import type { Client } from "@/src/services/clientsService";
 import { CLIENTS_TABLE_GRID } from "@/src/sections/clientsSections/clientsTableGrid";
 import ClientTableRow from "@/src/sections/clientsSections/ClientTableRow";
 
@@ -12,7 +12,7 @@ const COLUMNS = [
   "", // action column has no header label
 ];
 
-export default function ClientsTable() {
+export default function ClientsTable({ clients }: { clients: Client[] }) {
   return (
     <div className="rounded-[18px] border border-[#E0E5EB] bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
       <div className={`${CLIENTS_TABLE_GRID} border-b border-[#E0E5EB] px-4`}>
@@ -26,7 +26,7 @@ export default function ClientsTable() {
         ))}
       </div>
       <div>
-        {clientsData.map((client) => (
+        {clients.map((client) => (
           <ClientTableRow key={client.id} client={client} />
         ))}
       </div>
