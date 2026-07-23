@@ -1,11 +1,11 @@
 "use client";
 
-import type { SessionRow } from "@/src/data/sessionsData/sessionsData";
+import type { Session } from "@/src/services/sessionsService";
 import { statusOptionsData } from "@/src/data/sessionsData/statusOptionsData";
 import { SESSIONS_TABLE_GRID } from "@/src/sections/sessionsSections/sessionsTableGrid";
 import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";
 
-export default function SessionTableRow({ session }: { session: SessionRow }) {
+export default function SessionTableRow({ session }: { session: Session }) {
   return (
     <div
       className={`${SESSIONS_TABLE_GRID} border-b border-[#E0E5EB] px-4 last:border-b-0`}

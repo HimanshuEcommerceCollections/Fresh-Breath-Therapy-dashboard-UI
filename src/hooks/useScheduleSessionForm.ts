@@ -3,20 +3,39 @@
 // src/hooks/useScheduleSessionForm.ts
 //
 // Form state, validation, and submit logic for the Schedule Session modal.
-// Mirrors the useAddTherapistForm pattern — keeps all side effects (service
-// call, success callback) here so the component stays presentation-only.
-//
-// "client" is stored as a client ID (from clientsData) so the rest of the app
-// can reference the client by their stable identifier. The display name is
-// derived at submit time.
 
 import { useMemo, useState } from "react";
-import { sessionsService } from "@/src/services/sessionsService";
-import { clientsData } from "@/src/data/clientsData/clientsData";
+import type { ScheduleSessionPayload } from "@/src/services/sessionsService";
 
-export const useScheduleSessionForm = (onSuccess: () => void) => {
+// Date/time inputs are free-text DD/MM/YYYY and h:mm AM/PM (no picker exists
+// yet — a pre-existing limitation, not introduced here). Converts to the
+// ISO "YYYY-MM-DD" / 24h "HH:MM" the real API expects.
+function toIsoDate(ddmmyyyy: string): string | null {
+  const match = ddmmyyyy.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const [, day, month, year] = match;
+  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+}
+
+function to24HourTime(hmmAmPm: string): string | null {
+  const match = hmmAmPm.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return null;
+  let [, hourStr, minute, meridiem] = match;
+  let hour = parseInt(hourStr, 10);
+  if (meridiem.toUpperCase() === "AM") {
+    if (hour === 12) hour = 0;
+  } else if (hour !== 12) {
+    hour += 12;
+  }
+  return `${String(hour).padStart(2, "0")}:${minute}`;
+}
+
+export const useScheduleSessionForm = (
+  onSchedule: (payload: ScheduleSessionPayload) => Promise<void>,
+  onSuccess: () => void
+) => {
   const [clientId, setClientId] = useState("");
-  const [therapist, setTherapist] = useState("");
+  const [therapistId, setTherapistId] = useState("");
   const [date, setDate] = useState("25/06/2026");
   const [time, setTime] = useState("10:00 AM");
   const [type, setType] = useState("");
@@ -25,26 +44,23 @@ export const useScheduleSessionForm = (onSuccess: () => void) => {
   const isValid = useMemo(
     () =>
       clientId.trim().length > 0 &&
-      therapist.trim().length > 0 &&
+      therapistId.trim().length > 0 &&
       date.trim().length > 0 &&
       time.trim().length > 0 &&
       type.trim().length > 0,
-    [clientId, therapist, date, time, type],
+    [clientId, therapistId, date, time, type],
   );
 
   const handleSubmit = async () => {
     if (!isValid || isSubmitting) return;
+    const isoDate = toIsoDate(date);
+    const time24 = to24HourTime(time);
+    if (!isoDate || !time24) return;
+
     setIsSubmitting(true);
     try {
-      const clientName =
-        clientsData.find((c) => c.id === clientId)?.name ?? clientId;
-      const payload = { client: clientName, therapist, date, time, type };
-      const res = await sessionsService.scheduleSession(payload);
-      if (res.success) {
-        // TODO: insert into sessionsData once it's stateful.
-        console.log("New session scheduled:", payload);
-        onSuccess();
-      }
+      await onSchedule({ clientId, therapistId, date: isoDate, time: time24, type });
+      onSuccess();
     } finally {
       setIsSubmitting(false);
     }
@@ -52,7 +68,7 @@ export const useScheduleSessionForm = (onSuccess: () => void) => {
 
   const reset = () => {
     setClientId("");
-    setTherapist("");
+    setTherapistId("");
     setDate("25/06/2026");
     setTime("10:00 AM");
     setType("");
@@ -61,8 +77,8 @@ export const useScheduleSessionForm = (onSuccess: () => void) => {
   return {
     clientId,
     setClientId,
-    therapist,
-    setTherapist,
+    therapistId,
+    setTherapistId,
     date,
     setDate,
     time,

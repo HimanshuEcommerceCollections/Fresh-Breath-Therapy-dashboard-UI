@@ -5,7 +5,7 @@ import ViewToggle, {
   type SessionsView,
 } from "@/src/sections/sessionsSections/ViewToggle";
 import TherapistFilterDropdown from "@/src/components/sessionsComponents/TherapistFilterDropdown";
-import type { Therapist } from "@/src/data/therapistsData/therapistsData";
+import type { Therapist } from "@/src/services/therapistsService";
 
 export default function SessionsPageHeader({
   activeView,

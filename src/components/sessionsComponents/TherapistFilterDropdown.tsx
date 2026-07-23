@@ -8,7 +8,7 @@
 
 import { useEffect, useRef } from "react";
 import { Check, ChevronDown, Users } from "lucide-react";
-import type { Therapist } from "@/src/data/therapistsData/therapistsData";
+import type { Therapist } from "@/src/services/therapistsService";
 
 // 6-colour avatar palette, cycled by therapist index in the roster.
 const AVATAR_PALETTE: { bg: string; text: string }[] = [
@@ -210,7 +210,8 @@ export default function TherapistFilterDropdown({
                       style={{ fontSize: "10.9px" }}
                       className="truncate text-[#62748E]"
                     >
-                      {therapist.credential} · {therapist.location}
+                      {therapist.credential ? `${therapist.credential} · ` : ""}
+                      {therapist.location.name}
                     </span>
                   </div>
 

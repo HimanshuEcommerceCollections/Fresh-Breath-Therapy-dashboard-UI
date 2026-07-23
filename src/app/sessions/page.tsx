@@ -52,7 +52,9 @@ export default function SessionsPage() {
         }}
       />
 
-      {sessions.activeView === "list" && <SessionsTable />}
+      {sessions.activeView === "list" && (
+        <SessionsTable sessions={sessions.sessions} />
+      )}
       {sessions.activeView === "day" && (
         <SessionsDayView selectedDate={sessions.selectedDate} />
       )}
@@ -64,6 +66,7 @@ export default function SessionsPage() {
       <ScheduleSessionModal
         open={sessions.isScheduleModalOpen}
         onClose={sessions.closeScheduleModal}
+        onSchedule={sessions.scheduleSession}
       />
     </div>
   );
