@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { dashboardHeaderContent } from "@/src/data/dashboardData/dashboardHeaderData";
 import AddLeadModal from "@/src/sections/leadsSections/AddLeadModal";
+import { useLeads } from "@/src/hooks/useLeads";
 
 export default function DashboardPageHeader() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { createLead } = useLeads();
 
   return (
     <div className="flex flex-row items-end justify-between">
@@ -35,7 +37,9 @@ export default function DashboardPageHeader() {
         </button>
       </div>
 
-      {isModalOpen && <AddLeadModal onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && (
+        <AddLeadModal onClose={() => setIsModalOpen(false)} onCreate={createLead} />
+      )}
     </div>
   );
 }

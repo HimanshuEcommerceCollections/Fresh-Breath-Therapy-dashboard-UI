@@ -1,6 +1,6 @@
 "use client";
 
-import type { Lead } from "@/src/data/leadsData/leadsData";
+import type { Lead } from "@/src/services/leadsService";
 import { LEADS_TABLE_GRID } from "@/src/sections/leadsSections/leadsTableGrid";
 import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
 import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";

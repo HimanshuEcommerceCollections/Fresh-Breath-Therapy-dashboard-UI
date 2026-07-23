@@ -1,6 +1,6 @@
 "use client";
 
-import type { Lead } from "@/src/data/leadsData/leadsData";
+import type { Lead } from "@/src/services/leadsService";
 
 export default function PipelineCard({ lead }: { lead: Lead }) {
   return (

@@ -1,13 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { leadsData } from "@/src/data/leadsData/leadsData";
+import type { Lead, CreateLeadPayload } from "@/src/services/leadsService";
 import AddLeadModal from "@/src/sections/leadsSections/AddLeadModal";
 
-export default function LeadsPageHeader() {
+export default function LeadsPageHeader({
+  leads,
+  onCreate,
+}: {
+  leads: Lead[];
+  onCreate: (payload: CreateLeadPayload) => Promise<Lead>;
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const total = leadsData.length;
-  const newCount = leadsData.filter((lead) => lead.status === "New Lead").length;
+  const total = leads.length;
+  const newCount = leads.filter((lead) => lead.status === "New Lead").length;
 
   return (
     <div className="flex flex-row items-end justify-between">
@@ -51,7 +57,9 @@ export default function LeadsPageHeader() {
         Add Lead
       </button>
 
-      {isModalOpen && <AddLeadModal onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && (
+        <AddLeadModal onClose={() => setIsModalOpen(false)} onCreate={onCreate} />
+      )}
     </div>
   );
 }

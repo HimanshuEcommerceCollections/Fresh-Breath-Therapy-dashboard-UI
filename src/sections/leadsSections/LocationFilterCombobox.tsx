@@ -3,17 +3,25 @@
 import { useState } from "react";
 import LocationSelectionMenu from "@/src/sections/leadsSections/LocationSelectionMenu";
 
-// Shared location filter combobox (Leads, Clients toolbars). The first option
-// is the default "All locations" entry. Selection is local state only —
-// actual filtering is wired up later.
+// Shared location filter combobox (Leads, Clients, Therapists, Reports
+// toolbars). The first option is the default "All locations" entry.
+// Optionally controlled via `value`/`onChange` (used by Leads to drive a
+// real location_id filter) — falls back to internal state when omitted, so
+// toolbars that haven't been wired to real filtering yet are unaffected.
 export default function LocationFilterCombobox({
   options,
   widthClass,
+  value,
+  onChange,
 }: {
   options: string[];
   widthClass: string;
+  value?: string;
+  onChange?: (value: string) => void;
 }) {
-  const [selected, setSelected] = useState(options[0]);
+  const [internalSelected, setInternalSelected] = useState(options[0]);
+  const selected = value ?? internalSelected;
+  const setSelected = onChange ?? setInternalSelected;
   const [isOpen, setIsOpen] = useState(false);
 
   return (
