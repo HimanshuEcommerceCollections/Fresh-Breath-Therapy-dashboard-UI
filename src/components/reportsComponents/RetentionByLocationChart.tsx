@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -11,14 +12,25 @@ import {
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
 import CsvButton from "@/src/sections/reportsSections/CsvButton";
-import { retentionByLocationData } from "@/src/data/reportsData/retentionByLocationData";
+import {
+  reportsService,
+  type ReportFilters,
+  type RetentionEntry,
+} from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 11 };
 
-export default function RetentionByLocationChart() {
-  // Chart animation only starts once the card scrolls into view.
+export default function RetentionByLocationChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
+  const [data, setData] = useState<RetentionEntry[]>([]);
+
+  useEffect(() => {
+    reportsService.fetchRetention(filters).then(setData).catch(() => {});
+  }, [filters]);
+
+  const maxMonths = Math.max(1, ...data.map((d) => d.months));
+  const yMax = Math.ceil(maxMonths / 6) * 6 || 6;
 
   return (
     <div className="h-[386px]">
@@ -27,7 +39,7 @@ export default function RetentionByLocationChart() {
           {isInView && (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={retentionByLocationData}
+                data={data}
                 margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
               >
                 <CartesianGrid
@@ -43,16 +55,12 @@ export default function RetentionByLocationChart() {
                   interval={0}
                 />
                 <YAxis
-                  domain={[0, 24]}
-                  ticks={[0, 6, 12, 18, 24]}
+                  domain={[0, yMax]}
                   axisLine={false}
                   tickLine={false}
                   tick={AXIS_TICK_STYLE}
                 />
                 <Tooltip />
-                {/* Zero-month locations (Raleigh, Fayetteville, Wilmington)
-                    intentionally render no bar, per the reference. Same
-                    per-bar stagger fallback note as the other charts. */}
                 <Bar
                   dataKey="months"
                   fill="#3FC168"
