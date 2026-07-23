@@ -73,8 +73,11 @@ export const useSignupForm = () => {
         return;
       }
 
+      const expiresAtParam = res.expiresAt
+        ? `&expiresAt=${encodeURIComponent(res.expiresAt)}`
+        : "";
       router.push(
-        `/verify-otp?email=${encodeURIComponent(values.email)}&flow=signup`
+        `/verify-otp?email=${encodeURIComponent(values.email)}&flow=signup${expiresAtParam}`
       );
     } catch (err) {
       setServerError("Something went wrong. Please try again.");

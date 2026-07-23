@@ -1,5 +1,4 @@
 import { currentUser } from "@/src/data/layoutData/userData";
-import { notificationStatus } from "@/src/data/layoutData/notificationData";
 import HeaderSidebarToggle from "@/src/sections/layoutSections/HeaderSidebarToggle";
 import HeaderSearchBar from "@/src/sections/layoutSections/HeaderSearchBar";
 import HeaderNotificationButton from "@/src/sections/layoutSections/HeaderNotificationButton";
@@ -11,7 +10,7 @@ export default function Header() {
       <HeaderSidebarToggle />
       <HeaderSearchBar />
       <div className="flex-1" />
-      <HeaderNotificationButton notification={notificationStatus} />
+      <HeaderNotificationButton />
       <HeaderProfileAvatar user={currentUser} />
     </header>
   );

@@ -1,86 +1,71 @@
 // src/hooks/useNotifications.ts
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   NotificationItem,
   NotificationTab,
-  notificationsMock,
+  tabToQueryParam,
 } from "@/src/data/notificationsData/notificationsData";
 import { notificationsService } from "@/src/services/notificationsService";
+import { useNotificationsSummary } from "@/src/hooks/useNotificationsSummary";
 
 export const useNotifications = () => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(
-    notificationsMock
-  );
+  const { summary, refetchSummary } = useNotificationsSummary();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
   const [isLoading, setIsLoading] = useState(false);
   const [isMarking, setIsMarking] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const load = async () => {
-      setIsLoading(true);
-      try {
-        const data = await notificationsService.fetchNotifications();
-        if (isMounted) setNotifications(data);
-      } finally {
-        if (isMounted) setIsLoading(false);
-      }
-    };
-
-    load();
-    return () => {
-      isMounted = false;
-    };
+  const loadNotifications = useCallback(async (tab: NotificationTab) => {
+    setIsLoading(true);
+    try {
+      const data = await notificationsService.fetchNotifications(tabToQueryParam[tab]);
+      setNotifications(data);
+    } catch {
+      // Error toast already surfaced by the apiClient interceptor.
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  const counts = useMemo(() => {
-    const unread = notifications.filter((n) => !n.isRead).length;
-    const followUpReminders = notifications.filter(
-      (n) => n.badgeType === "REMINDER" || n.badgeType === "SCHEDULED"
-    ).length;
-    const alerts = notifications.filter((n) => n.badgeType === "OVERDUE").length;
-    return { unread, followUpReminders, alerts };
-  }, [notifications]);
-
-  const filteredNotifications = useMemo(() => {
-    switch (activeTab) {
-      case "Unread":
-        return notifications.filter((n) => !n.isRead);
-      case "Follow-Up Reminders":
-        return notifications.filter(
-          (n) => n.badgeType === "REMINDER" || n.badgeType === "SCHEDULED"
-        );
-      case "Alerts":
-        return notifications.filter((n) => n.badgeType === "OVERDUE");
-      case "Read":
-        return notifications.filter((n) => n.isRead);
-      default:
-        return notifications;
-    }
-  }, [notifications, activeTab]);
+  useEffect(() => {
+    loadNotifications(activeTab);
+  }, [activeTab, loadNotifications]);
 
   const handleMarkAllAsRead = async () => {
     try {
       setIsMarking(true);
-      const res = await notificationsService.markAllAsRead();
-      if (res.success) {
-        setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-      }
+      await notificationsService.markAllAsRead();
+      await Promise.all([loadNotifications(activeTab), refetchSummary()]);
+    } catch {
+      // Error toast already surfaced by the apiClient interceptor.
     } finally {
       setIsMarking(false);
     }
   };
 
+  const handleMarkAsRead = async (notificationId: string) => {
+    try {
+      await notificationsService.markAsRead(notificationId);
+      await Promise.all([loadNotifications(activeTab), refetchSummary()]);
+    } catch {
+      // Error toast already surfaced by the apiClient interceptor.
+    }
+  };
+
   return {
-    notifications: filteredNotifications,
-    counts,
+    notifications,
+    counts: {
+      unread: summary.unread,
+      followUpReminders: summary.follow_up_reminders,
+      alerts: summary.alerts,
+    },
     activeTab,
     setActiveTab,
     isLoading,
     isMarking,
     handleMarkAllAsRead,
+    handleMarkAsRead,
   };
 };

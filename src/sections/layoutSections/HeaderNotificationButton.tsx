@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import type { Notification } from "@/src/data/layoutData/notificationData";
+import { useNotificationsSummary } from "@/src/hooks/useNotificationsSummary";
 
-export default function HeaderNotificationButton({
-  notification,
-}: {
-  notification: Notification;
-}) {
+export default function HeaderNotificationButton() {
+  const { summary } = useNotificationsSummary();
+  const hasUnread = summary.unread > 0;
+
   return (
     <Link
       href="/notifications"
@@ -36,11 +35,13 @@ export default function HeaderNotificationButton({
           strokeLinejoin="round"
         />
       </svg>
-      {notification.hasUnread && (
+      {hasUnread && (
         <span
           aria-hidden
-          className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#F22A36]"
-        />
+          className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#F22A36] px-1 text-[9px] font-bold leading-none text-white"
+        >
+          {summary.unread > 99 ? "99+" : summary.unread}
+        </span>
       )}
     </Link>
   );

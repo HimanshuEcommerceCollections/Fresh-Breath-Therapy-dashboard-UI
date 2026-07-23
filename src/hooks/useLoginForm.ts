@@ -64,8 +64,11 @@ export const useLoginForm = () => {
         return;
       }
 
+      const expiresAtParam = res.expiresAt
+        ? `&expiresAt=${encodeURIComponent(res.expiresAt)}`
+        : "";
       router.push(
-        `/verify-otp?email=${encodeURIComponent(values.email)}&flow=login`
+        `/verify-otp?email=${encodeURIComponent(values.email)}&flow=login${expiresAtParam}`
       );
     } catch (err) {
       setServerError("Something went wrong. Please try again.");

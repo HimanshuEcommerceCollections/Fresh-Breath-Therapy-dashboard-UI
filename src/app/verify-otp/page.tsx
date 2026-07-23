@@ -13,6 +13,7 @@ const VerifyOtpContent = () => {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "you@clinic.com";
   const flow: OtpFlow = searchParams.get("flow") === "login" ? "login" : "signup";
+  const expiresAt = searchParams.get("expiresAt") ?? undefined;
 
   // Signup users go back to /signup if they need to change the email,
   // login users go back to /login instead.
@@ -23,6 +24,7 @@ const VerifyOtpContent = () => {
       <OtpVerificationSection
         email={email}
         flow={flow}
+        expiresAt={expiresAt}
         changeEmailHref={changeEmailHref}
       />
       <AuthFooterLinks links={otpContent.footerLinks} />
