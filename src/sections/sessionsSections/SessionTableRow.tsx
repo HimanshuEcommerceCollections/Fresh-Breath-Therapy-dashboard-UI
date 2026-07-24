@@ -4,8 +4,12 @@ import type { Session } from "@/src/services/sessionsService";
 import { statusOptionsData } from "@/src/data/sessionsData/statusOptionsData";
 import { SESSIONS_TABLE_GRID } from "@/src/sections/sessionsSections/sessionsTableGrid";
 import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { canSetTerminalSessionStatus } from "@/src/lib/permissions";
 
 export default function SessionTableRow({ session }: { session: Session }) {
+  const { role } = useCurrentUser();
+
   return (
     <div
       className={`${SESSIONS_TABLE_GRID} border-b border-[#E0E5EB] px-4 last:border-b-0`}
@@ -26,7 +30,11 @@ export default function SessionTableRow({ session }: { session: Session }) {
         {session.type}
       </div>
       <div className="px-2 py-2">
-        <StatusCombobox status={session.status} options={statusOptionsData} />
+        <StatusCombobox
+          status={session.status}
+          options={statusOptionsData}
+          readOnly={!canSetTerminalSessionStatus(role)}
+        />
       </div>
     </div>
   );

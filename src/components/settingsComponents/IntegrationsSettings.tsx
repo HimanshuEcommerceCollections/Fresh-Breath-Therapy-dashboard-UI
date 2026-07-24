@@ -2,10 +2,13 @@
 
 import { useIntegrationsSettings } from "@/src/hooks/useIntegrationsSettings";
 import IntegrationCard from "@/src/sections/settingsSections/IntegrationCard";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { isAdmin } from "@/src/lib/permissions";
 
 // Wider than the other settings cards — 2-column grid per the reference
 // (the one layout outlier among the settings tabs).
 export default function IntegrationsSettings() {
+  const { role } = useCurrentUser();
   const { integrations, connect } = useIntegrationsSettings();
 
   return (
@@ -19,6 +22,7 @@ export default function IntegrationsSettings() {
             key={integration.id}
             integration={integration}
             onToggleConnection={() => connect(integration.id)}
+            disabled={!isAdmin(role)}
           />
         ))}
       </div>

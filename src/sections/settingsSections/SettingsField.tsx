@@ -7,11 +7,13 @@ export default function SettingsField({
   value,
   onChange,
   type = "text",
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  disabled?: boolean;
 }) {
   return (
     <label className="flex flex-col gap-2">
@@ -21,8 +23,9 @@ export default function SettingsField({
       <input
         type={type}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className="h-9 rounded-xl border border-[#E0E5EB] bg-white px-3 text-sm font-normal tracking-[-0.154px] text-[#071123] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] outline-none focus:ring-2 focus:ring-[#376EF4]/30"
+        className="h-9 rounded-xl border border-[#E0E5EB] bg-white px-3 text-sm font-normal tracking-[-0.154px] text-[#071123] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] outline-none focus:ring-2 focus:ring-[#376EF4]/30 disabled:cursor-not-allowed disabled:bg-[#F8FAFC] disabled:opacity-70"
       />
     </label>
   );

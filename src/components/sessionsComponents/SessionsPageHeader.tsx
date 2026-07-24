@@ -6,6 +6,8 @@ import ViewToggle, {
 } from "@/src/sections/sessionsSections/ViewToggle";
 import TherapistFilterDropdown from "@/src/components/sessionsComponents/TherapistFilterDropdown";
 import type { Therapist } from "@/src/services/therapistsService";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { canWrite, isTherapist } from "@/src/lib/permissions";
 
 export default function SessionsPageHeader({
   activeView,
@@ -46,6 +48,8 @@ export default function SessionsPageHeader({
   onApply: () => void;
   filteredTherapists: Therapist[];
 }) {
+  const { role } = useCurrentUser();
+
   return (
     <div className="flex flex-row items-end justify-between">
       <div className="flex flex-col gap-1">
@@ -58,34 +62,39 @@ export default function SessionsPageHeader({
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Therapist filter pill — shared across all four views */}
-        <TherapistFilterDropdown
-          therapistFilterLabel={therapistFilterLabel}
-          isAllTherapists={isAllTherapists}
-          selectedTherapistIds={selectedTherapistIds}
-          isDropdownOpen={isDropdownOpen}
-          onOpen={onDropdownOpen}
-          onClose={onDropdownClose}
-          therapistSearch={therapistSearch}
-          onSearchChange={onSearchChange}
-          pendingIds={pendingIds}
-          onTogglePending={onTogglePending}
-          onSelectAll={onSelectAll}
-          onReset={onReset}
-          onApply={onApply}
-          filteredTherapists={filteredTherapists}
-        />
+        {/* Therapist filter pill — meaningless for Therapist role, whose
+            sessions are already scoped to just themselves server-side. */}
+        {!isTherapist(role) && (
+          <TherapistFilterDropdown
+            therapistFilterLabel={therapistFilterLabel}
+            isAllTherapists={isAllTherapists}
+            selectedTherapistIds={selectedTherapistIds}
+            isDropdownOpen={isDropdownOpen}
+            onOpen={onDropdownOpen}
+            onClose={onDropdownClose}
+            therapistSearch={therapistSearch}
+            onSearchChange={onSearchChange}
+            pendingIds={pendingIds}
+            onTogglePending={onTogglePending}
+            onSelectAll={onSelectAll}
+            onReset={onReset}
+            onApply={onApply}
+            filteredTherapists={filteredTherapists}
+          />
+        )}
 
         <ViewToggle activeView={activeView} onChange={onViewChange} />
 
-        <button
-          type="button"
-          onClick={onScheduleClick}
-          className="flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-[#376EF4] px-3 text-sm font-semibold leading-5 text-[#FCFCFC] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-opacity hover:opacity-90"
-        >
-          <Plus size={16} stroke="#FCFCFC" />
-          Schedule
-        </button>
+        {canWrite(role) && (
+          <button
+            type="button"
+            onClick={onScheduleClick}
+            className="flex h-9 cursor-pointer items-center gap-2 rounded-xl bg-[#376EF4] px-3 text-sm font-semibold leading-5 text-[#FCFCFC] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-opacity hover:opacity-90"
+          >
+            <Plus size={16} stroke="#FCFCFC" />
+            Schedule
+          </button>
+        )}
       </div>
     </div>
   );

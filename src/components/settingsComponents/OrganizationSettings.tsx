@@ -5,8 +5,12 @@ import { useOrganizationSettings } from "@/src/hooks/useOrganizationSettings";
 import { useLocations } from "@/src/hooks/useLocations";
 import SettingsField from "@/src/sections/settingsSections/SettingsField";
 import LocationChip from "@/src/sections/settingsSections/LocationChip";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { isAdmin } from "@/src/lib/permissions";
 
 export default function OrganizationSettings() {
+  const { role } = useCurrentUser();
+  const canEdit = isAdmin(role);
   const { organization, isSaving, save } = useOrganizationSettings();
   const { locations } = useLocations();
 
@@ -30,24 +34,27 @@ export default function OrganizationSettings() {
         Organization
       </h3>
 
-      <SettingsField label="Organization Name" value={name} onChange={setName} />
+      <SettingsField label="Organization Name" value={name} onChange={setName} disabled={!canEdit} />
       <SettingsField
         label="Primary Email"
         value={primaryEmail}
         onChange={setPrimaryEmail}
         type="email"
+        disabled={!canEdit}
       />
       {/* Plain text input for now — a real timezone select is a future enhancement. */}
-      <SettingsField label="Timezone" value={timezone} onChange={setTimezone} />
+      <SettingsField label="Timezone" value={timezone} onChange={setTimezone} disabled={!canEdit} />
 
-      <button
-        type="button"
-        disabled={!name || !primaryEmail || isSaving}
-        onClick={() => save({ name, primaryEmail, timezone })}
-        className="self-start rounded-xl bg-[#376EF4] px-4 py-2 text-sm font-medium text-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-opacity hover:opacity-90 disabled:opacity-60"
-      >
-        {isSaving ? "Saving…" : "Save"}
-      </button>
+      {canEdit && (
+        <button
+          type="button"
+          disabled={!name || !primaryEmail || isSaving}
+          onClick={() => save({ name, primaryEmail, timezone })}
+          className="self-start rounded-xl bg-[#376EF4] px-4 py-2 text-sm font-medium text-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-opacity hover:opacity-90 disabled:opacity-60"
+        >
+          {isSaving ? "Saving…" : "Save"}
+        </button>
+      )}
 
       <h3 className="text-base font-semibold tracking-[-0.32px] text-[#071123]">
         Locations ({locations.length})

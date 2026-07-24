@@ -14,11 +14,13 @@ import TherapistUtilizationChart from "@/src/components/reportsComponents/Therap
 import RevenueByTherapistChart from "@/src/components/reportsComponents/RevenueByTherapistChart";
 import RetentionByLocationChart from "@/src/components/reportsComponents/RetentionByLocationChart";
 import { useLocations } from "@/src/hooks/useLocations";
+import { useRequireRole } from "@/src/hooks/useRequireRole";
 import type { ReportRange } from "@/src/services/reportsService";
 
 const ALL_LOCATIONS = "All locations";
 
 export default function ReportsPage() {
+  const { isChecking } = useRequireRole(["Admin", "Coordinator"], "/leads");
   const [activeTab, setActiveTab] = useState<ReportTabName>("Sales");
   const [dateRange, setDateRange] = useState<ReportRange>("last_6_months");
   const [locationName, setLocationName] = useState(ALL_LOCATIONS);
@@ -39,6 +41,8 @@ export default function ReportsPage() {
     Revenue: <RevenueByTherapistChart filters={filters} />,
     Retention: <RetentionByLocationChart filters={filters} />,
   };
+
+  if (isChecking) return null;
 
   return (
     <div className="flex flex-col gap-4 px-8 pb-12 pt-24">

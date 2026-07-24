@@ -13,6 +13,7 @@ import NotificationsSettings from "@/src/components/settingsComponents/Notificat
 import SaaSSettings from "@/src/components/settingsComponents/SaaSSettings";
 import SecuritySettings from "@/src/components/settingsComponents/SecuritySettings";
 import IntegrationsSettings from "@/src/components/settingsComponents/IntegrationsSettings";
+import { useRequireRole } from "@/src/hooks/useRequireRole";
 
 const TAB_CONTENT: Record<SettingsTabName, ReactNode> = {
   Organization: <OrganizationSettings />,
@@ -26,7 +27,10 @@ const TAB_CONTENT: Record<SettingsTabName, ReactNode> = {
 };
 
 export default function SettingsPage() {
+  const { isChecking } = useRequireRole(["Admin", "Coordinator"], "/leads");
   const [activeTab, setActiveTab] = useState<SettingsTabName>("Organization");
+
+  if (isChecking) return null;
 
   return (
     <div className="flex flex-col gap-4 px-8 pb-12 pt-24">

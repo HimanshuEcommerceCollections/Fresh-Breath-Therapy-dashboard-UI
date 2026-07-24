@@ -2,8 +2,11 @@
 
 import { useFeatureFlags } from "@/src/hooks/useFeatureFlags";
 import ToggleRow from "@/src/sections/settingsSections/ToggleRow";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { isAdmin } from "@/src/lib/permissions";
 
 export default function SaaSSettings() {
+  const { role } = useCurrentUser();
   const { flags, toggle } = useFeatureFlags("saas");
 
   return (
@@ -21,6 +24,7 @@ export default function SaaSSettings() {
             label={flag.label}
             enabled={flag.enabled}
             onToggle={() => toggle(flag.id, !flag.enabled)}
+            disabled={!isAdmin(role)}
           />
         ))}
       </div>

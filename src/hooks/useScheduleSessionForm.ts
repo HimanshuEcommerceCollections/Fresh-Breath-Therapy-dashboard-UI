@@ -20,7 +20,7 @@ function toIsoDate(ddmmyyyy: string): string | null {
 function to24HourTime(hmmAmPm: string): string | null {
   const match = hmmAmPm.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (!match) return null;
-  let [, hourStr, minute, meridiem] = match;
+  const [, hourStr, minute, meridiem] = match;
   let hour = parseInt(hourStr, 10);
   if (meridiem.toUpperCase() === "AM") {
     if (hour === 12) hour = 0;

@@ -7,6 +7,10 @@ declare module "axios" {
   export interface AxiosRequestConfig {
     idempotent?: boolean;
     idempotencyKey?: string;
+    /** Suppresses the global error toast — for silent background checks
+     * (e.g. the initial GET /api/auth/me on app load) where a 401 is an
+     * expected "not logged in yet" outcome, not a real failure to surface. */
+    skipErrorToast?: boolean;
   }
 }
 
@@ -52,7 +56,9 @@ function errorDetailToMessage(error: AxiosError<ErrorResponseBody>): string {
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ErrorResponseBody>) => {
-    showErrorToast(errorDetailToMessage(error));
+    if (!error.config?.skipErrorToast) {
+      showErrorToast(errorDetailToMessage(error));
+    }
     return Promise.reject(error);
   }
 );

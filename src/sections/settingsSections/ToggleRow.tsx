@@ -7,10 +7,12 @@ export default function ToggleRow({
   label,
   enabled,
   onToggle,
+  disabled = false,
 }: {
   label: string;
   enabled: boolean;
   onToggle: () => void;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between py-3.5">
@@ -19,10 +21,11 @@ export default function ToggleRow({
         type="button"
         role="switch"
         aria-checked={enabled}
+        disabled={disabled}
         onClick={onToggle}
-        className={`relative h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ${
-          enabled ? "bg-[#376EF4]" : "bg-[#E0E5EB]"
-        }`}
+        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200 ${
+          disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer"
+        } ${enabled ? "bg-[#376EF4]" : "bg-[#E0E5EB]"}`}
       >
         <span
           className={`absolute top-0.5 h-4 w-4 rounded-full bg-[#F7FBFD] shadow-[0px_10px_15px_-3px_rgba(0,0,0,0.1),0px_4px_6px_-4px_rgba(0,0,0,0.1)] transition-[left] duration-200 ${

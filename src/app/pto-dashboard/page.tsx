@@ -5,9 +5,13 @@ import PTOStatsRow from "@/src/components/ptoDashboardComponents/PTOStatsRow";
 import PTOChartsRow from "@/src/components/ptoDashboardComponents/PTOChartsRow";
 import TherapistLeaderboardTable from "@/src/components/ptoDashboardComponents/TherapistLeaderboardTable";
 import { usePTODashboard } from "@/src/hooks/usePTODashboard";
+import { useRequireRole } from "@/src/hooks/useRequireRole";
 
 export default function PTODashboardPage() {
+  const { isChecking } = useRequireRole(["Admin", "Coordinator"], "/leads");
   const { stats, byLocation, leaderboard } = usePTODashboard();
+
+  if (isChecking) return null;
 
   return (
     <div className="flex flex-col gap-4 px-8 pb-12 pt-24">

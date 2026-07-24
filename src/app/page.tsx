@@ -8,9 +8,13 @@ import ChartsRow from "@/src/components/dashboardComponents/ChartsRow";
 import FunnelSessionsRow from "@/src/components/dashboardComponents/FunnelSessionsRow";
 import FollowUpUtilizationRow from "@/src/components/dashboardComponents/FollowUpUtilizationRow";
 import { useDashboard } from "@/src/hooks/useDashboard";
+import { useRequireRole } from "@/src/hooks/useRequireRole";
 
 export default function Home() {
+  const { isChecking } = useRequireRole(["Admin", "Coordinator"], "/leads");
   const dashboard = useDashboard();
+
+  if (isChecking) return null;
 
   return (
     <div className="flex flex-col gap-8 px-8 pb-12 pt-24">

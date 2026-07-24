@@ -19,6 +19,26 @@ export interface AuthResponse {
   expiresAt?: string;
 }
 
+export type RoleName = "Admin" | "Coordinator" | "Therapist";
+
+export interface CurrentUser {
+  id: string;
+  name: string;
+  email: string;
+  avatarUrl: string | null;
+  isActive: boolean;
+  role: RoleName | null;
+}
+
+interface ApiCurrentUser {
+  id: string;
+  name: string;
+  email: string;
+  avatar_url: string | null;
+  is_active: boolean;
+  role: { id: string; name: RoleName; permissions: Record<string, unknown> } | null;
+}
+
 export interface VerifyOtpPayload {
   email: string;
   code: string;
@@ -102,9 +122,18 @@ export const otpService = {
 };
 
 export const sessionAuthService = {
-  async me() {
-    const res = await apiClient.get("/api/auth/me");
-    return res.data;
+  async me(): Promise<CurrentUser> {
+    const res = await apiClient.get<ApiCurrentUser>("/api/auth/me", {
+      skipErrorToast: true,
+    });
+    return {
+      id: res.data.id,
+      name: res.data.name,
+      email: res.data.email,
+      avatarUrl: res.data.avatar_url,
+      isActive: res.data.is_active,
+      role: res.data.role?.name ?? null,
+    };
   },
 
   async logout(): Promise<AuthResponse> {

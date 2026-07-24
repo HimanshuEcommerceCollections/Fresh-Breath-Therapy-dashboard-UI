@@ -3,6 +3,8 @@
 import type { FollowUpWithClient } from "@/src/services/followUpsService";
 import { FOLLOW_UPS_TABLE_GRID } from "@/src/sections/followUpsSections/followUpsTableGrid";
 import StatusPill from "@/src/sections/followUpsSections/StatusPill";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { canWrite } from "@/src/lib/permissions";
 
 export default function FollowUpTableRow({
   followUp,
@@ -11,6 +13,8 @@ export default function FollowUpTableRow({
   followUp: FollowUpWithClient;
   onMarkDone: (followUpId: string) => void;
 }) {
+  const { role } = useCurrentUser();
+
   return (
     <div
       className={`${FOLLOW_UPS_TABLE_GRID} min-h-[50px] border-b border-[#E0E5EB] px-4 last:border-b-0`}
@@ -31,7 +35,7 @@ export default function FollowUpTableRow({
         <StatusPill status={followUp.status} />
       </div>
       <div className="flex justify-end px-2 py-2">
-        {followUp.status !== "Completed" && (
+        {followUp.status !== "Completed" && canWrite(role) && (
           <button
             type="button"
             onClick={() => onMarkDone(followUp.id)}

@@ -5,16 +5,18 @@ import { useState } from "react";
 import { dashboardHeaderContent } from "@/src/data/dashboardData/dashboardHeaderData";
 import AddLeadModal from "@/src/sections/leadsSections/AddLeadModal";
 import { useLeads } from "@/src/hooks/useLeads";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
 export default function DashboardPageHeader() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { createLead } = useLeads();
+  const { user } = useCurrentUser();
 
   return (
     <div className="flex flex-row items-end justify-between">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl font-semibold tracking-[-0.75px] text-[#071123]">
-          Welcome back, {dashboardHeaderContent.greetingName}
+          Welcome back{user ? `, ${user.name}` : ""}
         </h1>
         <p className="text-sm font-normal tracking-[-0.154px] text-[#596475]">
           {dashboardHeaderContent.subtitle}

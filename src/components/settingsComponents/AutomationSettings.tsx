@@ -2,8 +2,11 @@
 
 import { useFeatureFlags } from "@/src/hooks/useFeatureFlags";
 import ToggleRow from "@/src/sections/settingsSections/ToggleRow";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { isAdmin } from "@/src/lib/permissions";
 
 export default function AutomationSettings() {
+  const { role } = useCurrentUser();
   const { flags, toggle } = useFeatureFlags("automation");
 
   return (
@@ -18,6 +21,7 @@ export default function AutomationSettings() {
             label={flag.label}
             enabled={flag.enabled}
             onToggle={() => toggle(flag.id, !flag.enabled)}
+            disabled={!isAdmin(role)}
           />
         ))}
       </div>
