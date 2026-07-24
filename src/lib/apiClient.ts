@@ -1,13 +1,7 @@
-// src/lib/apiClient.ts
-//
-// Per FBT_Backend_API_Reference.docx section 2.1. Auth is cookie-based
-// (httponly access_token set by the backend) — every request must go through
-// this client so withCredentials is never accidentally omitted.
-
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { showErrorToast } from "@/src/lib/toast";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://fresh-breath-therapy-dashboard-server.onrender.com";
 
 declare module "axios" {
   export interface AxiosRequestConfig {
