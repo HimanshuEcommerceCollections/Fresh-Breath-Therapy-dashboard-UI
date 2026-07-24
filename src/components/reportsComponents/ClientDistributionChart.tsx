@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -11,14 +12,25 @@ import {
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
 import CsvButton from "@/src/sections/reportsSections/CsvButton";
-import { clientDistributionData } from "@/src/data/reportsData/clientDistributionData";
+import {
+  reportsService,
+  type ReportFilters,
+  type ClientDistributionSlice,
+} from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 11 };
 
-export default function ClientDistributionChart() {
-  // Chart animation only starts once the card scrolls into view.
+export default function ClientDistributionChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
+  const [data, setData] = useState<ClientDistributionSlice[]>([]);
+
+  useEffect(() => {
+    reportsService.fetchClientDistribution(filters).then(setData).catch(() => {});
+  }, [filters]);
+
+  const maxCount = Math.max(1, ...data.map((d) => d.count));
+  const xMax = Math.ceil(maxCount / 3) * 3 || 3;
 
   return (
     <div className="h-[460px]">
@@ -27,7 +39,7 @@ export default function ClientDistributionChart() {
           {isInView && (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={clientDistributionData}
+                data={data}
                 layout="vertical"
                 margin={{ top: 8, right: 8, left: 48, bottom: 0 }}
               >
@@ -38,8 +50,7 @@ export default function ClientDistributionChart() {
                 />
                 <XAxis
                   type="number"
-                  domain={[0, 12]}
-                  ticks={[0, 3, 6, 9, 12]}
+                  domain={[0, xMax]}
                   axisLine={false}
                   tickLine={false}
                   tick={AXIS_TICK_STYLE}
@@ -53,9 +64,6 @@ export default function ClientDistributionChart() {
                   tick={AXIS_TICK_STYLE}
                 />
                 <Tooltip />
-                {/* Recharts doesn't support per-bar animationBegin staggering,
-                    so all bars grow together — same fallback as the app's
-                    other bar charts. */}
                 <Bar
                   dataKey="count"
                   fill="#376EF4"

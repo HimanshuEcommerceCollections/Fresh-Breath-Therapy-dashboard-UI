@@ -1,4 +1,4 @@
-import type { Lead } from "@/src/data/leadsData/leadsData";
+import type { Lead } from "@/src/services/leadsService";
 import type { PipelineStageConfig } from "@/src/data/leadsData/pipelineStageConfig";
 import PipelineCard from "@/src/sections/leadsSections/PipelineCard";
 

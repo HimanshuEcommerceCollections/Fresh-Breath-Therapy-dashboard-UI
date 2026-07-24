@@ -1,6 +1,6 @@
 "use client";
 
-import type { Client } from "@/src/data/clientsData/clientsData";
+import type { Client } from "@/src/services/clientsService";
 import { CLIENTS_TABLE_GRID } from "@/src/sections/clientsSections/clientsTableGrid";
 import StatusPill from "@/src/sections/clientsSections/StatusPill";
 

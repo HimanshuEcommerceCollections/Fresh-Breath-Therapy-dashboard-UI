@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import type { Therapist } from "@/src/data/therapistsData/therapistsData";
+import type { Therapist } from "@/src/services/therapistsService";
 
 // e.g. 600 → "$0.6k", 1100 → "$1.1k", 0 → "$0.0k"
 function formatRevenueK(dollars: number): string {
@@ -11,15 +11,8 @@ function formatRevenueK(dollars: number): string {
 
 export default function TherapistCard({
   therapist,
-  animate,
-  index,
 }: {
   therapist: Therapist;
-  // Utilization bars sit at 0% until the grid scrolls into view, then grow
-  // left-to-right staggered per card — same motion language as the
-  // Dashboard's Therapist Utilization bars.
-  animate: boolean;
-  index: number;
 }) {
   const [imgError, setImgError] = useState(false);
 
@@ -27,7 +20,7 @@ export default function TherapistCard({
     <div className="flex flex-col gap-3 rounded-[18px] border border-[#E0E5EB] bg-white p-5 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
       <div className="flex flex-row items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[rgba(55,110,244,0.1)]">
-          {imgError ? (
+          {imgError || !therapist.avatarUrl ? (
             <span className="text-sm font-semibold text-[#376EF4]">
               {therapist.name
                 .split(" ")
@@ -51,19 +44,25 @@ export default function TherapistCard({
             {therapist.name}
           </span>
           <span className="truncate text-xs font-normal text-[#596475]">
-            {therapist.credential} · {therapist.location}
+            {therapist.credential ? `${therapist.credential} · ` : ""}
+            {therapist.location.name}
           </span>
           <span className="truncate text-xs font-normal text-[#596475]">
             {therapist.email}
           </span>
         </div>
+        {!therapist.isActive && (
+          <span className="shrink-0 rounded-full bg-[#F1F5F9] px-2 py-0.5 text-[10px] font-medium uppercase text-[#596475]">
+            Inactive
+          </span>
+        )}
       </div>
 
       <div className="flex justify-between">
         {[
-          { value: therapist.activeClients, label: "Active" },
-          { value: therapist.sessionsThisMonth, label: "This mo" },
-          { value: formatRevenueK(therapist.revenueThisMonth), label: "Revenue" },
+          { value: therapist.activeClientCount, label: "Active" },
+          { value: therapist.ytdSessions, label: "YTD" },
+          { value: formatRevenueK(therapist.revenue), label: "Revenue" },
         ].map((stat) => (
           <div key={stat.label} className="flex flex-col items-center">
             <span className="text-lg font-semibold tracking-[-0.45px] text-[#071123]">
@@ -76,33 +75,14 @@ export default function TherapistCard({
         ))}
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-normal text-[#596475]">
-            Utilization
-          </span>
-          <span className="text-xs font-medium text-[#071123]">
-            {therapist.utilizationPercent}%
-          </span>
-        </div>
-        <div className="h-1.5 w-full rounded-full bg-[rgba(55,110,244,0.2)]">
-          <div
-            className="h-1.5 rounded-full bg-[#376EF4] transition-[width] duration-1000 ease-out"
-            style={{
-              width: animate ? `${therapist.utilizationPercent}%` : "0%",
-              transitionDelay: `${index * 100}ms`,
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-between">
-        <span className="text-xs font-normal text-[#596475]">
-          YTD: {therapist.ytdSessions} sessions
-        </span>
-        <span className="text-xs font-normal text-[#596475]">
-          PTO: {therapist.ptoHours}h
-        </span>
+      {/*
+        No utilization % — deliberately absent from GET /api/therapists since
+        there's no capacity/schedule field to compute a genuine percentage
+        against. PTO balance fills that slot instead of a fabricated number.
+      */}
+      <div className="flex items-center justify-between text-xs font-normal text-[#596475]">
+        <span>PTO Balance</span>
+        <span className="font-medium text-[#071123]">{therapist.ptoBalance}h</span>
       </div>
     </div>
   );

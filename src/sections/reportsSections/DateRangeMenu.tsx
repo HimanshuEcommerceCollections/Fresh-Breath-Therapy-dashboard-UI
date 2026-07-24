@@ -2,12 +2,14 @@
 
 import LocationSelectionMenu from "@/src/sections/leadsSections/LocationSelectionMenu";
 
+// MISMATCH: "Year to date" removed — section 15 only supports
+// last_30_days|last_3_months|last_6_months|last_12_months, no "Year to
+// date" range exists on the backend.
 export const dateRangeOptions = [
   "Last 30 days",
   "Last 3 months",
   "Last 6 months",
   "Last 12 months",
-  "Year to date",
 ];
 
 // Same floating-menu pattern as the location filter — LocationSelectionMenu

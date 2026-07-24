@@ -11,6 +11,7 @@ import { useOtpForm, OtpFlow } from "@/src/hooks/useOtpForm";
 interface OtpVerificationSectionProps {
   email: string;
   flow: OtpFlow;
+  expiresAt?: string;
   changeEmailHref?: string;
 }
 
@@ -25,6 +26,7 @@ const formatTime = (totalSeconds: number) => {
 const OtpVerificationSection = ({
   email,
   flow,
+  expiresAt,
   changeEmailHref = "/signup",
 }: OtpVerificationSectionProps) => {
   const {
@@ -37,7 +39,7 @@ const OtpVerificationSection = ({
     canResend,
     handleSubmit,
     handleResend,
-  } = useOtpForm({ email, flow });
+  } = useOtpForm({ email, flow, expiresAt });
 
   return (
     <div className="flex w-full max-w-[448px] flex-col gap-10 rounded-3xl border border-[#C1C8C8]/30 bg-white p-10 shadow-[0_10px_40px_rgba(16,25,23,0.08)]">

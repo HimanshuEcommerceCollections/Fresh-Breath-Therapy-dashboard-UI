@@ -13,26 +13,38 @@ interface UseOtpFormOptions {
   email: string;
   flow: OtpFlow;
   length?: number;
+  /**
+   * Absolute UTC timestamp from the login/signup/resend response
+   * (`expires_at`). When present, the countdown is derived from it so it
+   * survives a page refresh, per backend doc section 3.2. Falls back to the
+   * static cooldown constant if absent (e.g. direct navigation to this page).
+   */
+  expiresAt?: string;
+}
+
+function secondsUntil(expiresAt?: string): number {
+  if (!expiresAt) return otpContent.resendCooldownSeconds;
+  const remainingMs = new Date(expiresAt).getTime() - Date.now();
+  return Math.max(0, Math.round(remainingMs / 1000));
 }
 
 export const useOtpForm = ({
   email,
   flow,
   length = otpContent.otpLength,
+  expiresAt,
 }: UseOtpFormOptions) => {
   const router = useRouter();
   const [digits, setDigits] = useState<string[]>(Array(length).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
-  const [secondsLeft, setSecondsLeft] = useState(
-    otpContent.resendCooldownSeconds
-  );
+  const [secondsLeft, setSecondsLeft] = useState(() => secondsUntil(expiresAt));
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const startCountdown = useCallback(() => {
-    setSecondsLeft(otpContent.resendCooldownSeconds);
+  const startCountdown = useCallback((fromExpiresAt?: string) => {
+    setSecondsLeft(secondsUntil(fromExpiresAt));
 
     if (timerRef.current) clearInterval(timerRef.current);
 
@@ -48,11 +60,12 @@ export const useOtpForm = ({
   }, []);
 
   useEffect(() => {
-    startCountdown();
+    startCountdown(expiresAt);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [startCountdown]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const code = digits.join("");
   const isComplete = code.length === length && !digits.includes("");
@@ -93,8 +106,14 @@ export const useOtpForm = ({
 
     try {
       setIsResending(true);
-      await otpService.resendOtp({ email, flow });
-      startCountdown();
+      const res = await otpService.resendOtp({ email, flow });
+      if (!res.success) {
+        // 429 cooldown-not-elapsed detail is already toasted by apiClient;
+        // don't restart the countdown since the resend didn't actually happen.
+        setError(res.message ?? "Couldn't resend the code. Please try again.");
+        return;
+      }
+      startCountdown(res.expiresAt);
     } catch {
       setError("Couldn't resend the code. Please try again.");
     } finally {

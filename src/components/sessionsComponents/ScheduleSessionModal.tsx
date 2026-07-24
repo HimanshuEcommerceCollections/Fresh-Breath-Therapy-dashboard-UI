@@ -11,8 +11,9 @@ import { Calendar, Clock, User, X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
 import { useScheduleSessionForm } from "@/src/hooks/useScheduleSessionForm";
-import { therapistOptions } from "@/src/data/sessionsData/scheduleModalOptionsData";
+import { useTherapists } from "@/src/hooks/useTherapists";
 import { sessionTypeOptions } from "@/src/data/sessionsData/sessionTypeOptions";
+import type { ScheduleSessionPayload } from "@/src/services/sessionsService";
 
 // Shared label style
 const LABEL_CLASS = "text-sm font-semibold leading-5 text-[#0F172A]";
@@ -41,11 +42,14 @@ const ChevronIcon = () => (
 export default function ScheduleSessionModal({
   open,
   onClose,
+  onSchedule,
 }: {
   open: boolean;
   onClose: () => void;
+  onSchedule: (payload: ScheduleSessionPayload) => Promise<void>;
 }) {
-  const form = useScheduleSessionForm(onClose);
+  const { therapists } = useTherapists();
+  const form = useScheduleSessionForm(onSchedule, onClose);
 
   if (!open) return null;
 
@@ -84,16 +88,16 @@ export default function ScheduleSessionModal({
                 <User size={18} />
               </span>
               <select
-                value={form.therapist}
-                onChange={(e) => form.setTherapist(e.target.value)}
+                value={form.therapistId}
+                onChange={(e) => form.setTherapistId(e.target.value)}
                 className={`${SELECT_CLASS} pl-11 pr-11`}
               >
                 <option value="" disabled>
                   Select a therapist…
                 </option>
-                {therapistOptions.map((t) => (
-                  <option key={t.name} value={`${t.name} — ${t.location}`}>
-                    {t.name} — {t.location}
+                {therapists.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} — {t.location.name}
                   </option>
                 ))}
               </select>

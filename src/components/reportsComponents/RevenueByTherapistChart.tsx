@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -11,14 +12,25 @@ import {
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
 import CsvButton from "@/src/sections/reportsSections/CsvButton";
-import { revenueByTherapistData } from "@/src/data/reportsData/revenueByTherapistData";
+import {
+  reportsService,
+  type ReportFilters,
+  type RevenueEntry,
+} from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 10 };
 
-export default function RevenueByTherapistChart() {
-  // Chart animation only starts once the card scrolls into view.
+export default function RevenueByTherapistChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
+  const [data, setData] = useState<RevenueEntry[]>([]);
+
+  useEffect(() => {
+    reportsService.fetchRevenue(filters).then(setData).catch(() => {});
+  }, [filters]);
+
+  const maxRevenue = Math.max(1, ...data.map((d) => d.revenue));
+  const yMax = Math.ceil(maxRevenue / 350) * 350 || 350;
 
   return (
     <div className="h-[460px]">
@@ -27,7 +39,7 @@ export default function RevenueByTherapistChart() {
           {isInView && (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={revenueByTherapistData}
+                data={data}
                 margin={{ top: 8, right: 8, left: -8, bottom: 8 }}
               >
                 <CartesianGrid
@@ -46,14 +58,12 @@ export default function RevenueByTherapistChart() {
                   interval={0}
                 />
                 <YAxis
-                  domain={[0, 1400]}
-                  ticks={[0, 350, 700, 1050, 1400]}
+                  domain={[0, yMax]}
                   axisLine={false}
                   tickLine={false}
                   tick={AXIS_TICK_STYLE}
                 />
                 <Tooltip />
-                {/* Same per-bar stagger fallback note as the other charts. */}
                 <Bar
                   dataKey="revenue"
                   fill="#376EF4"

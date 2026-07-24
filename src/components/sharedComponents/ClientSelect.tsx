@@ -13,7 +13,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
-import { clientsData } from "@/src/data/clientsData/clientsData";
+import { clientsService, type Client } from "@/src/services/clientsService";
 
 export default function ClientSelect({
   label,
@@ -35,19 +35,24 @@ export default function ClientSelect({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [clients, setClients] = useState<Client[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    clientsService.fetchClients().then(setClients).catch(() => {});
+  }, []);
+
   // Derived display name for the currently selected client
-  const selectedClient = clientsData.find((c) => c.id === value) ?? null;
+  const selectedClient = clients.find((c) => c.id === value) ?? null;
   const displayName = selectedClient?.name ?? "";
 
   // Filtered list based on current query
   const filtered = query.trim()
-    ? clientsData.filter((c) =>
+    ? clients.filter((c) =>
         c.name.toLowerCase().includes(query.toLowerCase()),
       )
-    : clientsData;
+    : clients;
 
   // Open dropdown and focus the filter input
   function openDropdown() {

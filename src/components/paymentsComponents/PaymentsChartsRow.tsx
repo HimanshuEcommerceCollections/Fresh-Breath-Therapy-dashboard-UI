@@ -13,15 +13,17 @@ import {
   YAxis,
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
-import { revenueTrendBarData } from "@/src/data/paymentsData/revenueTrendBarData";
-import { statusDistributionData } from "@/src/data/paymentsData/statusDistributionData";
+import type { RevenueBarPoint } from "@/src/data/paymentsData/revenueTrendBarData";
+import type { PaymentStatusSlice } from "@/src/data/dashboardData/paymentStatusData";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 12 };
 
-function RevenueTrendBarChart() {
+function RevenueTrendBarChart({ data }: { data: RevenueBarPoint[] }) {
   // Chart animation only starts once the card scrolls into view.
   const { ref, isInView } = useInView<HTMLDivElement>();
+  const maxRevenue = Math.max(1, ...data.map((d) => d.revenue));
+  const yMax = Math.ceil(maxRevenue / 800) * 800 || 800;
 
   return (
     <ChartCard title="Revenue Trend" subtitle="Monthly revenue — last 6 months">
@@ -29,7 +31,7 @@ function RevenueTrendBarChart() {
         {isInView && (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={revenueTrendBarData}
+              data={data}
               margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
             >
               <CartesianGrid
@@ -44,16 +46,12 @@ function RevenueTrendBarChart() {
                 tick={AXIS_TICK_STYLE}
               />
               <YAxis
-                domain={[0, 3200]}
-                ticks={[0, 800, 1600, 2400, 3200]}
+                domain={[0, yMax]}
                 axisLine={false}
                 tickLine={false}
                 tick={AXIS_TICK_STYLE}
               />
               <Tooltip />
-              {/* Recharts doesn't support per-bar animationBegin staggering,
-                  so all bars grow bottom-to-top together — same fallback as
-                  the Lead Conversion Funnel's left-to-right growth. */}
               <Bar
                 dataKey="revenue"
                 fill="#376EF4"
@@ -72,7 +70,7 @@ function RevenueTrendBarChart() {
   );
 }
 
-function StatusDistributionChart() {
+function StatusDistributionChart({ data }: { data: PaymentStatusSlice[] }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
 
   return (
@@ -86,7 +84,7 @@ function StatusDistributionChart() {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={statusDistributionData}
+                  data={data}
                   dataKey="value"
                   nameKey="status"
                   innerRadius={70}
@@ -100,7 +98,7 @@ function StatusDistributionChart() {
                   animationDuration={1300}
                   animationEasing="ease-out"
                 >
-                  {statusDistributionData.map((slice) => (
+                  {data.map((slice) => (
                     <Cell key={slice.status} fill={slice.color} />
                   ))}
                 </Pie>
@@ -111,7 +109,7 @@ function StatusDistributionChart() {
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
-          {statusDistributionData.map((slice) => (
+          {data.map((slice) => (
             <div key={slice.status} className="flex items-center gap-2">
               <span
                 aria-hidden
@@ -132,14 +130,20 @@ function StatusDistributionChart() {
   );
 }
 
-export default function PaymentsChartsRow() {
+export default function PaymentsChartsRow({
+  revenueTrend,
+  statusDistribution,
+}: {
+  revenueTrend: RevenueBarPoint[];
+  statusDistribution: PaymentStatusSlice[];
+}) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
       <div className="h-[386px]">
-        <RevenueTrendBarChart />
+        <RevenueTrendBarChart data={revenueTrend} />
       </div>
       <div className="h-[386px]">
-        <StatusDistributionChart />
+        <StatusDistributionChart data={statusDistribution} />
       </div>
     </div>
   );

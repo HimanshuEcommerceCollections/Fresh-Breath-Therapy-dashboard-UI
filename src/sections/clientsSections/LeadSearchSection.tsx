@@ -1,7 +1,6 @@
 "use client";
 
-import { clientsData } from "@/src/data/clientsData/clientsData";
-import type { Lead } from "@/src/data/leadsData/leadsData";
+import type { Lead } from "@/src/services/leadsService";
 import LeadSearchInput from "@/src/components/clientsComponents/LeadSearchInput";
 import LeadStatusBadge from "@/src/components/clientsComponents/LeadStatusBadge";
 import { LEAD_SEARCH_TABLE_GRID } from "@/src/sections/clientsSections/leadSearchTableGrid";
@@ -26,6 +25,7 @@ function CheckIcon() {
 }
 
 export default function LeadSearchSection({
+  clientCount,
   searchQuery,
   onSearchQueryChange,
   leads,
@@ -34,6 +34,7 @@ export default function LeadSearchSection({
   convertingLeadId,
   convertedLeadIds,
 }: {
+  clientCount: number;
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   leads: Lead[];
@@ -50,7 +51,7 @@ export default function LeadSearchSection({
             Clients
           </h1>
           <p className="text-sm font-normal leading-5 tracking-[-0.154px] text-[#596475]">
-            {clientsData.length} active clients across the practice
+            {clientCount} active clients across the practice
           </p>
         </div>
         <button
@@ -85,6 +86,10 @@ export default function LeadSearchSection({
           {leads.map((lead) => {
             const isConverting = convertingLeadId === lead.id;
             const isConverted = convertedLeadIds.has(lead.id);
+            // Client.therapist_id is non-nullable — the backend 400s converting
+            // a lead with no therapist assigned. Disabled up front instead of
+            // relying on that error (section 7's own note on /convert).
+            const hasNoTherapist = !lead.therapistId;
             return (
               <div
                 key={lead.id}
@@ -113,9 +118,10 @@ export default function LeadSearchSection({
                 <div className="flex justify-end px-2 py-3">
                   <button
                     type="button"
-                    disabled={isConverting || isConverted}
+                    disabled={isConverting || isConverted || hasNoTherapist}
                     onClick={() => onAddLead(lead.id)}
-                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-[#E5E7EB] px-4 py-1.5 text-sm font-medium text-[#1E293B] transition-colors hover:bg-black/4 disabled:cursor-default disabled:opacity-60"
+                    title={hasNoTherapist ? "Assign a therapist first" : undefined}
+                    className="flex cursor-pointer items-center gap-1 rounded-lg border border-[#E5E7EB] px-4 py-1.5 text-sm font-medium text-[#1E293B] transition-colors hover:bg-black/4 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     {isConverted ? (
                       <>
@@ -124,6 +130,8 @@ export default function LeadSearchSection({
                       </>
                     ) : isConverting ? (
                       "Adding…"
+                    ) : hasNoTherapist ? (
+                      "Assign therapist first"
                     ) : (
                       <>Add Lead →</>
                     )}

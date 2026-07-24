@@ -10,12 +10,12 @@ import {
   YAxis,
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
-import { revenueTrendData } from "@/src/data/dashboardData/revenueTrendData";
+import type { RevenuePoint } from "@/src/data/dashboardData/revenueTrendData";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 12 };
 
-export default function RevenueTrendChart() {
+export default function RevenueTrendChart({ data }: { data: RevenuePoint[] }) {
   // Chart animation only starts once the card scrolls into view, rather
   // than firing on page load where it'd finish before anyone sees it.
   const { ref, isInView } = useInView<HTMLDivElement>();
@@ -29,7 +29,7 @@ export default function RevenueTrendChart() {
         {isInView && (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
-              data={revenueTrendData}
+              data={data}
               margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
             >
               <defs>

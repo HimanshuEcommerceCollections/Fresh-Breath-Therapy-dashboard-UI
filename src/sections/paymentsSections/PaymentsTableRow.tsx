@@ -1,6 +1,6 @@
 "use client";
 
-import type { Payment } from "@/src/data/paymentsData/paymentsData";
+import type { Payment } from "@/src/services/paymentsService";
 import { paymentStatusOptions } from "@/src/data/paymentsData/paymentsData";
 import { PAYMENTS_TABLE_GRID } from "@/src/sections/paymentsSections/paymentsTableGrid";
 import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";
@@ -11,7 +11,7 @@ export default function PaymentsTableRow({ payment }: { payment: Payment }) {
       className={`${PAYMENTS_TABLE_GRID} min-h-[50px] border-b border-[#E0E5EB] px-4 last:border-b-0`}
     >
       <div className="truncate px-2 py-3 text-sm font-medium leading-5 text-[#071123]">
-        {payment.clientName}
+        {payment.client}
       </div>
       <div className="truncate px-2 py-3 text-sm font-normal leading-5 text-[#071123]">
         {payment.packageName}

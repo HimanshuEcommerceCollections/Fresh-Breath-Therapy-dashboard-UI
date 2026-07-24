@@ -1,4 +1,4 @@
-import type { LeaderboardEntry } from "@/src/data/ptoDashboardData/therapistLeaderboardData";
+import type { PTOLeaderboardEntry as LeaderboardEntry } from "@/src/services/ptoService";
 import { PTO_LEADERBOARD_GRID } from "@/src/sections/ptoDashboardSections/ptoLeaderboardGrid";
 
 export default function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {

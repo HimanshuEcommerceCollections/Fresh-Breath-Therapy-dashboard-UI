@@ -1,15 +1,21 @@
 // src/sections/notificationsSections/NotificationsSection.tsx
 "use client";
 
+import { useRouter } from "next/navigation";
 import NotificationsHeader from "@/src/components/notificationsComponents/NotificationsHeader";
 import NotificationSummaryCard from "@/src/components/notificationsComponents/NotificationSummaryCard";
 import NotificationFilterTabs from "@/src/components/notificationsComponents/NotificationFilterTabs";
 import NotificationListItem from "@/src/components/notificationsComponents/NotificationListItem";
 import NotificationsEmptyState from "@/src/components/notificationsComponents/NotificationsEmptyState";
-import { notificationsPageContent } from "@/src/data/notificationsData/notificationsData";
+import {
+  notificationsPageContent,
+  relatedEntityRoute,
+  type NotificationItem,
+} from "@/src/data/notificationsData/notificationsData";
 import { useNotifications } from "@/src/hooks/useNotifications";
 
 const NotificationsSection = () => {
+  const router = useRouter();
   const {
     notifications,
     counts,
@@ -17,9 +23,18 @@ const NotificationsSection = () => {
     setActiveTab,
     isMarking,
     handleMarkAllAsRead,
+    handleMarkAsRead,
   } = useNotifications();
 
   const { summaryCards, tabs, emptyState } = notificationsPageContent;
+
+  const handleAction = (notification: NotificationItem) => {
+    handleMarkAsRead(notification.id);
+    const route = notification.relatedEntityType
+      ? relatedEntityRoute[notification.relatedEntityType]
+      : null;
+    if (route) router.push(route);
+  };
 
   return (
     <div className="flex w-full flex-col gap-6 px-8 pb-12 pt-24">
@@ -70,6 +85,7 @@ const NotificationsSection = () => {
             <NotificationListItem
               key={notification.id}
               notification={notification}
+              onAction={handleAction}
               isLast={index === notifications.length - 1}
             />
           ))}

@@ -7,12 +7,16 @@
 // - Selected date (shared across views so Month→Day click lands correctly)
 // - Schedule modal open state
 // - Therapist filter (search query, selected IDs, derived labels)
+// - Real session list for the List view (filtered by selected therapists)
+//
+// MISMATCH (flagged): Day/Week/Month views still read their own separate
+// mock datasets — see the note at the top of sessionsService.ts.
 
-import { useMemo, useState } from "react";
-import { therapistsData } from "@/src/data/therapistsData/therapistsData";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTherapists } from "@/src/hooks/useTherapists";
+import { sessionsService, type Session, type ScheduleSessionPayload } from "@/src/services/sessionsService";
+import { showSuccessToast } from "@/src/lib/toast";
 import type { SessionsView } from "@/src/sections/sessionsSections/ViewToggle";
-
-export { therapistsData };
 
 export function useSessionsPage() {
   // ── View & date ──────────────────────────────────────────────────────────
@@ -28,6 +32,9 @@ export function useSessionsPage() {
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const openScheduleModal = () => setIsScheduleModalOpen(true);
   const closeScheduleModal = () => setIsScheduleModalOpen(false);
+
+  // ── Therapists (real) ────────────────────────────────────────────────────
+  const { therapists } = useTherapists();
 
   // ── Therapist filter ──────────────────────────────────────────────────────
   const [therapistSearch, setTherapistSearch] = useState("");
@@ -71,20 +78,48 @@ export function useSessionsPage() {
   const therapistFilterLabel = useMemo(() => {
     if (isAllTherapists) return "All Therapists";
     if (selectedTherapistIds.length === 1) {
-      const found = therapistsData.find((t) => t.id === selectedTherapistIds[0]);
+      const found = therapists.find((t) => t.id === selectedTherapistIds[0]);
       return found ? found.name : "All Therapists";
     }
     return `${selectedTherapistIds.length} Therapists`;
-  }, [isAllTherapists, selectedTherapistIds]);
+  }, [isAllTherapists, selectedTherapistIds, therapists]);
 
   // Filtered therapist list for the dropdown
   const filteredTherapists = useMemo(() => {
     const q = therapistSearch.toLowerCase().trim();
-    if (!q) return therapistsData;
-    return therapistsData.filter((t) =>
+    if (!q) return therapists;
+    return therapists.filter((t) =>
       t.name.toLowerCase().includes(q),
     );
-  }, [therapistSearch]);
+  }, [therapistSearch, therapists]);
+
+  // ── Sessions (real, List view only — see MISMATCH note above) ───────────
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+
+  const loadSessions = useCallback(async () => {
+    setIsLoadingSessions(true);
+    try {
+      const data = await sessionsService.searchSessions({
+        therapistIds: selectedTherapistIds.length ? selectedTherapistIds : undefined,
+      });
+      setSessions(data);
+    } catch {
+      // Error toast already surfaced by the apiClient interceptor.
+    } finally {
+      setIsLoadingSessions(false);
+    }
+  }, [selectedTherapistIds]);
+
+  useEffect(() => {
+    loadSessions();
+  }, [loadSessions]);
+
+  const scheduleSession = async (payload: ScheduleSessionPayload) => {
+    await sessionsService.scheduleSession(payload);
+    showSuccessToast("Session scheduled");
+    await loadSessions();
+  };
 
   return {
     // View & date
@@ -115,5 +150,10 @@ export function useSessionsPage() {
     resetFilter,
     applyFilter,
     filteredTherapists,
+
+    // Sessions (List view)
+    sessions,
+    isLoadingSessions,
+    scheduleSession,
   };
 }

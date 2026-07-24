@@ -11,14 +11,16 @@ import {
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
 import LocationBreakdownList from "@/src/sections/ptoDashboardSections/LocationBreakdownList";
-import { ptoByLocationData } from "@/src/data/ptoDashboardData/ptoByLocationData";
+import type { PTOLocationBreakdown } from "@/src/services/ptoService";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 11 };
 
-function PTOByLocationChart() {
+function PTOByLocationChart({ data }: { data: PTOLocationBreakdown[] }) {
   // Chart animation only starts once the card scrolls into view.
   const { ref, isInView } = useInView<HTMLDivElement>();
+  const maxHours = Math.max(1, ...data.map((d) => d.ptoHours));
+  const yMax = Math.ceil(maxHours / 15) * 15 || 15;
 
   return (
     <ChartCard
@@ -29,7 +31,7 @@ function PTOByLocationChart() {
         {isInView && (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={ptoByLocationData}
+              data={data}
               margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
             >
               <CartesianGrid
@@ -45,8 +47,7 @@ function PTOByLocationChart() {
                 interval={0}
               />
               <YAxis
-                domain={[0, 60]}
-                ticks={[0, 15, 30, 45, 60]}
+                domain={[0, yMax]}
                 axisLine={false}
                 tickLine={false}
                 tick={AXIS_TICK_STYLE}
@@ -73,14 +74,14 @@ function PTOByLocationChart() {
   );
 }
 
-export default function PTOChartsRow() {
+export default function PTOChartsRow({ byLocation }: { byLocation: PTOLocationBreakdown[] }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
       <div className="h-[386px]">
-        <PTOByLocationChart />
+        <PTOByLocationChart data={byLocation} />
       </div>
       <div className="h-[386px]">
-        <LocationBreakdownList />
+        <LocationBreakdownList items={byLocation} />
       </div>
     </div>
   );

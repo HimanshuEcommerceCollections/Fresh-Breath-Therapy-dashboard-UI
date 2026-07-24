@@ -24,10 +24,15 @@ const STATUS_PILL_STYLES: Record<
     border: "rgba(242,166,24,0.3)",
     text: "#B37505",
   },
-  Missed: {
+  "No Show": {
     background: "rgba(242,42,54,0.15)",
     border: "rgba(242,42,54,0.3)",
     text: "#C41220",
+  },
+  Rescheduled: {
+    background: "rgba(142,81,255,0.15)",
+    border: "rgba(142,81,255,0.3)",
+    text: "#7008E7",
   },
 };
 

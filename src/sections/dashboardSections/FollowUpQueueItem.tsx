@@ -14,7 +14,7 @@ const STATUS_PILL_STYLES: Record<
     border: "rgba(251,44,54,0.3)",
     text: "#C10007",
   },
-  Upcoming: {
+  Pending: {
     background: "rgba(43,127,255,0.15)",
     border: "rgba(43,127,255,0.3)",
     text: "#1447E6",

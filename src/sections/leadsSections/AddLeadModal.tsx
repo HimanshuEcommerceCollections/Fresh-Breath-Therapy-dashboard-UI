@@ -2,19 +2,17 @@
 
 import { useState } from "react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
-import { leadsData, type Lead, type LeadStatus } from "@/src/data/leadsData/leadsData";
+import type { LeadStatus } from "@/src/data/leadsData/leadsData";
+import type { CreateLeadPayload, Lead } from "@/src/services/leadsService";
 import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
-import { locationOptions } from "@/src/data/leadsData/locationOptions";
 import { referralSourceOptions } from "@/src/data/leadsData/referralSourceOptions";
+import { useLocations } from "@/src/hooks/useLocations";
+import { useTherapists } from "@/src/hooks/useTherapists";
 import FormField from "@/src/sections/leadsSections/FormField";
 import FormSelect from "@/src/sections/leadsSections/FormSelect";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 
 const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"];
-
-// Therapists are derived from the existing leads dataset — will come from
-// the backend therapists endpoint later.
-const THERAPIST_OPTIONS = Array.from(new Set(leadsData.map((l) => l.therapist)));
 
 function PersonIcon() {
   return (
@@ -52,35 +50,50 @@ function UserIcon() {
   );
 }
 
-export default function AddLeadModal({ onClose }: { onClose: () => void }) {
+export default function AddLeadModal({
+  onClose,
+  onCreate,
+}: {
+  onClose: () => void;
+  onCreate: (payload: CreateLeadPayload) => Promise<Lead>;
+}) {
+  const { locations } = useLocations();
+  const { therapists } = useTherapists();
+
   const [fullName, setFullName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [location, setLocation] = useState("");
+  const [locationName, setLocationName] = useState("");
   const [source, setSource] = useState("");
-  const [therapist, setTherapist] = useState("");
+  const [therapistName, setTherapistName] = useState("");
   const [status, setStatus] = useState<LeadStatus>("New Lead");
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleAddLead() {
-    const newLead: Lead = {
-      id: crypto.randomUUID(),
-      name: fullName,
-      age: Number(age) || 0,
-      genderOrPronoun: gender,
-      email,
-      phone,
-      location,
-      therapist,
-      source,
-      status,
-    };
-    // TODO: wire this into leadsData state once the list is stateful
-    // (requires lifting leadsData into React state at the page level).
-    console.log("New lead:", newLead);
-    onClose();
+  async function handleAddLead() {
+    const locationId = locations.find((l) => l.name === locationName)?.id;
+    if (!locationId) return;
+    const therapistId = therapists.find((t) => t.name === therapistName)?.id;
+
+    setIsSubmitting(true);
+    try {
+      await onCreate({
+        name: fullName,
+        age: age ? Number(age) : undefined,
+        genderOrPronoun: gender || undefined,
+        email,
+        phone,
+        locationId,
+        therapistId,
+        source: source || undefined,
+        status,
+      });
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -150,9 +163,9 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
               label="Location"
               icon={<PinIcon />}
               placeholder="Select location"
-              options={locationOptions}
-              value={location}
-              onChange={setLocation}
+              options={locations.map((l) => l.name)}
+              value={locationName}
+              onChange={setLocationName}
             />
             <FormSelect
               label="Referral Source"
@@ -169,9 +182,9 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
               label="Assigned Therapist"
               icon={<UserIcon />}
               placeholder="Select therapist"
-              options={THERAPIST_OPTIONS}
-              value={therapist}
-              onChange={setTherapist}
+              options={therapists.map((t) => t.name)}
+              value={therapistName}
+              onChange={setTherapistName}
             />
             <div className="flex flex-1 flex-col gap-1.5">
               <span className="text-xs font-semibold tracking-[0.6px] text-[#434655]">
@@ -212,10 +225,11 @@ export default function AddLeadModal({ onClose }: { onClose: () => void }) {
           </button>
           <button
             type="button"
+            disabled={!fullName || !locationName || isSubmitting}
             onClick={handleAddLead}
-            className="cursor-pointer rounded-lg bg-[#325A5E] px-8 py-2.5 text-xs font-semibold tracking-[0.6px] text-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-opacity hover:opacity-90"
+            className="cursor-pointer rounded-lg bg-[#325A5E] px-8 py-2.5 text-xs font-semibold tracking-[0.6px] text-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-50"
           >
-            Add Lead
+            {isSubmitting ? "Adding…" : "Add Lead"}
           </button>
         </div>
       </div>

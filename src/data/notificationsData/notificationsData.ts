@@ -1,156 +1,70 @@
 // src/data/notificationsData/notificationsData.ts
+//
+// Aligned to FBT_Notifications_API_Reference.docx sections 3.1/3.3. Badge
+// values are lowercase, matching the backend's `badge` enum directly
+// (reminder|overdue|scheduled|completed|message) — NotificationBadge already
+// renders the label via a CSS `uppercase` class, so no casing conversion is
+// needed anywhere else.
 
 export type NotificationBadgeType =
-  | "REMINDER"
-  | "OVERDUE"
-  | "SCHEDULED"
-  | "COMPLETED"
-  | "MESSAGE";
+  | "reminder"
+  | "overdue"
+  | "scheduled"
+  | "completed"
+  | "message";
+
+export type NotificationCategory =
+  | "follow_up_reminder"
+  | "appointment_reminder"
+  | "payment_due"
+  | "missed_session"
+  | "client_message";
+
+export type RelatedEntityType = "session" | "follow_up" | "payment" | "client_message";
 
 export interface NotificationItem {
   id: string;
-  icon: string; // filename inside /public/notifications
+  category: NotificationCategory;
+  badge: NotificationBadgeType;
   title: string;
-  badgeType: NotificationBadgeType;
-  badgeLabel: string;
-  description: string;
-  clientName: string;
-  dateLabel: string;
-  timeAgo: string;
-  actionLabel: string;
+  body: string;
+  therapistId: string | null;
+  relatedEntityType: RelatedEntityType | null;
+  relatedEntityId: string | null;
   isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
 }
 
 export const badgeStyles: Record<
   NotificationBadgeType,
   { bg: string; text: string; iconBg: string }
 > = {
-  REMINDER: { bg: "#FFEDD5", text: "#EA580C", iconBg: "#FFF7ED" },
-  OVERDUE: { bg: "#FEE2E2", text: "#DC2626", iconBg: "#FEF2F2" },
-  SCHEDULED: { bg: "#DBEAFE", text: "#2563EB", iconBg: "#EFF6FF" },
-  COMPLETED: { bg: "#D1FAE5", text: "#059669", iconBg: "#ECFDF5" },
-  MESSAGE: { bg: "#F3E8FF", text: "#9333EA", iconBg: "#FAF5FF" },
+  reminder: { bg: "#FFEDD5", text: "#EA580C", iconBg: "#FFF7ED" },
+  overdue: { bg: "#FEE2E2", text: "#DC2626", iconBg: "#FEF2F2" },
+  scheduled: { bg: "#DBEAFE", text: "#2563EB", iconBg: "#EFF6FF" },
+  completed: { bg: "#D1FAE5", text: "#059669", iconBg: "#ECFDF5" },
+  message: { bg: "#F3E8FF", text: "#9333EA", iconBg: "#FAF5FF" },
 };
 
-export const notificationsMock: NotificationItem[] = [
-  {
-    id: "notif-1",
-    icon: "star.svg",
-    title: "Follow-up due today",
-    badgeType: "REMINDER",
-    badgeLabel: "REMINDER",
-    description: "Follow-up reminder for Emily Garcia is due today.",
-    clientName: "Emily Garcia",
-    dateLabel: "Due 2026-06-21",
-    timeAgo: "10 min ago",
-    actionLabel: "View Follow-Up",
-    isRead: true,
-  },
-  {
-    id: "notif-2",
-    icon: "overdue.svg",
-    title: "Follow-up overdue",
-    badgeType: "OVERDUE",
-    badgeLabel: "OVERDUE",
-    description: "Caden Harris has an overdue follow-up from yesterday.",
-    clientName: "Caden Harris",
-    dateLabel: "Overdue - 2026-06-22",
-    timeAgo: "1 hour ago",
-    actionLabel: "View Follow-Up",
-    isRead: true,
-  },
-  {
-    id: "notif-3",
-    icon: "reminderscheduled.svg",
-    title: "Reminder scheduled",
-    badgeType: "SCHEDULED",
-    badgeLabel: "SCHEDULED",
-    description: "Reminder set for Lucas Taylor's next session.",
-    clientName: "Lucas Taylor",
-    dateLabel: "Scheduled 2026-06-23",
-    timeAgo: "2 hours ago",
-    actionLabel: "View Follow-Up",
-    isRead: true,
-  },
-  {
-    id: "notif-4",
-    icon: "completetick.svg",
-    title: "Follow-up completed",
-    badgeType: "COMPLETED",
-    badgeLabel: "COMPLETED",
-    description: "Follow-up with Liam Quinn was marked as completed.",
-    clientName: "Liam Quinn",
-    dateLabel: "Completed 2026-06-24",
-    timeAgo: "3 hours ago",
-    actionLabel: "View Follow-Up",
-    isRead: true,
-  },
-  {
-    id: "notif-5",
-    icon: "halfclock.svg",
-    title: "Follow-up due tomorrow",
-    badgeType: "REMINDER",
-    badgeLabel: "REMINDER",
-    description: "Call to confirm next session with William Parker.",
-    clientName: "William Parker",
-    dateLabel: "Due 2026-06-25",
-    timeAgo: "5 hours ago",
-    actionLabel: "View Follow-Up",
-    isRead: true,
-  },
-  {
-    id: "notif-6",
-    icon: "overdue.svg",
-    title: "Follow-up overdue",
-    badgeType: "OVERDUE",
-    badgeLabel: "OVERDUE",
-    description: "Scarlett Carter's insurance follow-up is overdue.",
-    clientName: "Scarlett Carter",
-    dateLabel: "Overdue - 2026-06-22",
-    timeAgo: "Yesterday",
-    actionLabel: "View Follow-Up",
-    isRead: true,
-  },
-  {
-    id: "notif-7",
-    icon: "message.svg",
-    title: "New client message",
-    badgeType: "MESSAGE",
-    badgeLabel: "MESSAGE",
-    description: "Mia Foster replied about therapy progress check-in.",
-    clientName: "Mia Foster",
-    dateLabel: "Session 2026-06-30",
-    timeAgo: "Yesterday",
-    actionLabel: "View Message",
-    isRead: true,
-  },
-  {
-    id: "notif-8",
-    icon: "completetick.svg",
-    title: "Follow-up completed",
-    badgeType: "COMPLETED",
-    badgeLabel: "COMPLETED",
-    description: "Insurance follow-up with Evelyn Parker closed successfully.",
-    clientName: "Evelyn Parker",
-    dateLabel: "Completed 2026-06-23",
-    timeAgo: "2 days ago",
-    actionLabel: "View Follow-Up",
-    isRead: true,
-  },
-  {
-    id: "notif-9",
-    icon: "package_renewal.svg",
-    title: "Package renewal reminder",
-    badgeType: "REMINDER",
-    badgeLabel: "REMINDER",
-    description: "Discuss package renewal with Elizabeth Garcia.",
-    clientName: "Elizabeth Garcia",
-    dateLabel: "Due 2026-06-27",
-    timeAgo: "2 days ago",
-    actionLabel: "View Follow-Up",
-    isRead: true,
-  },
-];
+// Section 6: "View X" should route using related_entity_type. There are no
+// dedicated detail routes/pages for any entity in this frontend yet, so per
+// product decision this navigates to the existing flat list page rather than
+// deep-linking to the specific row. client_message has no route at all — the
+// docs themselves note there's no message UI anywhere in the current design.
+export const relatedEntityRoute: Record<RelatedEntityType, string | null> = {
+  follow_up: "/follow-ups",
+  session: "/sessions",
+  payment: "/payments",
+  client_message: null,
+};
+
+export const relatedEntityActionLabel: Record<RelatedEntityType, string> = {
+  follow_up: "View Follow-Up",
+  session: "View Session",
+  payment: "View Payment",
+  client_message: "View Message",
+};
 
 export const notificationsPageContent = {
   heading: "Notifications",
@@ -174,3 +88,12 @@ export const notificationsPageContent = {
 };
 
 export type NotificationTab = (typeof notificationsPageContent.tabs)[number];
+
+// Section 5.1's exact ?tab= contract.
+export const tabToQueryParam: Record<NotificationTab, string> = {
+  All: "all",
+  Unread: "unread",
+  "Follow-Up Reminders": "follow_up_reminders",
+  Alerts: "alerts",
+  Read: "read",
+};

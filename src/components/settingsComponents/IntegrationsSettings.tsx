@@ -1,17 +1,29 @@
-import { integrationsData } from "@/src/data/settingsData/integrationsData";
+"use client";
+
+import { useIntegrationsSettings } from "@/src/hooks/useIntegrationsSettings";
 import IntegrationCard from "@/src/sections/settingsSections/IntegrationCard";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { isAdmin } from "@/src/lib/permissions";
 
 // Wider than the other settings cards — 2-column grid per the reference
 // (the one layout outlier among the settings tabs).
 export default function IntegrationsSettings() {
+  const { role } = useCurrentUser();
+  const { integrations, connect } = useIntegrationsSettings();
+
   return (
     <div className="flex flex-col gap-3 rounded-[18px] border border-[#E0E5EB] bg-white p-5 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
       <h3 className="text-base font-semibold tracking-[-0.32px] text-[#071123]">
         Integrations
       </h3>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {integrationsData.map((integration) => (
-          <IntegrationCard key={integration.id} integration={integration} />
+        {integrations.map((integration) => (
+          <IntegrationCard
+            key={integration.id}
+            integration={integration}
+            onToggleConnection={() => connect(integration.id)}
+            disabled={!isAdmin(role)}
+          />
         ))}
       </div>
     </div>

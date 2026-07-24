@@ -8,21 +8,24 @@ import AddFollowUpModal from "@/src/components/followUpsComponents/AddFollowUpMo
 import FilterTabs, {
   type FollowUpFilter,
 } from "@/src/sections/followUpsSections/FilterTabs";
+import { useFollowUps } from "@/src/hooks/useFollowUps";
 
 export default function FollowUpsPage() {
   const [activeTab, setActiveTab] = useState<FollowUpFilter>("All");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { followUps, stats, createFollowUp, completeFollowUp } = useFollowUps(activeTab);
 
   return (
     <div className="flex flex-col gap-4 px-8 pb-12 pt-24">
       <FollowUpsHeader onAddClick={() => setIsAddModalOpen(true)} />
-      <FollowUpsStatCards />
+      <FollowUpsStatCards stats={stats} />
       <FilterTabs activeTab={activeTab} onChange={setActiveTab} />
-      <FollowUpsTable activeTab={activeTab} />
+      <FollowUpsTable followUps={followUps} onMarkDone={completeFollowUp} />
 
       <AddFollowUpModal
         open={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
+        onCreate={createFollowUp}
       />
     </div>
   );

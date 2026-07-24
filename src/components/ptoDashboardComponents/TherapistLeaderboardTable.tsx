@@ -1,4 +1,4 @@
-import { therapistLeaderboardData } from "@/src/data/ptoDashboardData/therapistLeaderboardData";
+import type { PTOLeaderboardEntry } from "@/src/services/ptoService";
 import { PTO_LEADERBOARD_GRID } from "@/src/sections/ptoDashboardSections/ptoLeaderboardGrid";
 import LeaderboardRow from "@/src/sections/ptoDashboardSections/LeaderboardRow";
 
@@ -13,7 +13,11 @@ const COLUMNS: { label: string; align: "left" | "right" }[] = [
   { label: "Avg /wk", align: "right" },
 ];
 
-export default function TherapistLeaderboardTable() {
+export default function TherapistLeaderboardTable({
+  leaderboard,
+}: {
+  leaderboard: PTOLeaderboardEntry[];
+}) {
   return (
     <div className="rounded-[18px] border border-[#E0E5EB] bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
       <div className="flex flex-col px-6 pt-5">
@@ -38,7 +42,7 @@ export default function TherapistLeaderboardTable() {
         ))}
       </div>
       <div>
-        {therapistLeaderboardData.map((entry) => (
+        {leaderboard.map((entry) => (
           <LeaderboardRow key={entry.rank} entry={entry} />
         ))}
       </div>

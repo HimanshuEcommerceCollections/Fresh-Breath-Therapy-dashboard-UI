@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -11,14 +12,21 @@ import {
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
 import CsvButton from "@/src/sections/reportsSections/CsvButton";
-import { salesReportData } from "@/src/data/reportsData/salesReportData";
+import { reportsService, type ReportFilters, type SalesReportPoint } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 12 };
 
-export default function SalesReportChart() {
-  // Chart animation only starts once the card scrolls into view.
+export default function SalesReportChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
+  const [data, setData] = useState<SalesReportPoint[]>([]);
+
+  useEffect(() => {
+    reportsService.fetchSales(filters).then(setData).catch(() => {});
+  }, [filters]);
+
+  const maxSales = Math.max(1, ...data.map((d) => d.sales));
+  const yMax = Math.ceil(maxSales / 800) * 800 || 800;
 
   return (
     <div className="h-[386px]">
@@ -27,7 +35,7 @@ export default function SalesReportChart() {
           {isInView && (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
-                data={salesReportData}
+                data={data}
                 margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
               >
                 <CartesianGrid
@@ -42,15 +50,12 @@ export default function SalesReportChart() {
                   tick={AXIS_TICK_STYLE}
                 />
                 <YAxis
-                  domain={[0, 3200]}
-                  ticks={[0, 800, 1600, 2400, 3200]}
+                  domain={[0, yMax]}
                   axisLine={false}
                   tickLine={false}
                   tick={AXIS_TICK_STYLE}
                 />
                 <Tooltip />
-                {/* Plain line, no gradient fill — intentionally distinct from
-                    the Dashboard's Revenue Trend area chart. */}
                 <Line
                   type="monotone"
                   dataKey="sales"

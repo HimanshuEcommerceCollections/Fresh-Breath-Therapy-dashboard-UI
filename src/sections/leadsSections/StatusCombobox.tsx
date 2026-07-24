@@ -10,13 +10,29 @@ export default function StatusCombobox({
   status,
   options,
   widthClass = "w-45",
+  readOnly = false,
 }: {
   status: string;
   options: string[];
   widthClass?: string;
+  /** Renders the same pill with no dropdown/interaction — for roles without
+   * write access to this resource. */
+  readOnly?: boolean;
 }) {
   const [currentStatus, setCurrentStatus] = useState(status);
   const [isOpen, setIsOpen] = useState(false);
+
+  if (readOnly) {
+    return (
+      <div
+        className={`flex h-8 ${widthClass} items-center rounded-xl border border-[#E0E5EB] bg-white px-3 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]`}
+      >
+        <span className="truncate text-sm font-normal text-[#071123]">
+          {currentStatus}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
