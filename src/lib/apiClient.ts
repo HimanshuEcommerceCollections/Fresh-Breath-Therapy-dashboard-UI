@@ -1,15 +1,14 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { showErrorToast } from "@/src/lib/toast";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://fresh-breath-therapy-dashboard-server.onrender.com";
+const API_BASE_URL = "http://127.0.0.1:8000" 
+
+//process.env.NEXT_PUBLIC_API_URL || "https://fresh-breath-therapy-dashboard-server.onrender.com";
 
 declare module "axios" {
   export interface AxiosRequestConfig {
     idempotent?: boolean;
     idempotencyKey?: string;
-    /** Suppresses the global error toast — for silent background checks
-     * (e.g. the initial GET /api/auth/me on app load) where a 401 is an
-     * expected "not logged in yet" outcome, not a real failure to surface. */
     skipErrorToast?: boolean;
   }
 }
