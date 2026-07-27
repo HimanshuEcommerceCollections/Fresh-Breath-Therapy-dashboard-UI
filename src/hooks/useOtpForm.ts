@@ -88,9 +88,9 @@ export const useOtpForm = ({
         return;
       }
 
-      // Both flows land on the dashboard once verified. If signup ever needs
+      // Both flows land on the home page once verified. If signup ever needs
       // an onboarding step instead, branch here on `flow === "signup"`.
-      router.push("/dashboard");
+      router.push("/");
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {
