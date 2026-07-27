@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from "axios";
 import { showErrorToast } from "@/src/lib/toast";
 
-const API_BASE_URL = "process.env.NEXT_PUBLIC_API_URL || https://fresh-breath-therapy-dashboard-server.onrender.com"
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://fresh-breath-therapy-dashboard-server.onrender.com"
 
 declare module "axios" {
   export interface AxiosRequestConfig {
