@@ -17,7 +17,9 @@ const PUBLIC_ROUTES = ["/login", "/signup", "/verify-otp"];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
+  const isPublicRoute = PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
 
   if (isPublicRoute) {
     return <>{children}</>;
