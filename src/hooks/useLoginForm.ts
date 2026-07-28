@@ -4,6 +4,7 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginService } from "@/src/services/authService";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
 export interface LoginFormValues {
   email: string;
@@ -21,6 +22,7 @@ const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const useLoginForm = () => {
   const router = useRouter();
+  const { refetch } = useCurrentUser();
   const [values, setValues] = useState<LoginFormValues>(initialValues);
   const [errors, setErrors] = useState<LoginFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,12 +66,13 @@ export const useLoginForm = () => {
         return;
       }
 
-      const expiresAtParam = res.expiresAt
-        ? `&expiresAt=${encodeURIComponent(res.expiresAt)}`
-        : "";
-      router.push(
-        `/verify-otp?email=${encodeURIComponent(values.email)}&flow=login${expiresAtParam}`
-      );
+      // Email/OTP delivery is temporarily disabled backend-side — go straight
+      // to the home page once login succeeds instead of the OTP step.
+      // CurrentUserProvider only checks the session once on initial app
+      // mount, so without this refetch it still holds user: null and
+      // ProtectedShell bounces us straight back to /login after the push.
+      await refetch();
+      router.push("/");
     } catch (err) {
       setServerError("Something went wrong. Please try again.");
     } finally {

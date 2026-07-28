@@ -11,6 +11,7 @@ import PackagesSettings from "@/src/components/settingsComponents/PackagesSettin
 import NotificationsSettings from "@/src/components/settingsComponents/NotificationsSettings";
 import SaaSSettings from "@/src/components/settingsComponents/SaaSSettings";
 import SecuritySettings from "@/src/components/settingsComponents/SecuritySettings";
+import LogoutButton from "@/src/components/settingsComponents/LogoutButton";
 import { useRequireRole } from "@/src/hooks/useRequireRole";
 
 const TAB_CONTENT: Record<SettingsTabName, ReactNode> = {
@@ -30,7 +31,10 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-4 px-8 pb-12 pt-24">
-      <SettingsPageHeader />
+      <div className="flex items-start justify-between gap-4">
+        <SettingsPageHeader />
+        <LogoutButton />
+      </div>
       <SettingsTabList activeTab={activeTab} onChange={setActiveTab} />
       {TAB_CONTENT[activeTab]}
     </div>
