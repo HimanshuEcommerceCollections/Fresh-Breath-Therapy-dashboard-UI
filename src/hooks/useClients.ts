@@ -1,93 +1,82 @@
 // src/hooks/useClients.ts
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { clientsService, type Client } from "@/src/services/clientsService";
-import { leadsService, type Lead } from "@/src/services/leadsService";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { clientsService } from "@/src/services/clientsService";
+import { leadsService } from "@/src/services/leadsService";
+import { useDebouncedValue } from "@/src/hooks/useDebouncedValue";
 import { showSuccessToast } from "@/src/lib/toast";
 
 const SEARCH_DEBOUNCE_MS = 350;
 
 export const useClients = () => {
+  const queryClient = useQueryClient();
+
   // Real Clients table state.
-  const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [locationId, setLocationId] = useState<string | null>(null);
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
 
-  const fetchClients = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await clientsService.fetchClients({
-        search: search || undefined,
-        locationId: locationId ?? undefined,
-      });
-      setClients(data);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    } finally {
-      setIsLoading(false);
-    }
-  }, [search, locationId]);
+  const clientFilters = useMemo(
+    () => ({ search: debouncedSearch || undefined, locationId: locationId ?? undefined }),
+    [debouncedSearch, locationId]
+  );
 
-  useEffect(() => {
-    const timeout = setTimeout(fetchClients, SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timeout);
-  }, [fetchClients]);
+  const { data: clients = [], isLoading } = useQuery({
+    queryKey: ["clients", clientFilters],
+    queryFn: () => clientsService.fetchClients(clientFilters),
+  });
 
-  const createClient = async (payload: Parameters<typeof clientsService.createClient>[0]) => {
-    const client = await clientsService.createClient(payload);
-    showSuccessToast("Client created");
-    setClients((prev) => [client, ...prev]);
-    return client;
-  };
+  const createClientMutation = useMutation({
+    mutationFn: (payload: Parameters<typeof clientsService.createClient>[0]) =>
+      clientsService.createClient(payload),
+    onSuccess: () => {
+      showSuccessToast("Client created");
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
 
   // Lead-search "Add Client" flow — real leads, real convert endpoint
   // (POST /api/leads/{lead_id}/convert, section 7).
   const [isAddingClient, setIsAddingClient] = useState(false);
   const [leadSearchQuery, setLeadSearchQuery] = useState("");
-  const [leads, setLeads] = useState<Lead[]>([]);
   const [convertingLeadId, setConvertingLeadId] = useState<string | null>(null);
   const [convertedLeadIds, setConvertedLeadIds] = useState<Set<string>>(new Set());
 
-  const fetchLeadsForSearch = useCallback(async (query: string) => {
-    try {
-      const data = await leadsService.fetchLeads({ search: query || undefined });
-      setLeads(data);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    }
-  }, []);
+  const debouncedLeadSearch = useDebouncedValue(leadSearchQuery, SEARCH_DEBOUNCE_MS);
 
-  useEffect(() => {
-    if (!isAddingClient) return;
-    const timeout = setTimeout(() => fetchLeadsForSearch(leadSearchQuery), SEARCH_DEBOUNCE_MS);
-    return () => clearTimeout(timeout);
-  }, [isAddingClient, leadSearchQuery, fetchLeadsForSearch]);
+  const { data: filteredLeads = [] } = useQuery({
+    queryKey: ["leads", { search: debouncedLeadSearch || undefined }],
+    queryFn: () => leadsService.fetchLeads({ search: debouncedLeadSearch || undefined }),
+    // Only search leads while the "Add Client" panel is actually open.
+    enabled: isAddingClient,
+  });
 
-  const openLeadSearch = () => {
-    setIsAddingClient(true);
-    fetchLeadsForSearch(leadSearchQuery);
-  };
+  const openLeadSearch = () => setIsAddingClient(true);
   const cancelLeadSearch = () => {
     setIsAddingClient(false);
     setLeadSearchQuery("");
   };
 
-  const handleAddLead = async (leadId: string) => {
-    setConvertingLeadId(leadId);
-    try {
-      const client = await clientsService.convertLeadToClient(leadId);
+  const convertLeadMutation = useMutation({
+    mutationFn: (leadId: string) => clientsService.convertLeadToClient(leadId),
+    onMutate: (leadId) => setConvertingLeadId(leadId),
+    onSuccess: (_client, leadId) => {
       setConvertedLeadIds((prev) => new Set(prev).add(leadId));
       showSuccessToast("Lead converted to client");
-      setClients((prev) => [client, ...prev]);
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       // Land back on the normal Clients table showing the new client — there
       // is no per-client detail route in this app to navigate to instead.
       cancelLeadSearch();
-    } finally {
-      setConvertingLeadId(null);
-    }
-  };
+    },
+    onSettled: () => setConvertingLeadId(null),
+  });
+
+  const handleAddLead = (leadId: string) => convertLeadMutation.mutateAsync(leadId);
 
   return {
     clients,
@@ -96,13 +85,13 @@ export const useClients = () => {
     setSearch,
     locationId,
     setLocationId,
-    createClient,
+    createClient: createClientMutation.mutateAsync,
     isAddingClient,
     openLeadSearch,
     cancelLeadSearch,
     leadSearchQuery,
     setLeadSearchQuery,
-    filteredLeads: leads,
+    filteredLeads,
     convertingLeadId,
     convertedLeadIds,
     handleAddLead,

@@ -3,7 +3,7 @@
 
 import { ChangeEvent, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signupService } from "@/src/services/authService";
+import { signupService, loginWithGoogle } from "@/src/services/authService";
 
 export interface SignupFormValues {
   fullName: string;
@@ -87,7 +87,10 @@ export const useSignupForm = () => {
   };
 
   const handleGoogleSignup = () => {
-    // TODO: kick off Google OAuth flow once backend redirect URL is available
+    // Same /api/auth/google/login endpoint as the login page — the backend
+    // decides new-account-vs-existing itself and redirects back with the
+    // appropriate status.
+    loginWithGoogle();
   };
 
   return {

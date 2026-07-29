@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import AuthBrandPanel from "@/src/components/authComponents/AuthBrandPanel";
 import LoginFormSection from "@/src/sections/authSections/LoginFormSection";
 
@@ -18,7 +19,9 @@ export default function LoginPage() {
         </div>
 
         <div className="flex w-full items-center justify-center lg:w-1/2">
-          <LoginFormSection />
+          <Suspense fallback={null}>
+            <LoginFormSection />
+          </Suspense>
         </div>
       </div>
     </main>

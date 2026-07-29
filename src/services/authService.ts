@@ -7,7 +7,7 @@
 // the hooks already render.
 
 import { AxiosError } from "axios";
-import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
+import { apiClient, newIdempotencyKey, API_BASE_URL } from "@/src/lib/apiClient";
 import { showSuccessToast } from "@/src/lib/toast";
 import { SignupFormValues } from "@/src/hooks/useSignupForm";
 import { LoginFormValues } from "@/src/hooks/useLoginForm";
@@ -87,6 +87,16 @@ export const loginService = {
     }
   },
 };
+
+// GET /api/auth/google/login returns a 307 redirect straight to Google's
+// consent screen — there is no JSON body, so this must be a real browser
+// navigation, never an apiClient/Axios call (an XHR can't follow that
+// redirect chain and just fails with a CORS error). The backend eventually
+// redirects back to /login with a `status` param (see LoginFormSection) or
+// straight to the dashboard once the session cookie is set.
+export function loginWithGoogle(): void {
+  window.location.href = `${API_BASE_URL}/api/auth/google/login`;
+}
 
 export const otpService = {
   async verifyOtp(payload: VerifyOtpPayload): Promise<AuthResponse> {

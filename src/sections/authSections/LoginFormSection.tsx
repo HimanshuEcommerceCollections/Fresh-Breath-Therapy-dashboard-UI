@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Mail } from "lucide-react";
 import AuthInput from "@/src/components/authComponents/AuthInput";
 import PasswordInput from "@/src/components/authComponents/PasswordInput";
@@ -10,6 +11,20 @@ import PrimaryButton from "@/src/components/authComponents/PrimaryButton";
 import StepBadge from "@/src/components/authComponents/StepBadge";
 import { loginContent } from "@/src/data/authData/loginData";
 import { useLoginForm } from "@/src/hooks/useLoginForm";
+
+// Set by the backend redirect after the Google OAuth callback completes
+// (GET /api/auth/google/callback) — success lands straight on "/" with the
+// session cookie already set, these two are the only non-success outcomes.
+const GOOGLE_STATUS_MESSAGES: Record<string, { text: string; tone: "info" | "error" }> = {
+  pending_approval: {
+    text: "Your account was created via Google and is awaiting admin approval.",
+    tone: "info",
+  },
+  inactive: {
+    text: "This account has been deactivated. Contact an administrator.",
+    tone: "error",
+  },
+};
 
 const LoginFormSection = () => {
   const {
@@ -21,6 +36,9 @@ const LoginFormSection = () => {
     handleSubmit,
     handleGoogleLogin,
   } = useLoginForm();
+  const searchParams = useSearchParams();
+  const googleStatus = searchParams.get("status");
+  const googleStatusMessage = googleStatus ? GOOGLE_STATUS_MESSAGES[googleStatus] : undefined;
 
   return (
     <section className="flex w-full flex-col justify-center px-6 py-12 lg:px-16">
@@ -35,6 +53,19 @@ const LoginFormSection = () => {
             {loginContent.subheading}
           </p>
         </div>
+
+        {googleStatusMessage && (
+          <p
+            role="alert"
+            className={`rounded-xl border px-4 py-3 text-sm ${
+              googleStatusMessage.tone === "error"
+                ? "border-red-200 bg-red-50 text-red-600"
+                : "border-amber-200 bg-amber-50 text-amber-700"
+            }`}
+          >
+            {googleStatusMessage.text}
+          </p>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">

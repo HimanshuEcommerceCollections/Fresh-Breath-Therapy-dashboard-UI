@@ -3,7 +3,7 @@
 
 import { ChangeEvent, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginService } from "@/src/services/authService";
+import { loginService, loginWithGoogle } from "@/src/services/authService";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
 export interface LoginFormValues {
@@ -81,7 +81,7 @@ export const useLoginForm = () => {
   };
 
   const handleGoogleLogin = () => {
-    // TODO: kick off Google OAuth flow once backend redirect URL is available
+    loginWithGoogle();
   };
 
   return {
