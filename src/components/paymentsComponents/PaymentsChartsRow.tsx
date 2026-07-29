@@ -13,17 +13,34 @@ import {
   YAxis,
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 import type { RevenueBarPoint } from "@/src/data/paymentsData/revenueTrendBarData";
 import type { PaymentStatusSlice } from "@/src/data/dashboardData/paymentStatusData";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 12 };
 
-function RevenueTrendBarChart({ data }: { data: RevenueBarPoint[] }) {
+function RevenueTrendBarChart({
+  data,
+  isLoading,
+}: {
+  data: RevenueBarPoint[];
+  isLoading: boolean;
+}) {
   // Chart animation only starts once the card scrolls into view.
   const { ref, isInView } = useInView<HTMLDivElement>();
   const maxRevenue = Math.max(1, ...data.map((d) => d.revenue));
   const yMax = Math.ceil(maxRevenue / 800) * 800 || 800;
+
+  if (isLoading) {
+    return (
+      <ChartSkeleton
+        title="Revenue Trend"
+        subtitle="Monthly revenue — last 6 months"
+        heightClassName="h-full"
+      />
+    );
+  }
 
   return (
     <ChartCard title="Revenue Trend" subtitle="Monthly revenue — last 6 months">
@@ -70,8 +87,24 @@ function RevenueTrendBarChart({ data }: { data: RevenueBarPoint[] }) {
   );
 }
 
-function StatusDistributionChart({ data }: { data: PaymentStatusSlice[] }) {
+function StatusDistributionChart({
+  data,
+  isLoading,
+}: {
+  data: PaymentStatusSlice[];
+  isLoading: boolean;
+}) {
   const { ref, isInView } = useInView<HTMLDivElement>();
+
+  if (isLoading) {
+    return (
+      <ChartSkeleton
+        title="Status Distribution"
+        subtitle="Distribution across all invoices"
+        heightClassName="h-full"
+      />
+    );
+  }
 
   return (
     <ChartCard
@@ -133,17 +166,19 @@ function StatusDistributionChart({ data }: { data: PaymentStatusSlice[] }) {
 export default function PaymentsChartsRow({
   revenueTrend,
   statusDistribution,
+  isLoading,
 }: {
   revenueTrend: RevenueBarPoint[];
   statusDistribution: PaymentStatusSlice[];
+  isLoading: boolean;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
       <div className="h-[386px]">
-        <RevenueTrendBarChart data={revenueTrend} />
+        <RevenueTrendBarChart data={revenueTrend} isLoading={isLoading} />
       </div>
       <div className="h-[386px]">
-        <StatusDistributionChart data={statusDistribution} />
+        <StatusDistributionChart data={statusDistribution} isLoading={isLoading} />
       </div>
     </div>
   );

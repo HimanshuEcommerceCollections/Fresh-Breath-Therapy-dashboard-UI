@@ -18,19 +18,30 @@ import {
   type UtilizationEntry,
 } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 10 };
 
 export default function TherapistUtilizationChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
   const [data, setData] = useState<UtilizationEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    reportsService.fetchUtilization(filters).then(setData).catch(() => {});
+    setIsLoading(true);
+    reportsService.fetchUtilization(filters).then(setData).catch(() => {}).finally(() => setIsLoading(false));
   }, [filters]);
 
   const maxValue = Math.max(1, ...data.map((d) => d.value));
   const yMax = Math.ceil(maxValue / 3) * 3 || 3;
+
+  if (isLoading) {
+    return (
+      <div className="h-[460px]">
+        <ChartSkeleton title="Therapist Utilization" heightClassName="h-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-[460px]">

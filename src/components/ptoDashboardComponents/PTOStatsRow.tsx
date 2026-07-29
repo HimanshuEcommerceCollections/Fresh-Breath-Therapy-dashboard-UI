@@ -1,12 +1,19 @@
 import type { PTOStats } from "@/src/services/ptoService";
 import StatCard from "@/src/sections/dashboardSections/StatCard";
+import { SummaryCardSkeleton } from "@/src/components/ui/SummaryCardSkeleton";
 
 const ICON_BASE = "/ptodashboard";
 const BLUE = { iconColor: "#376EF4", iconBg: "rgba(55,110,244,0.1)" };
 const GREEN = { iconColor: "#3FC168", iconBg: "rgba(63,193,104,0.1)" };
 const ORANGE = { iconColor: "#F2A618", iconBg: "rgba(242,166,24,0.1)" };
 
-export default function PTOStatsRow({ stats }: { stats: PTOStats }) {
+export default function PTOStatsRow({
+  stats,
+  isLoading,
+}: {
+  stats: PTOStats;
+  isLoading: boolean;
+}) {
   const cards = [
     { label: "Total Therapists", value: String(stats.totalTherapists), iconSrc: `${ICON_BASE}/totaltherapist.svg`, ...BLUE },
     { label: "Total Sessions", value: stats.totalSessions.toLocaleString(), iconSrc: `${ICON_BASE}/totalsessions.svg`, ...BLUE },
@@ -17,17 +24,19 @@ export default function PTOStatsRow({ stats }: { stats: PTOStats }) {
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-      {cards.map((stat) => (
-        <StatCard
-          key={stat.label}
-          label={stat.label}
-          value={stat.value}
-          iconSrc={stat.iconSrc}
-          iconBgColor={stat.iconBg}
-          iconColor={stat.iconColor}
-          compact
-        />
-      ))}
+      {isLoading
+        ? Array.from({ length: 5 }).map((_, i) => <SummaryCardSkeleton key={i} />)
+        : cards.map((stat) => (
+            <StatCard
+              key={stat.label}
+              label={stat.label}
+              value={stat.value}
+              iconSrc={stat.iconSrc}
+              iconBgColor={stat.iconBg}
+              iconColor={stat.iconColor}
+              compact
+            />
+          ))}
     </div>
   );
 }

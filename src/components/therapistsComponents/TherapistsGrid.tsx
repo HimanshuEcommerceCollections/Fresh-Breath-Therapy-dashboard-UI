@@ -1,5 +1,6 @@
 import type { Therapist } from "@/src/services/therapistsService";
 import TherapistCard from "@/src/sections/therapistsSections/TherapistCard";
+import { ProfileCardGridSkeleton } from "@/src/components/ui/ProfileCardSkeleton";
 
 export default function TherapistsGrid({
   therapists,
@@ -9,7 +10,7 @@ export default function TherapistsGrid({
   isLoading: boolean;
 }) {
   if (isLoading && therapists.length === 0) {
-    return <p className="text-sm text-[#596475]">Loading therapists…</p>;
+    return <ProfileCardGridSkeleton count={6} />;
   }
 
   return (

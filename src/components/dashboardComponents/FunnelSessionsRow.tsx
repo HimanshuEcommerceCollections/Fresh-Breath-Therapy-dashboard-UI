@@ -6,16 +6,18 @@ import type { UpcomingSession } from "@/src/data/dashboardData/upcomingSessionsD
 export default function FunnelSessionsRow({
   leadFunnel,
   upcomingSessions,
+  isLoading,
 }: {
   leadFunnel: FunnelStage[];
   upcomingSessions: UpcomingSession[];
+  isLoading: boolean;
 }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
       <div className="h-115">
-        <LeadConversionFunnelChart data={leadFunnel} />
+        <LeadConversionFunnelChart data={leadFunnel} isLoading={isLoading} />
       </div>
-      <UpcomingSessionsList sessions={upcomingSessions} />
+      <UpcomingSessionsList sessions={upcomingSessions} isLoading={isLoading} />
     </div>
   );
 }

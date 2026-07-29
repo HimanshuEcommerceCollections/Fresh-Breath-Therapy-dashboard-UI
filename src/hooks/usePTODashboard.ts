@@ -12,7 +12,7 @@ const EMPTY: PTODashboardData = {
 
 export const usePTODashboard = () => {
   const [data, setData] = useState<PTODashboardData>(EMPTY);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;

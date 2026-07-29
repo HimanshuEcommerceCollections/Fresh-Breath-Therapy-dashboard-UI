@@ -7,6 +7,8 @@ import NotificationSummaryCard from "@/src/components/notificationsComponents/No
 import NotificationFilterTabs from "@/src/components/notificationsComponents/NotificationFilterTabs";
 import NotificationListItem from "@/src/components/notificationsComponents/NotificationListItem";
 import NotificationsEmptyState from "@/src/components/notificationsComponents/NotificationsEmptyState";
+import { SummaryCardSkeleton } from "@/src/components/ui/SummaryCardSkeleton";
+import { ListSkeleton } from "@/src/components/ui/ListItemSkeleton";
 import {
   notificationsPageContent,
   relatedEntityRoute,
@@ -21,6 +23,7 @@ const NotificationsSection = () => {
     counts,
     activeTab,
     setActiveTab,
+    isLoading,
     isMarking,
     handleMarkAllAsRead,
     handleMarkAsRead,
@@ -47,24 +50,34 @@ const NotificationsSection = () => {
       />
 
       <div className="flex w-full gap-6">
-        <NotificationSummaryCard
-          label={summaryCards.unread.label}
-          count={counts.unread}
-          icon={summaryCards.unread.icon}
-          iconBg={summaryCards.unread.iconBg}
-        />
-        <NotificationSummaryCard
-          label={summaryCards.followUpReminders.label}
-          count={counts.followUpReminders}
-          icon={summaryCards.followUpReminders.icon}
-          iconBg={summaryCards.followUpReminders.iconBg}
-        />
-        <NotificationSummaryCard
-          label={summaryCards.alerts.label}
-          count={counts.alerts}
-          icon={summaryCards.alerts.icon}
-          iconBg={summaryCards.alerts.iconBg}
-        />
+        {isLoading ? (
+          <>
+            <SummaryCardSkeleton />
+            <SummaryCardSkeleton />
+            <SummaryCardSkeleton />
+          </>
+        ) : (
+          <>
+            <NotificationSummaryCard
+              label={summaryCards.unread.label}
+              count={counts.unread}
+              icon={summaryCards.unread.icon}
+              iconBg={summaryCards.unread.iconBg}
+            />
+            <NotificationSummaryCard
+              label={summaryCards.followUpReminders.label}
+              count={counts.followUpReminders}
+              icon={summaryCards.followUpReminders.icon}
+              iconBg={summaryCards.followUpReminders.iconBg}
+            />
+            <NotificationSummaryCard
+              label={summaryCards.alerts.label}
+              count={counts.alerts}
+              icon={summaryCards.alerts.icon}
+              iconBg={summaryCards.alerts.iconBg}
+            />
+          </>
+        )}
       </div>
 
       <NotificationFilterTabs
@@ -73,7 +86,11 @@ const NotificationsSection = () => {
         onChange={setActiveTab}
       />
 
-      {notifications.length === 0 ? (
+      {isLoading ? (
+        <div className="w-full overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+          <ListSkeleton rows={5} />
+        </div>
+      ) : notifications.length === 0 ? (
         <NotificationsEmptyState
           icon={emptyState.icon}
           heading={emptyState.heading}

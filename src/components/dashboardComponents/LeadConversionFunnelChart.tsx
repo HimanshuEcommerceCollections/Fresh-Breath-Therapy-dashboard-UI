@@ -10,17 +10,34 @@ import {
   YAxis,
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 import type { FunnelStage } from "@/src/data/dashboardData/leadConversionFunnelData";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 11 };
 
-export default function LeadConversionFunnelChart({ data }: { data: FunnelStage[] }) {
+export default function LeadConversionFunnelChart({
+  data,
+  isLoading,
+}: {
+  data: FunnelStage[];
+  isLoading: boolean;
+}) {
   // Chart animation only starts once the card scrolls into view, rather
   // than firing on page load where it'd finish before anyone sees it.
   const { ref, isInView } = useInView<HTMLDivElement>();
   const maxValue = Math.max(1, ...data.map((d) => d.value));
   const xMax = Math.ceil(maxValue / 2) * 2 || 2;
+
+  if (isLoading) {
+    return (
+      <ChartSkeleton
+        title="Lead Conversion Funnel"
+        subtitle="Pipeline distribution by stage"
+        heightClassName="h-full"
+      />
+    );
+  }
 
   return (
     <ChartCard

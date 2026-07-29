@@ -7,7 +7,7 @@ import { showSuccessToast } from "@/src/lib/toast";
 
 export const useOrganizationSettings = () => {
   const [organization, setOrganization] = useState<Organization | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {

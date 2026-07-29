@@ -2,27 +2,46 @@
 
 import { useState } from "react";
 import LocationSelectionMenu from "@/src/sections/leadsSections/LocationSelectionMenu";
+import { useLocations } from "@/src/hooks/useLocations";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { isAdmin } from "@/src/lib/permissions";
+
+const ALL_LOCATIONS = "All locations";
 
 // Shared location filter combobox (Leads, Clients, Therapists, Reports
-// toolbars). The first option is the default "All locations" entry.
-// Optionally controlled via `value`/`onChange` (used by Leads to drive a
-// real location_id filter) — falls back to internal state when omitted, so
-// toolbars that haven't been wired to real filtering yet are unaffected.
+// toolbars). Sources the real locations list itself via useLocations() —
+// callers just pass value/onChange for the selected filter, they no longer
+// need to build the options list.
+//
+// For Admin, this also doubles as the locations management UI: "+ Add
+// Location" creates one via POST /api/locations, and each row gets a
+// delete action (with confirmation) via DELETE /api/locations/:id — per the
+// permission matrix, Locations are Admin full R/W, Coordinator/Therapist
+// read-only, so non-admins just see the plain filter list.
 export default function LocationFilterCombobox({
-  options,
   widthClass,
   value,
   onChange,
 }: {
-  options: string[];
   widthClass: string;
   value?: string;
   onChange?: (value: string) => void;
 }) {
-  const [internalSelected, setInternalSelected] = useState(options[0]);
+  const { locations, createLocation, deleteLocation } = useLocations();
+  const { role } = useCurrentUser();
+  const [internalSelected, setInternalSelected] = useState(ALL_LOCATIONS);
   const selected = value ?? internalSelected;
   const setSelected = onChange ?? setInternalSelected;
   const [isOpen, setIsOpen] = useState(false);
+
+  async function handleDeleteLocation(locationId: string) {
+    const deletedName = locations.find((l) => l.id === locationId)?.name;
+    await deleteLocation(locationId);
+    // The deleted location can no longer be a valid filter selection.
+    if (deletedName && deletedName === selected) {
+      setSelected(ALL_LOCATIONS);
+    }
+  }
 
   return (
     <div className="relative shrink-0">
@@ -55,10 +74,13 @@ export default function LocationFilterCombobox({
       </button>
       {isOpen && (
         <LocationSelectionMenu
-          options={options}
+          locations={locations}
           selected={selected}
           onSelect={setSelected}
           onClose={() => setIsOpen(false)}
+          canManage={isAdmin(role)}
+          onCreateLocation={createLocation}
+          onDeleteLocation={handleDeleteLocation}
         />
       )}
     </div>

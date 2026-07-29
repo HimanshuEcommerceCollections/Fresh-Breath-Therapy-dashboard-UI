@@ -3,12 +3,18 @@
 import { useEffect, useState } from "react";
 import { packagesService, type ServicePackage } from "@/src/services/packagesService";
 import PackageCard from "@/src/sections/settingsSections/PackageCard";
+import { Skeleton } from "@/src/components/ui/Skeleton";
 
 export default function PackagesSettings() {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    packagesService.fetchPackages().then(setPackages).catch(() => {});
+    packagesService
+      .fetchPackages()
+      .then(setPackages)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -17,9 +23,9 @@ export default function PackagesSettings() {
         Service Packages
       </h3>
       <div className="flex flex-col gap-2">
-        {packages.map((pkg) => (
-          <PackageCard key={pkg.id} pkg={pkg} />
-        ))}
+        {isLoading
+          ? Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-10 w-full" />)
+          : packages.map((pkg) => <PackageCard key={pkg.id} pkg={pkg} />)}
       </div>
     </div>
   );

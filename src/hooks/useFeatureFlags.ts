@@ -10,7 +10,7 @@ import {
 
 export const useFeatureFlags = (category: FeatureFlagCategory) => {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
     setIsLoading(true);

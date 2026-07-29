@@ -2,13 +2,30 @@
 
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 import type { PaymentStatusSlice } from "@/src/data/dashboardData/paymentStatusData";
 import { useInView } from "@/src/hooks/useInView";
 
-export default function PaymentStatusChart({ data }: { data: PaymentStatusSlice[] }) {
+export default function PaymentStatusChart({
+  data,
+  isLoading,
+}: {
+  data: PaymentStatusSlice[];
+  isLoading: boolean;
+}) {
   // Chart animation only starts once the card scrolls into view, rather
   // than firing on page load where it'd finish before anyone sees it.
   const { ref, isInView } = useInView<HTMLDivElement>();
+
+  if (isLoading) {
+    return (
+      <ChartSkeleton
+        title="Payment Status"
+        subtitle="Distribution across all invoices"
+        heightClassName="h-full"
+      />
+    );
+  }
 
   return (
     <ChartCard

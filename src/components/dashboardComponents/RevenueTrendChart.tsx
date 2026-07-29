@@ -10,15 +10,32 @@ import {
   YAxis,
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 import type { RevenuePoint } from "@/src/data/dashboardData/revenueTrendData";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 12 };
 
-export default function RevenueTrendChart({ data }: { data: RevenuePoint[] }) {
+export default function RevenueTrendChart({
+  data,
+  isLoading,
+}: {
+  data: RevenuePoint[];
+  isLoading: boolean;
+}) {
   // Chart animation only starts once the card scrolls into view, rather
   // than firing on page load where it'd finish before anyone sees it.
   const { ref, isInView } = useInView<HTMLDivElement>();
+
+  if (isLoading) {
+    return (
+      <ChartSkeleton
+        title="Revenue Trend"
+        subtitle="Collected vs pending — last 6 months"
+        heightClassName="h-full"
+      />
+    );
+  }
 
   return (
     <ChartCard

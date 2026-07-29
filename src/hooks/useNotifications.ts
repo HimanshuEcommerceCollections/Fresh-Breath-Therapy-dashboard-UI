@@ -14,7 +14,7 @@ export const useNotifications = () => {
   const { summary, refetchSummary } = useNotificationsSummary();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isMarking, setIsMarking] = useState(false);
 
   const loadNotifications = useCallback(async (tab: NotificationTab) => {

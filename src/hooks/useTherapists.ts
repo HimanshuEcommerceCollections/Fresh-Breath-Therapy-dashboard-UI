@@ -11,7 +11,7 @@ import { showSuccessToast } from "@/src/lib/toast";
 
 export const useTherapists = () => {
   const [therapists, setTherapists] = useState<Therapist[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const refetch = useCallback(async () => {
     setIsLoading(true);

@@ -1,7 +1,7 @@
-import type { DaySession } from "@/src/data/sessionsData/dayViewData";
+import type { Session } from "@/src/services/sessionsService";
 import { dayStatusColorData } from "@/src/data/sessionsData/dayStatusColorData";
 
-export default function DayListItem({ session }: { session: DaySession }) {
+export default function DayListItem({ session }: { session: Session }) {
   const pill = dayStatusColorData[session.status];
 
   return (

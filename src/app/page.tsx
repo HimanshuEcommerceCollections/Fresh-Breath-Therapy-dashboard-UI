@@ -19,14 +19,23 @@ export default function Home() {
   return (
     <div className="flex flex-col gap-8 px-8 pb-12 pt-24">
       <DashboardPageHeader />
-      <LeadClientStatsRow stats={dashboard.leadClientStats} />
-      <SessionMetricsRow stats={dashboard.sessionMetricsStats} />
-      <RevenueMetricsRow stats={dashboard.revenueMetricsStats} />
-      <ChartsRow revenueTrend={dashboard.revenueTrend} paymentStatus={dashboard.paymentStatus} />
-      <FunnelSessionsRow leadFunnel={dashboard.leadFunnel} upcomingSessions={dashboard.upcomingSessions} />
+      <LeadClientStatsRow stats={dashboard.leadClientStats} isLoading={dashboard.isLoading} />
+      <SessionMetricsRow stats={dashboard.sessionMetricsStats} isLoading={dashboard.isLoading} />
+      <RevenueMetricsRow stats={dashboard.revenueMetricsStats} isLoading={dashboard.isLoading} />
+      <ChartsRow
+        revenueTrend={dashboard.revenueTrend}
+        paymentStatus={dashboard.paymentStatus}
+        isLoading={dashboard.isLoading}
+      />
+      <FunnelSessionsRow
+        leadFunnel={dashboard.leadFunnel}
+        upcomingSessions={dashboard.upcomingSessions}
+        isLoading={dashboard.isLoading}
+      />
       <FollowUpUtilizationRow
         followUpQueue={dashboard.followUpQueue}
         therapistUtilization={dashboard.therapistUtilization}
+        isLoading={dashboard.isLoading}
       />
     </div>
   );

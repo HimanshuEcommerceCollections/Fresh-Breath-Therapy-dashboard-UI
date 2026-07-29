@@ -18,19 +18,30 @@ import {
   type TeamPerformanceEntry,
 } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 10 };
 
 export default function TeamPerformanceChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
   const [data, setData] = useState<TeamPerformanceEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    reportsService.fetchTeamPerformance(filters).then(setData).catch(() => {});
+    setIsLoading(true);
+    reportsService.fetchTeamPerformance(filters).then(setData).catch(() => {}).finally(() => setIsLoading(false));
   }, [filters]);
 
   const maxSessions = Math.max(1, ...data.map((d) => d.sessions));
   const yMax = Math.ceil(maxSessions / 150) * 150 || 150;
+
+  if (isLoading) {
+    return (
+      <div className="h-[460px]">
+        <ChartSkeleton title="Team Performance" heightClassName="h-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-[460px]">

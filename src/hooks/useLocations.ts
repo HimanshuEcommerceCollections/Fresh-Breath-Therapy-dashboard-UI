@@ -10,7 +10,7 @@ import { showSuccessToast } from "@/src/lib/toast";
 // Any dropdown that needs {id, name} locations should use this hook.
 export const useLocations = () => {
   const [locations, setLocations] = useState<Location[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const refetch = useCallback(async () => {
     setIsLoading(true);

@@ -1,7 +1,26 @@
 import type { FollowUpStats } from "@/src/services/followUpsService";
 import StatCard from "@/src/sections/followUpsSections/StatCard";
+import { SummaryCardSkeleton } from "@/src/components/ui/SummaryCardSkeleton";
 
-export default function FollowUpsStatCards({ stats }: { stats: FollowUpStats }) {
+export default function FollowUpsStatCards({
+  stats,
+  isLoading,
+}: {
+  stats: FollowUpStats;
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <div className="flex flex-row gap-4">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="flex-1">
+            <SummaryCardSkeleton />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-row gap-4">
       <StatCard

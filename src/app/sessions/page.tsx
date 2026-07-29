@@ -13,9 +13,10 @@ export default function SessionsPage() {
   const sessions = useSessionsPage();
 
   // Month→Day: when the user clicks a day cell, jump to Day view for that date.
-  // Month view data is hardcoded to June 2026 (YYYY=2026, month index=5).
   function handleDayClick(dateNumber: number) {
-    sessions.setSelectedDate(new Date(2026, 5, dateNumber));
+    const next = new Date(sessions.selectedDate);
+    next.setDate(dateNumber);
+    sessions.setSelectedDate(next);
     sessions.setActiveView("day");
   }
 
@@ -42,25 +43,38 @@ export default function SessionsPage() {
         filteredTherapists={sessions.filteredTherapists}
       />
 
-      <MonthNavigator
-        label="June 2026"
-        onPrev={() => {
-          // TODO: real calendar navigation once date state exists.
-        }}
-        onNext={() => {
-          // TODO: real calendar navigation once date state exists.
-        }}
-      />
+      {sessions.activeView !== "list" && (
+        <MonthNavigator
+          label={sessions.navigatorLabel}
+          onPrev={sessions.goToPrevious}
+          onNext={sessions.goToNext}
+        />
+      )}
 
       {sessions.activeView === "list" && (
-        <SessionsTable sessions={sessions.sessions} />
+        <SessionsTable sessions={sessions.sessions} isLoading={sessions.isLoadingSessions} />
       )}
       {sessions.activeView === "day" && (
-        <SessionsDayView selectedDate={sessions.selectedDate} />
+        <SessionsDayView
+          selectedDate={sessions.selectedDate}
+          sessions={sessions.sessions}
+          isLoading={sessions.isLoadingSessions}
+        />
       )}
-      {sessions.activeView === "week" && <SessionsWeekView />}
+      {sessions.activeView === "week" && (
+        <SessionsWeekView
+          selectedDate={sessions.selectedDate}
+          sessions={sessions.sessions}
+          isLoading={sessions.isLoadingSessions}
+        />
+      )}
       {sessions.activeView === "month" && (
-        <SessionsMonthView onDayClick={handleDayClick} />
+        <SessionsMonthView
+          selectedDate={sessions.selectedDate}
+          sessions={sessions.sessions}
+          isLoading={sessions.isLoadingSessions}
+          onDayClick={handleDayClick}
+        />
       )}
 
       <ScheduleSessionModal

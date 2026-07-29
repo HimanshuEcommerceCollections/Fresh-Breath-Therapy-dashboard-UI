@@ -17,6 +17,7 @@ export default function LeadsPage() {
   const { locations } = useLocations();
   const {
     leads,
+    isLoading,
     search,
     setSearch,
     statusFilter,
@@ -44,7 +45,7 @@ export default function LeadsPage() {
         onLocationNameChange={handleLocationNameChange}
       />
       {activeView === "table" ? (
-        <LeadsTable leads={leads} />
+        <LeadsTable leads={leads} isLoading={isLoading} />
       ) : (
         <LeadsPipelineBoard leads={leads} />
       )}

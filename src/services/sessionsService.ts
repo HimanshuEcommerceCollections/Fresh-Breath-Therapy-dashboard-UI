@@ -5,16 +5,11 @@
 // sub-objects, so — unlike Follow-Ups/Payments — no separate client-side
 // join is needed here.
 //
-// MISMATCH (flagged, not guessed — see useSessions.ts / the Sessions
-// integration report): this only wires the List view. The Day/Week/Month
-// calendar views each read from their own separately-hardcoded mock
-// datasets (dayViewData.ts/weekViewData.ts/monthViewData.ts) that aren't
-// derived from a shared source and aren't shaped like this API's flat
-// session list. The backend only exposes a flat searchable list (section
-// 11) — it doesn't define how sessions should be bucketed into day/week/
-// month grids, which "today" cell to highlight, etc. That's frontend
-// calendar-layout logic with no spec to follow, so those three views are
-// left on mock data rather than guessed at.
+// searchSessions() powers all four Sessions page views (List, Day, Week,
+// Month) — there is no separate per-view endpoint. The List view calls it
+// unbounded; the calendar views (see useSessionsPage.ts) pass a
+// date_from/date_to range computed client-side from the selected date, then
+// bucket the flat response into day/week/month grids themselves.
 
 import type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";

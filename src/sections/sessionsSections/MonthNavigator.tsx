@@ -15,7 +15,7 @@ export default function MonthNavigator({
     <div className="flex h-[70px] items-center justify-between rounded-[18px] border border-[#E0E5EB] bg-white px-6 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
       <button
         type="button"
-        aria-label="Previous month"
+        aria-label="Previous"
         onClick={onPrev}
         className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-colors hover:bg-black/4"
       >
@@ -26,7 +26,7 @@ export default function MonthNavigator({
       </span>
       <button
         type="button"
-        aria-label="Next month"
+        aria-label="Next"
         onClick={onNext}
         className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl transition-colors hover:bg-black/4"
       >

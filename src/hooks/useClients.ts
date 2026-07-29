@@ -11,7 +11,7 @@ const SEARCH_DEBOUNCE_MS = 350;
 export const useClients = () => {
   // Real Clients table state.
   const [clients, setClients] = useState<Client[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [locationId, setLocationId] = useState<string | null>(null);
 

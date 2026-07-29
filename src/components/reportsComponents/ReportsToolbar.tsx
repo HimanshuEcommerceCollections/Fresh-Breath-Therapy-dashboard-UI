@@ -4,10 +4,7 @@ import { useState } from "react";
 import { FileText } from "lucide-react";
 import LocationFilterCombobox from "@/src/sections/leadsSections/LocationFilterCombobox";
 import DateRangeMenu from "@/src/sections/reportsSections/DateRangeMenu";
-import { useLocations } from "@/src/hooks/useLocations";
 import type { ReportRange } from "@/src/services/reportsService";
-
-const ALL_LOCATIONS = "All locations";
 
 export default function ReportsToolbar({
   dateRange,
@@ -21,7 +18,6 @@ export default function ReportsToolbar({
   onLocationNameChange: (name: string) => void;
 }) {
   const [dateMenuOpen, setDateMenuOpen] = useState(false);
-  const { locations } = useLocations();
   const dateRangeLabel = DATE_RANGE_LABELS[dateRange];
 
   return (
@@ -65,7 +61,6 @@ export default function ReportsToolbar({
         </div>
 
         <LocationFilterCombobox
-          options={[ALL_LOCATIONS, ...locations.map((l) => l.name)]}
           widthClass="w-48"
           value={locationName}
           onChange={onLocationNameChange}

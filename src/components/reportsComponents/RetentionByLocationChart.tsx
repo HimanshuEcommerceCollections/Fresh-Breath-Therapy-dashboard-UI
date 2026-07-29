@@ -18,19 +18,30 @@ import {
   type RetentionEntry,
 } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 11 };
 
 export default function RetentionByLocationChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
   const [data, setData] = useState<RetentionEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    reportsService.fetchRetention(filters).then(setData).catch(() => {});
+    setIsLoading(true);
+    reportsService.fetchRetention(filters).then(setData).catch(() => {}).finally(() => setIsLoading(false));
   }, [filters]);
 
   const maxMonths = Math.max(1, ...data.map((d) => d.months));
   const yMax = Math.ceil(maxMonths / 6) * 6 || 6;
+
+  if (isLoading) {
+    return (
+      <div className="h-[386px]">
+        <ChartSkeleton title="Retention by Location" heightClassName="h-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-[386px]">

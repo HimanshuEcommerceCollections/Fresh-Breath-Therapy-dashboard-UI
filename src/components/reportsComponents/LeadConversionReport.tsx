@@ -6,6 +6,7 @@ import CsvButton from "@/src/sections/reportsSections/CsvButton";
 import ConversionStageBar from "@/src/sections/reportsSections/ConversionStageBar";
 import { reportsService, type ReportFilters, type ConversionReport } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 
 const EMPTY: ConversionReport = { overallRate: 0, totalLeads: 0, stages: [] };
 
@@ -13,10 +14,16 @@ export default function LeadConversionReport({ filters }: { filters: ReportFilte
   // Bar-growth animation only starts once the card scrolls into view.
   const { ref, isInView } = useInView<HTMLDivElement>(0.1);
   const [report, setReport] = useState<ConversionReport>(EMPTY);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    reportsService.fetchConversion(filters).then(setReport).catch(() => {});
+    setIsLoading(true);
+    reportsService.fetchConversion(filters).then(setReport).catch(() => {}).finally(() => setIsLoading(false));
   }, [filters]);
+
+  if (isLoading) {
+    return <ChartSkeleton title="Lead Conversion" heightClassName="h-40" />;
+  }
 
   return (
     <ChartCard title="Lead Conversion" action={<CsvButton />}>

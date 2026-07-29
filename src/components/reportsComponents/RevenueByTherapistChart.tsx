@@ -18,19 +18,30 @@ import {
   type RevenueEntry,
 } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 10 };
 
 export default function RevenueByTherapistChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
   const [data, setData] = useState<RevenueEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    reportsService.fetchRevenue(filters).then(setData).catch(() => {});
+    setIsLoading(true);
+    reportsService.fetchRevenue(filters).then(setData).catch(() => {}).finally(() => setIsLoading(false));
   }, [filters]);
 
   const maxRevenue = Math.max(1, ...data.map((d) => d.revenue));
   const yMax = Math.ceil(maxRevenue / 350) * 350 || 350;
+
+  if (isLoading) {
+    return (
+      <div className="h-[460px]">
+        <ChartSkeleton title="Revenue by Therapist" heightClassName="h-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-[460px]">

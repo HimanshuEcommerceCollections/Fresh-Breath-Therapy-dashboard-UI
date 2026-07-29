@@ -2,83 +2,98 @@
 
 // src/hooks/useSignupRequests.ts
 //
-// Manages the signup requests list, role updates, reject-and-delete flow
-// (with confirmation state), and the derived pending count used by the
-// sidebar badge. Mirrors the useNotifications pattern.
+// Manages the signup requests list plus the approve (role-select modal) and
+// reject (confirm-delete) flows. Approvals/rejections can fail for reasons
+// the UI can't predict up front (missing Therapist record, another admin
+// already reviewed the request in another tab) — so both flows refetch the
+// list from the server afterward instead of optimistically mutating local
+// state, which would drift from reality on any of those failures.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  type SignupRequest,
-  type SignupRequestRole,
-  signupRequestsMock,
-} from "@/src/data/signupRequestsData/signupRequestsData";
+import { useCallback, useEffect, useState } from "react";
+import type { SignupRequest } from "@/src/data/signupRequestsData/signupRequestsData";
 import { signupRequestsService } from "@/src/services/signupRequestsService";
+import { rolesService, type SettingsRole } from "@/src/services/settingsService";
 
 export function useSignupRequests() {
-  const [requests, setRequests] = useState<SignupRequest[]>(signupRequestsMock);
-  const [isLoading, setIsLoading] = useState(false);
+  const [requests, setRequests] = useState<SignupRequest[]>([]);
+  const [roles, setRoles] = useState<SettingsRole[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Confirmation dialog state — holds the ID to delete, or null when closed.
+  // Approve flow — holds the request being approved, or null when the
+  // modal is closed.
+  const [approveTarget, setApproveTarget] = useState<SignupRequest | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+
+  // Reject flow — holds the ID to delete, or null when closed.
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Load on mount (same pattern as useNotifications)
-  useEffect(() => {
-    let mounted = true;
+  const refetch = useCallback(async () => {
     setIsLoading(true);
-    signupRequestsService
-      .fetchSignupRequests()
-      .then((data) => {
-        if (mounted) setRequests(data);
-      })
-      .finally(() => {
-        if (mounted) setIsLoading(false);
-      });
-    return () => {
-      mounted = false;
-    };
+    try {
+      const data = await signupRequestsService.fetchSignupRequests();
+      setRequests(data);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Derived pending count — drives the sidebar badge
-  const pendingCount = useMemo(
-    () => requests.filter((r) => r.status === "Pending").length,
-    [requests],
+  useEffect(() => {
+    refetch();
+    rolesService.fetchRoles().then(setRoles).catch(() => setRoles([]));
+  }, [refetch]);
+
+  const pendingCount = requests.filter((r) => r.status === "pending").length;
+
+  // Step 1: user clicks Approve → open role-select modal
+  const handleApproveClick = useCallback((request: SignupRequest) => {
+    setApproveTarget(request);
+  }, []);
+
+  // Step 2a: user picks a role and confirms
+  const handleConfirmApprove = useCallback(
+    async (roleId: string) => {
+      if (!approveTarget) return;
+      setIsApproving(true);
+      try {
+        await signupRequestsService.approveRequest(approveTarget.id, roleId);
+        setApproveTarget(null);
+      } catch {
+        // Error toast already surfaced by the apiClient interceptor
+        // (e.g. "No therapist record found...", "Request already
+        // reviewed."). Refetch below regardless so the list reflects
+        // whatever the server's real state ended up being.
+      } finally {
+        setIsApproving(false);
+        await refetch();
+      }
+    },
+    [approveTarget, refetch]
   );
 
-  // Role update — calls service immediately, optimistically updates local state
-  const handleRoleChange = useCallback(
-    async (id: string, newRole: SignupRequestRole) => {
-      // Optimistic update
-      setRequests((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, role: newRole } : r)),
-      );
-      // Fire-and-forget stub (no rollback needed for demo)
-      await signupRequestsService.updateRole(id, newRole);
-    },
-    [],
-  );
+  const handleCancelApprove = useCallback(() => {
+    setApproveTarget(null);
+  }, []);
 
   // Step 1: user clicks trash → open confirm dialog
   const handleRejectClick = useCallback((id: string) => {
     setConfirmDeleteId(id);
   }, []);
 
-  // Step 2a: user confirms → call service, remove row
+  // Step 2a: user confirms → permanently deletes the user account
   const handleConfirmReject = useCallback(async () => {
     if (!confirmDeleteId) return;
     setIsDeleting(true);
     try {
-      const res = await signupRequestsService.rejectAndDeleteUser(
-        confirmDeleteId,
-      );
-      if (res.success) {
-        setRequests((prev) => prev.filter((r) => r.id !== confirmDeleteId));
-      }
+      await signupRequestsService.rejectRequest(confirmDeleteId);
+    } catch {
+      // Error toast already surfaced by the apiClient interceptor.
     } finally {
       setIsDeleting(false);
       setConfirmDeleteId(null);
+      await refetch();
     }
-  }, [confirmDeleteId]);
+  }, [confirmDeleteId, refetch]);
 
   // Step 2b: user cancels
   const handleCancelReject = useCallback(() => {
@@ -87,10 +102,16 @@ export function useSignupRequests() {
 
   return {
     requests,
+    roles,
     isLoading,
     pendingCount,
-    handleRoleChange,
-    // Confirm-delete flow
+    // Approve flow
+    approveTarget,
+    isApproving,
+    handleApproveClick,
+    handleConfirmApprove,
+    handleCancelApprove,
+    // Reject flow
     confirmDeleteId,
     isDeleting,
     handleRejectClick,

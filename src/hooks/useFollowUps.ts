@@ -18,7 +18,7 @@ const EMPTY_STATS: FollowUpStats = { pending: 0, overdue: 0, completed: 0 };
 export const useFollowUps = (activeTab: FollowUpFilter) => {
   const [followUps, setFollowUps] = useState<FollowUpWithClient[]>([]);
   const [stats, setStats] = useState<FollowUpStats>(EMPTY_STATS);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
     setIsLoading(true);

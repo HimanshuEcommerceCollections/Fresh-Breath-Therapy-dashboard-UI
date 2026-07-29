@@ -1,24 +1,31 @@
-export type SignupRequestRole = "Admin" | "Coordinator" | "Therapist";
-export type SignupRequestStatus = "Approved" | "Pending";
+export type SignupRequestStatus = "pending" | "approved";
+
+export interface SignupRequestRole {
+  id: string;
+  name: string;
+}
 
 export interface SignupRequest {
   id: string;
-  name: string;
-  email: string;
-  role: SignupRequestRole;
   status: SignupRequestStatus;
+  createdAt: string;
+  reviewedAt: string | null;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+  // null until the request is approved — it records the role actually
+  // assigned at approval time, not something the user requested at signup.
+  requestedRole: SignupRequestRole | null;
 }
 
-// Role dropdown options — ordered per the reference screenshot.
-export const roleOptions: SignupRequestRole[] = [
-  "Admin",
-  "Coordinator",
-  "Therapist",
-];
-
-// Role pill visual config: background, border, text.
+// Role pill visual config, keyed by role name. Admin/Coordinator/Therapist
+// are the only roles the backend currently defines (per GET
+// /api/settings/roles), but any unrecognized name falls back to a neutral
+// style rather than crashing if a 4th role is ever added.
 export const roleStyleConfig: Record<
-  SignupRequestRole,
+  string,
   { bg: string; border: string; text: string }
 > = {
   Admin: { bg: "#EFF6FF", border: "#DBEAFE", text: "#1D4ED8" },
@@ -26,13 +33,15 @@ export const roleStyleConfig: Record<
   Therapist: { bg: "#ECFDF5", border: "#D1FAE5", text: "#047857" },
 };
 
+export const defaultRoleStyle = { bg: "#F1F5F9", border: "#E2E8F0", text: "#475569" };
+
 // Status badge visual config: background, dot color, text.
 export const statusStyleConfig: Record<
   SignupRequestStatus,
-  { bg: string; dot: string; text: string }
+  { bg: string; dot: string; text: string; label: string }
 > = {
-  Approved: { bg: "#ECFDF5", dot: "#10B981", text: "#047857" },
-  Pending: { bg: "#FFF7ED", dot: "#F97316", text: "#C2410C" },
+  approved: { bg: "#ECFDF5", dot: "#10B981", text: "#047857", label: "Approved" },
+  pending: { bg: "#FFF7ED", dot: "#F97316", text: "#C2410C", label: "Pending" },
 };
 
 // Avatar palette — same 6-colour cycle used in TherapistFilterDropdown.
@@ -43,51 +52,4 @@ export const AVATAR_PALETTE: { bg: string; text: string }[] = [
   { bg: "#FFE4E6", text: "#C70036" },
   { bg: "#EDE9FE", text: "#7008E7" },
   { bg: "#CBFBF1", text: "#00786F" },
-];
-
-// TODO: replace with backend-fetched data (GET /signup-requests).
-// 6 rows per spec; "Rejected" rows are deleted users — they don't appear here.
-export const signupRequestsMock: SignupRequest[] = [
-  {
-    id: "1",
-    name: "Elizabeth Garcia",
-    email: "elizabeth.garcia@email.com",
-    role: "Therapist",
-    status: "Approved",
-  },
-  {
-    id: "2",
-    name: "Marcus Bennett",
-    email: "marcus.bennett@email.com",
-    role: "Coordinator",
-    status: "Approved",
-  },
-  {
-    id: "3",
-    name: "Priya Shah",
-    email: "priya.shah@email.com",
-    role: "Admin",
-    status: "Pending",
-  },
-  {
-    id: "4",
-    name: "Wyatt Owens",
-    email: "wyatt.owens@email.com",
-    role: "Therapist",
-    status: "Approved",
-  },
-  {
-    id: "5",
-    name: "Caden Morris",
-    email: "caden.morris@email.com",
-    role: "Therapist",
-    status: "Approved",
-  },
-  {
-    id: "6",
-    name: "Sophia Delgado",
-    email: "sophia.delgado@email.com",
-    role: "Coordinator",
-    status: "Pending",
-  },
 ];

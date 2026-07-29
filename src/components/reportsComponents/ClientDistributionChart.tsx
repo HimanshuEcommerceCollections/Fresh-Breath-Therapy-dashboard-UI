@@ -18,19 +18,30 @@ import {
   type ClientDistributionSlice,
 } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 11 };
 
 export default function ClientDistributionChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
   const [data, setData] = useState<ClientDistributionSlice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    reportsService.fetchClientDistribution(filters).then(setData).catch(() => {});
+    setIsLoading(true);
+    reportsService.fetchClientDistribution(filters).then(setData).catch(() => {}).finally(() => setIsLoading(false));
   }, [filters]);
 
   const maxCount = Math.max(1, ...data.map((d) => d.count));
   const xMax = Math.ceil(maxCount / 3) * 3 || 3;
+
+  if (isLoading) {
+    return (
+      <div className="h-[460px]">
+        <ChartSkeleton title="Client Distribution by Status" heightClassName="h-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-[460px]">

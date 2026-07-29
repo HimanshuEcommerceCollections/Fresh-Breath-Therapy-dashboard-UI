@@ -1,6 +1,6 @@
 "use client";
 
-import LocationSelectionMenu from "@/src/sections/leadsSections/LocationSelectionMenu";
+import SimpleOptionMenu from "@/src/sections/leadsSections/SimpleOptionMenu";
 
 // MISMATCH: "Year to date" removed — section 15 only supports
 // last_30_days|last_3_months|last_6_months|last_12_months, no "Year to
@@ -12,10 +12,8 @@ export const dateRangeOptions = [
   "Last 12 months",
 ];
 
-// Same floating-menu pattern as the location filter — LocationSelectionMenu
-// is already a generic option list, so this is a thin semantic wrapper rather
-// than a duplicate implementation. Visual only for now; no real
-// date-filtering logic yet.
+// Thin semantic wrapper over the generic SimpleOptionMenu. Visual only for
+// now; no real date-filtering logic yet.
 export default function DateRangeMenu({
   selected,
   onSelect,
@@ -26,7 +24,7 @@ export default function DateRangeMenu({
   onClose: () => void;
 }) {
   return (
-    <LocationSelectionMenu
+    <SimpleOptionMenu
       options={dateRangeOptions}
       selected={selected}
       onSelect={onSelect}

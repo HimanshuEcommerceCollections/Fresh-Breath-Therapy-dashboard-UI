@@ -80,7 +80,7 @@ function computeStatusDistribution(payments: Payment[]): PaymentStatusSlice[] {
 
 export const usePayments = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   const load = useCallback(async () => {
     setIsLoading(true);

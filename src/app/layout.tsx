@@ -4,6 +4,7 @@ import "./globals.css";
 import AppShell from "@/src/components/layoutComponents/AppShell";
 import ToastViewport from "@/src/components/sharedComponents/ToastViewport";
 import { CurrentUserProvider } from "@/src/hooks/useCurrentUser";
+import { QueryProvider } from "@/src/components/providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,10 +37,12 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className={`${inter.className} flex min-h-full`}>
-        <CurrentUserProvider>
-          <AppShell>{children}</AppShell>
-          <ToastViewport />
-        </CurrentUserProvider>
+        <QueryProvider>
+          <CurrentUserProvider>
+            <AppShell>{children}</AppShell>
+            <ToastViewport />
+          </CurrentUserProvider>
+        </QueryProvider>
       </body>
     </html>
   );

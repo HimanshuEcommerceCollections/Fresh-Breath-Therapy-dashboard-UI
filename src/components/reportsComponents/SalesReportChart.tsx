@@ -14,19 +14,30 @@ import ChartCard from "@/src/sections/dashboardSections/ChartCard";
 import CsvButton from "@/src/sections/reportsSections/CsvButton";
 import { reportsService, type ReportFilters, type SalesReportPoint } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 12 };
 
 export default function SalesReportChart({ filters }: { filters: ReportFilters }) {
   const { ref, isInView } = useInView<HTMLDivElement>();
   const [data, setData] = useState<SalesReportPoint[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    reportsService.fetchSales(filters).then(setData).catch(() => {});
+    setIsLoading(true);
+    reportsService.fetchSales(filters).then(setData).catch(() => {}).finally(() => setIsLoading(false));
   }, [filters]);
 
   const maxSales = Math.max(1, ...data.map((d) => d.sales));
   const yMax = Math.ceil(maxSales / 800) * 800 || 800;
+
+  if (isLoading) {
+    return (
+      <div className="h-[386px]">
+        <ChartSkeleton title="Sales Report" heightClassName="h-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="h-[386px]">

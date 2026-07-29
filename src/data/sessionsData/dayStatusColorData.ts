@@ -1,9 +1,7 @@
 import type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
 
 // Colored status pills for the Day view (distinct from the List view's plain
-// bordered dropdown). "No Show" wasn't present in the reference day's data —
-// ASSUMED to match Cancelled's neutral-gray treatment (same "session didn't
-// happen" semantic); correct if the design shows a distinct color for it.
+// bordered dropdown).
 export const dayStatusColorData: Record<
   SessionStatus,
   { bg: string; border: string; text: string }

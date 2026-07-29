@@ -1,29 +1,44 @@
 "use client";
 
 // SidebarSignupRequestsItem — special nav item for Signup Requests that shows
-// a live pending-count badge. This is a client component because it reads from
-// the signupRequestsMock data to derive the count; once the API is live the
-// count will come from a shared store or server component prop.
-//
-// Kept self-contained so the rest of the sidebar (server component) doesn't
-// need to become a client component just for one badge.
+// a live pending-count badge, sourced from GET /api/auth/role-requests
+// (status_filter=pending). Polls on the same cadence as the notifications
+// summary badge so it stays reasonably fresh without a shared store.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
-import { signupRequestsMock } from "@/src/data/signupRequestsData/signupRequestsData";
+import { useEffect, useState } from "react";
+import { signupRequestsService } from "@/src/services/signupRequestsService";
 import type { NavItem } from "@/src/data/layoutData/navigationData";
+
+const POLL_INTERVAL_MS = 45000;
 
 export default function SidebarSignupRequestsItem({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const isActive = pathname === item.href;
+  const [pendingCount, setPendingCount] = useState(0);
 
-  // Derive pending count directly from the mock data (same source as the hook).
-  // TODO: Replace with a shared context/store once the API is live.
-  const pendingCount = useMemo(
-    () => signupRequestsMock.filter((r) => r.status === "Pending").length,
-    [],
-  );
+  useEffect(() => {
+    let mounted = true;
+
+    const refetch = () => {
+      signupRequestsService
+        .fetchSignupRequests("pending")
+        .then((data) => {
+          if (mounted) setPendingCount(data.length);
+        })
+        .catch(() => {
+          // Error toast already surfaced by the apiClient interceptor.
+        });
+    };
+
+    refetch();
+    const interval = setInterval(refetch, POLL_INTERVAL_MS);
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   return (
     <Link

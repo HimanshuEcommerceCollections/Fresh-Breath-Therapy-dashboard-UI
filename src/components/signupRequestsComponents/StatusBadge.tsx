@@ -19,7 +19,7 @@ export default function StatusBadge({ status }: { status: SignupRequestStatus })
         className="inline-block h-1.5 w-1.5 rounded-full"
         style={{ background: style.dot }}
       />
-      {status}
+      {style.label}
     </span>
   );
 }

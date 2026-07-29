@@ -18,11 +18,10 @@ const EMPTY_DASHBOARD: DashboardData = {
 
 export const useDashboard = () => {
   const [data, setData] = useState<DashboardData>(EMPTY_DASHBOARD);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
-    setIsLoading(true);
     dashboardService
       .fetchDashboard()
       .then((result) => {

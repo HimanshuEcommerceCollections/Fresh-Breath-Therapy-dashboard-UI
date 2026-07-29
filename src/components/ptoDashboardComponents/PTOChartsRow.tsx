@@ -10,17 +10,34 @@ import {
   YAxis,
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
+import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
 import LocationBreakdownList from "@/src/sections/ptoDashboardSections/LocationBreakdownList";
 import type { PTOLocationBreakdown } from "@/src/services/ptoService";
 import { useInView } from "@/src/hooks/useInView";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 11 };
 
-function PTOByLocationChart({ data }: { data: PTOLocationBreakdown[] }) {
+function PTOByLocationChart({
+  data,
+  isLoading,
+}: {
+  data: PTOLocationBreakdown[];
+  isLoading: boolean;
+}) {
   // Chart animation only starts once the card scrolls into view.
   const { ref, isInView } = useInView<HTMLDivElement>();
   const maxHours = Math.max(1, ...data.map((d) => d.ptoHours));
   const yMax = Math.ceil(maxHours / 15) * 15 || 15;
+
+  if (isLoading) {
+    return (
+      <ChartSkeleton
+        title="PTO Accrued by Location"
+        subtitle="Driven by completed sessions × 0.04"
+        heightClassName="h-full"
+      />
+    );
+  }
 
   return (
     <ChartCard
@@ -74,14 +91,20 @@ function PTOByLocationChart({ data }: { data: PTOLocationBreakdown[] }) {
   );
 }
 
-export default function PTOChartsRow({ byLocation }: { byLocation: PTOLocationBreakdown[] }) {
+export default function PTOChartsRow({
+  byLocation,
+  isLoading,
+}: {
+  byLocation: PTOLocationBreakdown[];
+  isLoading: boolean;
+}) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[2fr_1fr]">
       <div className="h-[386px]">
-        <PTOByLocationChart data={byLocation} />
+        <PTOByLocationChart data={byLocation} isLoading={isLoading} />
       </div>
       <div className="h-[386px]">
-        <LocationBreakdownList items={byLocation} />
+        <LocationBreakdownList items={byLocation} isLoading={isLoading} />
       </div>
     </div>
   );

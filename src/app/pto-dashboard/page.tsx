@@ -9,16 +9,16 @@ import { useRequireRole } from "@/src/hooks/useRequireRole";
 
 export default function PTODashboardPage() {
   const { isChecking } = useRequireRole(["Admin", "Coordinator"], "/leads");
-  const { stats, byLocation, leaderboard } = usePTODashboard();
+  const { stats, byLocation, leaderboard, isLoading } = usePTODashboard();
 
   if (isChecking) return null;
 
   return (
     <div className="flex flex-col gap-4 px-8 pb-12 pt-24">
       <PTODashboardPageHeader />
-      <PTOStatsRow stats={stats} />
-      <PTOChartsRow byLocation={byLocation} />
-      <TherapistLeaderboardTable leaderboard={leaderboard} />
+      <PTOStatsRow stats={stats} isLoading={isLoading} />
+      <PTOChartsRow byLocation={byLocation} isLoading={isLoading} />
+      <TherapistLeaderboardTable leaderboard={leaderboard} isLoading={isLoading} />
     </div>
   );
 }

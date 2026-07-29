@@ -1,6 +1,7 @@
 import type { PTOLeaderboardEntry } from "@/src/services/ptoService";
 import { PTO_LEADERBOARD_GRID } from "@/src/sections/ptoDashboardSections/ptoLeaderboardGrid";
 import LeaderboardRow from "@/src/sections/ptoDashboardSections/LeaderboardRow";
+import { TableSkeleton } from "@/src/components/ui/TableRowSkeleton";
 
 const COLUMNS: { label: string; align: "left" | "right" }[] = [
   { label: "#", align: "left" },
@@ -15,8 +16,10 @@ const COLUMNS: { label: string; align: "left" | "right" }[] = [
 
 export default function TherapistLeaderboardTable({
   leaderboard,
+  isLoading,
 }: {
   leaderboard: PTOLeaderboardEntry[];
+  isLoading: boolean;
 }) {
   return (
     <div className="rounded-[18px] border border-[#E0E5EB] bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
@@ -42,9 +45,11 @@ export default function TherapistLeaderboardTable({
         ))}
       </div>
       <div>
-        {leaderboard.map((entry) => (
-          <LeaderboardRow key={entry.rank} entry={entry} />
-        ))}
+        {isLoading ? (
+          <TableSkeleton gridClassName={PTO_LEADERBOARD_GRID} columns={COLUMNS.length} rows={7} />
+        ) : (
+          leaderboard.map((entry) => <LeaderboardRow key={entry.rank} entry={entry} />)
+        )}
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ export default function ClientsPage() {
   const { locations } = useLocations();
   const {
     clients,
+    isLoading,
     search,
     setSearch,
     setLocationId,
@@ -60,7 +61,7 @@ export default function ClientsPage() {
         locationName={locationName}
         onLocationNameChange={handleLocationNameChange}
       />
-      <ClientsTable clients={clients} />
+      <ClientsTable clients={clients} isLoading={isLoading} />
     </div>
   );
 }

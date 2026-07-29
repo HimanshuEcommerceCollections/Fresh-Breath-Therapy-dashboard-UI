@@ -3,30 +3,37 @@
 // src/hooks/useSessionsPage.ts
 //
 // Single source of truth for all state owned by the Sessions page:
-// - Active view (day/week/month/list)
-// - Selected date (shared across views so Month→Day click lands correctly)
+// - Active view (day/week/month/list) + selected date
 // - Schedule modal open state
 // - Therapist filter (search query, selected IDs, derived labels)
-// - Real session list for the List view (filtered by selected therapists)
+// - Real session list, date-bounded per the active view
 //
-// MISMATCH (flagged): Day/Week/Month views still read their own separate
-// mock datasets — see the note at the top of sessionsService.ts.
+// The backend only exposes a flat searchable session list (POST
+// /api/sessions/search with date_from/date_to) — there is no separate
+// day/week/month endpoint. Bucketing into calendar grids is frontend work:
+// each view just picks a different date_from/date_to range for the same
+// search call, then the view components group the flat response client-side.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTherapists } from "@/src/hooks/useTherapists";
 import { sessionsService, type Session, type ScheduleSessionPayload } from "@/src/services/sessionsService";
 import { showSuccessToast } from "@/src/lib/toast";
 import type { SessionsView } from "@/src/sections/sessionsSections/ViewToggle";
+import {
+  addDays,
+  addMonths,
+  formatDayLabel,
+  formatMonthLabel,
+  formatWeekLabel,
+  getMonthRange,
+  getWeekRange,
+  toISODate,
+} from "@/src/lib/dateRanges";
 
 export function useSessionsPage() {
   // ── View & date ──────────────────────────────────────────────────────────
   const [activeView, setActiveView] = useState<SessionsView>("list");
-
-  // June 26 2026 is marked isToday in monthViewData — use that as the
-  // initial "today" until real date state is wired to the backend.
-  const [selectedDate, setSelectedDate] = useState<Date>(
-    new Date(2026, 5, 26),
-  );
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // ── Schedule modal ────────────────────────────────────────────────────────
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -93,15 +100,63 @@ export function useSessionsPage() {
     );
   }, [therapistSearch, therapists]);
 
-  // ── Sessions (real, List view only — see MISMATCH note above) ───────────
+  // ── Date range + navigation per active view ─────────────────────────────
+  const dateRange = useMemo(() => {
+    if (activeView === "day") {
+      const iso = toISODate(selectedDate);
+      return { dateFrom: iso, dateTo: iso };
+    }
+    if (activeView === "week") {
+      const { start, end } = getWeekRange(selectedDate);
+      return { dateFrom: toISODate(start), dateTo: toISODate(end) };
+    }
+    if (activeView === "month") {
+      const { start, end } = getMonthRange(selectedDate);
+      return { dateFrom: toISODate(start), dateTo: toISODate(end) };
+    }
+    // List view is unbounded — shows all sessions matching the therapist filter.
+    return { dateFrom: undefined, dateTo: undefined };
+  }, [activeView, selectedDate]);
+
+  const navigatorLabel = useMemo(() => {
+    if (activeView === "day") return formatDayLabel(selectedDate);
+    if (activeView === "week") {
+      const { start, end } = getWeekRange(selectedDate);
+      return formatWeekLabel(start, end);
+    }
+    if (activeView === "month") return formatMonthLabel(selectedDate);
+    return "";
+  }, [activeView, selectedDate]);
+
+  const goToPrevious = useCallback(() => {
+    setSelectedDate((prev) => {
+      if (activeView === "day") return addDays(prev, -1);
+      if (activeView === "week") return addDays(prev, -7);
+      if (activeView === "month") return addMonths(prev, -1);
+      return prev;
+    });
+  }, [activeView]);
+
+  const goToNext = useCallback(() => {
+    setSelectedDate((prev) => {
+      if (activeView === "day") return addDays(prev, 1);
+      if (activeView === "week") return addDays(prev, 7);
+      if (activeView === "month") return addMonths(prev, 1);
+      return prev;
+    });
+  }, [activeView]);
+
+  // ── Sessions (real — date-bounded per the active view above) ────────────
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
 
   const loadSessions = useCallback(async () => {
     setIsLoadingSessions(true);
     try {
       const data = await sessionsService.searchSessions({
         therapistIds: selectedTherapistIds.length ? selectedTherapistIds : undefined,
+        dateFrom: dateRange.dateFrom,
+        dateTo: dateRange.dateTo,
       });
       setSessions(data);
     } catch {
@@ -109,7 +164,7 @@ export function useSessionsPage() {
     } finally {
       setIsLoadingSessions(false);
     }
-  }, [selectedTherapistIds]);
+  }, [selectedTherapistIds, dateRange]);
 
   useEffect(() => {
     loadSessions();
@@ -127,6 +182,9 @@ export function useSessionsPage() {
     setActiveView,
     selectedDate,
     setSelectedDate,
+    navigatorLabel,
+    goToPrevious,
+    goToNext,
 
     // Schedule modal
     isScheduleModalOpen,
@@ -151,7 +209,7 @@ export function useSessionsPage() {
     applyFilter,
     filteredTherapists,
 
-    // Sessions (List view)
+    // Sessions
     sessions,
     isLoadingSessions,
     scheduleSession,

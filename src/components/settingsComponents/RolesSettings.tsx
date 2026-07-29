@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { rolesService, type SettingsRole } from "@/src/services/settingsService";
 import RoleCard from "@/src/sections/settingsSections/RoleCard";
+import { Skeleton } from "@/src/components/ui/Skeleton";
 
 // MISMATCH: the real Role.permissions object has no documented shape, so
 // these human-readable descriptions stay as fixed local copy (matching
@@ -16,9 +17,14 @@ const PERMISSION_DESCRIPTIONS: Record<SettingsRole["name"], string> = {
 
 export default function RolesSettings() {
   const [roles, setRoles] = useState<SettingsRole[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    rolesService.fetchRoles().then(setRoles).catch(() => {});
+    rolesService
+      .fetchRoles()
+      .then(setRoles)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
   }, []);
 
   return (
@@ -27,12 +33,19 @@ export default function RolesSettings() {
         Roles &amp; Permissions
       </h3>
       <div className="flex flex-col gap-3">
-        {roles.map((role) => (
-          <RoleCard
-            key={role.id}
-            role={{ name: role.name, permissions: PERMISSION_DESCRIPTIONS[role.name] }}
-          />
-        ))}
+        {isLoading
+          ? Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex flex-col gap-2 rounded-[10px] border border-[#E2E8F0] p-4">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-56" />
+              </div>
+            ))
+          : roles.map((role) => (
+              <RoleCard
+                key={role.id}
+                role={{ name: role.name, permissions: PERMISSION_DESCRIPTIONS[role.name] }}
+              />
+            ))}
       </div>
     </div>
   );

@@ -2,11 +2,13 @@
 
 // src/sections/signupRequestsSections/SignupRequestsSection.tsx
 //
-// Composes the page header + table card with all rows.
-// Uses useSignupRequests for data and action handlers.
+// Composes the page header + table card with all rows, plus the approve
+// role-select modal. Uses useSignupRequests for data and action handlers.
 
 import SignupRequestRow from "@/src/components/signupRequestsComponents/SignupRequestRow";
+import ApproveRequestModal from "@/src/sections/signupRequestsSections/ApproveRequestModal";
 import { useSignupRequests } from "@/src/hooks/useSignupRequests";
+import { ListSkeleton } from "@/src/components/ui/ListItemSkeleton";
 
 const COL_HEADER_CLASS =
   "text-[10px] font-bold uppercase tracking-[1px] text-[#94A3B8]";
@@ -14,9 +16,15 @@ const COL_HEADER_CLASS =
 export default function SignupRequestsSection() {
   const {
     requests,
+    isLoading,
+    roles,
+    approveTarget,
+    isApproving,
+    handleApproveClick,
+    handleConfirmApprove,
+    handleCancelApprove,
     confirmDeleteId,
     isDeleting,
-    handleRoleChange,
     handleRejectClick,
     handleConfirmReject,
     handleCancelReject,
@@ -49,7 +57,9 @@ export default function SignupRequestsSection() {
         </div>
 
         {/* Rows */}
-        {requests.length === 0 ? (
+        {isLoading ? (
+          <ListSkeleton rows={6} />
+        ) : requests.length === 0 ? (
           <div className="px-6 py-12 text-center text-sm text-[#94A3B8]">
             No signup requests found.
           </div>
@@ -62,7 +72,7 @@ export default function SignupRequestsSection() {
               isLast={index === requests.length - 1}
               isConfirmingDelete={confirmDeleteId === request.id}
               isDeleting={isDeleting}
-              onRoleChange={handleRoleChange}
+              onApproveClick={handleApproveClick}
               onRejectClick={handleRejectClick}
               onConfirmReject={handleConfirmReject}
               onCancelReject={handleCancelReject}
@@ -70,6 +80,16 @@ export default function SignupRequestsSection() {
           ))
         )}
       </div>
+
+      {approveTarget && (
+        <ApproveRequestModal
+          request={approveTarget}
+          roles={roles}
+          isApproving={isApproving}
+          onConfirm={handleConfirmApprove}
+          onClose={handleCancelApprove}
+        />
+      )}
     </div>
   );
 }
