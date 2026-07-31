@@ -24,6 +24,10 @@ const GOOGLE_STATUS_MESSAGES: Record<string, { text: string; tone: "info" | "err
     text: "This account has been deactivated. Contact an administrator.",
     tone: "error",
   },
+  google_error: {
+    text: "Something went wrong signing in with Google. Please try again.",
+    tone: "error",
+  },
 };
 
 const LoginFormSection = () => {

@@ -1,7 +1,7 @@
 // src/hooks/usePayments.ts
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   paymentsService,
   type Payment,
@@ -79,38 +79,34 @@ function computeStatusDistribution(payments: Payment[]): PaymentStatusSlice[] {
 }
 
 export const usePayments = () => {
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
+  const { data: payments = [], isLoading } = useQuery({
+    queryKey: ["payments"],
+    queryFn: async () => {
       const [rawPayments, clients] = await Promise.all([
         paymentsService.fetchPayments(),
         clientsService.fetchClients(),
       ]);
       const clientNameById = new Map(clients.map((c) => [c.id, c.name]));
-      setPayments(
-        rawPayments.map((p) => ({
-          ...p,
-          client: clientNameById.get(p.clientId) ?? "Unknown client",
-        }))
-      );
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      return rawPayments.map((p) => ({
+        ...p,
+        client: clientNameById.get(p.clientId) ?? "Unknown client",
+      }));
+    },
+  });
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const createPaymentMutation = useMutation({
+    mutationFn: (payload: CreatePaymentPayload) => paymentsService.createPayment(payload),
+    onSuccess: () => {
+      showSuccessToast("Payment recorded");
+      queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
 
   const createPayment = async (payload: CreatePaymentPayload) => {
-    await paymentsService.createPayment(payload);
-    showSuccessToast("Payment recorded");
-    await load();
+    await createPaymentMutation.mutateAsync(payload);
   };
 
   return {

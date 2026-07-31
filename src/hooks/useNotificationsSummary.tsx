@@ -1,14 +1,7 @@
 // src/hooks/useNotificationsSummary.tsx
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   notificationsService,
   type NotificationsSummary,
@@ -22,45 +15,17 @@ const EMPTY_SUMMARY: NotificationsSummary = {
   alerts: 0,
 };
 
-interface NotificationsSummaryContextValue {
-  summary: NotificationsSummary;
-  refetchSummary: () => Promise<void>;
-}
-
-const NotificationsSummaryContext =
-  createContext<NotificationsSummaryContextValue | null>(null);
-
-export function NotificationsSummaryProvider({ children }: { children: ReactNode }) {
-  const [summary, setSummary] = useState<NotificationsSummary>(EMPTY_SUMMARY);
-
-  const refetchSummary = useCallback(async () => {
-    try {
-      const data = await notificationsService.fetchSummary();
-      setSummary(data);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    }
-  }, []);
-
-  useEffect(() => {
-    refetchSummary();
-    const interval = setInterval(refetchSummary, POLL_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [refetchSummary]);
-
-  return (
-    <NotificationsSummaryContext.Provider value={{ summary, refetchSummary }}>
-      {children}
-    </NotificationsSummaryContext.Provider>
-  );
-}
-
+// No Context/Provider needed — React Query's cache is itself the shared
+// store, so every component calling this hook with the same query key
+// (["notifications", "summary"]) reads/updates the same cached value. That's
+// also what makes mutation-invalidation (see useNotifications.ts) update
+// the Sidebar/Header bell instantly, with no manual refetch plumbing.
 export function useNotificationsSummary() {
-  const ctx = useContext(NotificationsSummaryContext);
-  if (!ctx) {
-    throw new Error(
-      "useNotificationsSummary must be used within a NotificationsSummaryProvider"
-    );
-  }
-  return ctx;
+  const { data: summary = EMPTY_SUMMARY, refetch } = useQuery({
+    queryKey: ["notifications", "summary"],
+    queryFn: () => notificationsService.fetchSummary(),
+    refetchInterval: POLL_INTERVAL_MS,
+  });
+
+  return { summary, refetchSummary: refetch };
 }

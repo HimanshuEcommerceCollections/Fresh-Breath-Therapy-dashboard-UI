@@ -4,8 +4,8 @@ import { useRef } from "react";
 import Image from "next/image";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import Select from "@/src/components/sharedComponents/Select";
+import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
 import { useAddTherapistForm } from "@/src/hooks/useAddTherapistForm";
-import { useLocations } from "@/src/hooks/useLocations";
 import { employmentStatusOptions } from "@/src/data/therapistsData/therapistFormOptions";
 import type { AddTherapistPayload, Therapist } from "@/src/services/therapistsService";
 
@@ -16,7 +16,6 @@ export default function AddTherapistModal({
   onClose: () => void;
   onCreate: (payload: AddTherapistPayload) => Promise<Therapist>;
 }) {
-  const { locations } = useLocations();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const {
     fullName,
@@ -38,8 +37,6 @@ export default function AddTherapistModal({
     isSubmitting,
     handleSubmit,
   } = useAddTherapistForm(onCreate, onClose);
-
-  const selectedLocationName = locations.find((l) => l.id === locationId)?.name ?? "";
 
   return (
     <ModalOverlay onClose={onClose}>
@@ -149,15 +146,13 @@ export default function AddTherapistModal({
           </div>
 
           <div className="flex gap-6">
-            <Select
+            <LocationSelect
               label="Assigned Clinic"
               placeholder="Select clinic"
-              options={locations.map((l) => l.name)}
-              value={selectedLocationName}
-              onChange={(name) => {
-                const match = locations.find((l) => l.name === name);
-                setLocationId(match?.id ?? "");
-              }}
+              value={locationId}
+              onChange={setLocationId}
+              labelClassName="text-sm font-bold text-[#1E293B]"
+              shellClassName="h-auto rounded-lg border border-[#E2E8F0] py-3"
             />
             {/* MISMATCH: no backend field for employment status — captured here but not sent on submit. */}
             <Select

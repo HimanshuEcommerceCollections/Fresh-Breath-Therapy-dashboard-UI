@@ -1,9 +1,9 @@
 // src/hooks/useNotifications.ts
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  NotificationItem,
   NotificationTab,
   tabToQueryParam,
 } from "@/src/data/notificationsData/notificationsData";
@@ -11,48 +11,31 @@ import { notificationsService } from "@/src/services/notificationsService";
 import { useNotificationsSummary } from "@/src/hooks/useNotificationsSummary";
 
 export const useNotifications = () => {
-  const { summary, refetchSummary } = useNotificationsSummary();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const queryClient = useQueryClient();
+  const { summary } = useNotificationsSummary();
   const [activeTab, setActiveTab] = useState<NotificationTab>("All");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isMarking, setIsMarking] = useState(false);
 
-  const loadNotifications = useCallback(async (tab: NotificationTab) => {
-    setIsLoading(true);
-    try {
-      const data = await notificationsService.fetchNotifications(tabToQueryParam[tab]);
-      setNotifications(data);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { data: notifications = [], isLoading } = useQuery({
+    queryKey: ["notifications", "list", activeTab],
+    queryFn: () => notificationsService.fetchNotifications(tabToQueryParam[activeTab]),
+  });
 
-  useEffect(() => {
-    loadNotifications(activeTab);
-  }, [activeTab, loadNotifications]);
+  // Invalidating the whole ["notifications"] prefix covers both the list
+  // (any tab) and the summary — that's what makes the Header bell update
+  // immediately from a mutation fired on the Notifications page, with no
+  // manual refetch plumbing between them.
+  const invalidateNotifications = () =>
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
 
-  const handleMarkAllAsRead = async () => {
-    try {
-      setIsMarking(true);
-      await notificationsService.markAllAsRead();
-      await Promise.all([loadNotifications(activeTab), refetchSummary()]);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    } finally {
-      setIsMarking(false);
-    }
-  };
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => notificationsService.markAllAsRead(),
+    onSuccess: invalidateNotifications,
+  });
 
-  const handleMarkAsRead = async (notificationId: string) => {
-    try {
-      await notificationsService.markAsRead(notificationId);
-      await Promise.all([loadNotifications(activeTab), refetchSummary()]);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    }
-  };
+  const markAsReadMutation = useMutation({
+    mutationFn: (notificationId: string) => notificationsService.markAsRead(notificationId),
+    onSuccess: invalidateNotifications,
+  });
 
   return {
     notifications,
@@ -64,8 +47,12 @@ export const useNotifications = () => {
     activeTab,
     setActiveTab,
     isLoading,
-    isMarking,
-    handleMarkAllAsRead,
-    handleMarkAsRead,
+    isMarking: markAllAsReadMutation.isPending,
+    // Errors already surfaced by the apiClient toast interceptor — swallow
+    // here so a failed mark-as-read doesn't produce an unhandled rejection
+    // for callers that fire this without awaiting (see NotificationsSection).
+    handleMarkAllAsRead: () => markAllAsReadMutation.mutateAsync().catch(() => {}),
+    handleMarkAsRead: (notificationId: string) =>
+      markAsReadMutation.mutateAsync(notificationId).catch(() => {}),
   };
 };

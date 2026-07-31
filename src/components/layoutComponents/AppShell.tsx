@@ -9,7 +9,6 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
-import { NotificationsSummaryProvider } from "@/src/hooks/useNotificationsSummary";
 import Sidebar from "@/src/components/layoutComponents/Sidebar/Sidebar";
 import Header from "@/src/components/layoutComponents/Header/Header";
 
@@ -49,7 +48,7 @@ function ProtectedShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <NotificationsSummaryProvider>
+    <>
       <Sidebar />
       <Header />
       {/* Header floats fixed with a translucent blurred background, so
@@ -59,6 +58,6 @@ function ProtectedShell({ children }: { children: React.ReactNode }) {
       <main className="ml-63.75 h-screen flex-1 overflow-y-auto">
         {children}
       </main>
-    </NotificationsSummaryProvider>
+    </>
   );
 }

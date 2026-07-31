@@ -2,43 +2,26 @@
 
 // SidebarSignupRequestsItem — special nav item for Signup Requests that shows
 // a live pending-count badge, sourced from GET /api/auth/role-requests
-// (status_filter=pending). Polls on the same cadence as the notifications
-// summary badge so it stays reasonably fresh without a shared store.
+// (status_filter=pending) via React Query. Shares the ["role-requests"]
+// query-key prefix with useSignupRequests.ts (the actual page), so
+// approving/rejecting a request there invalidates this badge too — no
+// polling, no manual refetch plumbing between the two.
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { signupRequestsService } from "@/src/services/signupRequestsService";
 import type { NavItem } from "@/src/data/layoutData/navigationData";
-
-const POLL_INTERVAL_MS = 45000;
 
 export default function SidebarSignupRequestsItem({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const isActive = pathname === item.href;
-  const [pendingCount, setPendingCount] = useState(0);
 
-  useEffect(() => {
-    let mounted = true;
-
-    const refetch = () => {
-      signupRequestsService
-        .fetchSignupRequests("pending")
-        .then((data) => {
-          if (mounted) setPendingCount(data.length);
-        })
-        .catch(() => {
-          // Error toast already surfaced by the apiClient interceptor.
-        });
-    };
-
-    refetch();
-    const interval = setInterval(refetch, POLL_INTERVAL_MS);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, []);
+  const { data: pendingRequests = [] } = useQuery({
+    queryKey: ["role-requests", "pending"],
+    queryFn: () => signupRequestsService.fetchSignupRequests("pending"),
+  });
+  const pendingCount = pendingRequests.length;
 
   return (
     <Link

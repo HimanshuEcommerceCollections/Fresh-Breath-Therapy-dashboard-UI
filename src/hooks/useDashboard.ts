@@ -1,7 +1,7 @@
 // src/hooks/useDashboard.ts
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { dashboardService, type DashboardData } from "@/src/services/dashboardService";
 
 const EMPTY_DASHBOARD: DashboardData = {
@@ -17,26 +17,10 @@ const EMPTY_DASHBOARD: DashboardData = {
 };
 
 export const useDashboard = () => {
-  const [data, setData] = useState<DashboardData>(EMPTY_DASHBOARD);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    dashboardService
-      .fetchDashboard()
-      .then((result) => {
-        if (isMounted) setData(result);
-      })
-      .catch(() => {
-        // Error toast already surfaced by the apiClient interceptor.
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { data = EMPTY_DASHBOARD, isLoading } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => dashboardService.fetchDashboard(),
+  });
 
   return { ...data, isLoading };
 };

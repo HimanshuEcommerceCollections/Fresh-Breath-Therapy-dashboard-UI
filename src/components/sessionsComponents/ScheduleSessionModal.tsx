@@ -7,7 +7,7 @@
 // Client uses the shared ClientSelect combobox; Therapist and Type are
 // native <select> elements populated from existing data sources.
 
-import { Calendar, Clock, User, X } from "lucide-react";
+import { User, X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
 import { useScheduleSessionForm } from "@/src/hooks/useScheduleSessionForm";
@@ -109,37 +109,21 @@ export default function ScheduleSessionModal({
           <div className="flex gap-4">
             <div className="flex flex-1 flex-col gap-1.5">
               <span className={LABEL_CLASS}>Date</span>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={form.date}
-                  onChange={(e) => form.setDate(e.target.value)}
-                  placeholder="DD/MM/YYYY"
-                  className="h-13 w-full rounded-xl border border-[#E2E8F0] bg-[rgba(248,250,252,0.5)] pl-4 pr-11 text-base font-normal leading-6 text-[#0F172A] outline-none focus:border-2 focus:border-[#2563EB]"
-                />
-                <Calendar
-                  size={18}
-                  stroke="#0F172A"
-                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
-                />
-              </div>
+              <input
+                type="date"
+                value={form.date}
+                onChange={(e) => form.setDate(e.target.value)}
+                className="h-13 w-full rounded-xl border border-[#E2E8F0] bg-[rgba(248,250,252,0.5)] px-4 text-base font-normal leading-6 text-[#0F172A] outline-none focus:border-2 focus:border-[#2563EB]"
+              />
             </div>
             <div className="flex flex-1 flex-col gap-1.5">
               <span className={LABEL_CLASS}>Time</span>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={form.time}
-                  onChange={(e) => form.setTime(e.target.value)}
-                  placeholder="h:mm AM/PM"
-                  className="h-13 w-full rounded-xl border border-[#E2E8F0] bg-[rgba(248,250,252,0.5)] pl-4 pr-11 text-base font-normal leading-6 text-[#0F172A] outline-none focus:border-2 focus:border-[#2563EB]"
-                />
-                <Clock
-                  size={18}
-                  stroke="#0F172A"
-                  className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
-                />
-              </div>
+              <input
+                type="time"
+                value={form.time}
+                onChange={(e) => form.setTime(e.target.value)}
+                className="h-13 w-full rounded-xl border border-[#E2E8F0] bg-[rgba(248,250,252,0.5)] px-4 text-base font-normal leading-6 text-[#0F172A] outline-none focus:border-2 focus:border-[#2563EB]"
+              />
             </div>
           </div>
 

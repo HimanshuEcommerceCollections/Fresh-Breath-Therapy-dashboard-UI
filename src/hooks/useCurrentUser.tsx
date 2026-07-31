@@ -19,9 +19,12 @@ interface CurrentUserContextValue {
   /** Resolved once the initial GET /api/auth/me call finishes (success or
    * failure) — distinguishes "still checking" from "checked, not logged in." */
   hasChecked: boolean;
-  // Section 1.4: an Admin/Coordinator MAY also be linked to a Therapist
-  // record, matched by email — this is that match, computed client-side
-  // since GET /api/auth/me doesn't expose a linked-therapist field.
+  // Role-agnostic: any logged-in user (Admin, Coordinator, or Therapist)
+  // MAY be linked to a Therapist record, matched by email — this is that
+  // match, computed client-side since GET /api/auth/me doesn't expose a
+  // linked-therapist field. A genuine Therapist-role account always has a
+  // match, since role-request approval only ever grants that role because
+  // one already exists (see role_request approval logic backend-side).
   linkedTherapist: Therapist | null;
   refetch: () => Promise<void>;
   logout: () => Promise<void>;
@@ -41,18 +44,14 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
       const currentUser = await sessionAuthService.me();
       setUser(currentUser);
 
-      if (currentUser.role === "Admin" || currentUser.role === "Coordinator") {
-        try {
-          const therapists = await therapistsService.fetchTherapists();
-          setLinkedTherapist(
-            therapists.find(
-              (t) => t.email.toLowerCase() === currentUser.email.toLowerCase()
-            ) ?? null
-          );
-        } catch {
-          setLinkedTherapist(null);
-        }
-      } else {
+      try {
+        const therapists = await therapistsService.fetchTherapists();
+        setLinkedTherapist(
+          therapists.find(
+            (t) => t.email.toLowerCase() === currentUser.email.toLowerCase()
+          ) ?? null
+        );
+      } catch {
         setLinkedTherapist(null);
       }
     } catch {

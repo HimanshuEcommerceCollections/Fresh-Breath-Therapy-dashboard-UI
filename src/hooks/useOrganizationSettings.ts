@@ -1,44 +1,32 @@
 // src/hooks/useOrganizationSettings.ts
 "use client";
 
-import { useEffect, useState } from "react";
-import { organizationService, type Organization } from "@/src/services/settingsService";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { organizationService } from "@/src/services/settingsService";
 import { showSuccessToast } from "@/src/lib/toast";
 
 export const useOrganizationSettings = () => {
-  const [organization, setOrganization] = useState<Organization | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-    organizationService
-      .fetchOrganization()
-      .then((org) => {
-        if (isMounted) setOrganization(org);
-      })
-      .catch(() => {})
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { data: organization = null, isLoading } = useQuery({
+    queryKey: ["organization"],
+    queryFn: () => organizationService.fetchOrganization(),
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: (payload: { name: string; primaryEmail: string; timezone: string }) =>
+      organization
+        ? organizationService.updateOrganization(payload)
+        : organizationService.createOrganization(payload),
+    onSuccess: () => {
+      showSuccessToast("Organization settings saved");
+      queryClient.invalidateQueries({ queryKey: ["organization"] });
+    },
+  });
 
   const save = async (payload: { name: string; primaryEmail: string; timezone: string }) => {
-    setIsSaving(true);
-    try {
-      const result = organization
-        ? await organizationService.updateOrganization(payload)
-        : await organizationService.createOrganization(payload);
-      setOrganization(result);
-      showSuccessToast("Organization settings saved");
-    } finally {
-      setIsSaving(false);
-    }
+    await saveMutation.mutateAsync(payload);
   };
 
-  return { organization, isLoading, isSaving, save };
+  return { organization, isLoading, isSaving: saveMutation.isPending, save };
 };

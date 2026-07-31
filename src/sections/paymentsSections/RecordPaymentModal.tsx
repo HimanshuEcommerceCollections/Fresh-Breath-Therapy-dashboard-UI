@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar, X } from "lucide-react";
+import { X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import FormField from "@/src/sections/leadsSections/FormField";
 import FormSelect from "@/src/sections/leadsSections/FormSelect";
@@ -11,16 +11,6 @@ import type { CreatePaymentPayload } from "@/src/services/paymentsService";
 import type { PaymentMethod, PaymentStatus } from "@/src/data/paymentsData/paymentsData";
 
 const METHOD_OPTIONS: PaymentMethod[] = ["Credit Card", "ACH", "Cash", "Insurance"];
-
-// The date input is free-text DD/MM/YYYY (no date picker exists yet — a
-// pre-existing limitation, not introduced here). Converts to the ISO
-// "YYYY-MM-DD" the real API expects.
-function toIsoDate(ddmmyyyy: string): string | null {
-  const match = ddmmyyyy.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!match) return null;
-  const [, day, month, year] = match;
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-}
 
 export default function RecordPaymentModal({
   open,
@@ -37,7 +27,7 @@ export default function RecordPaymentModal({
   const [amountDue, setAmountDue] = useState("");
   const [amountPaid, setAmountPaid] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("Credit Card");
-  const [date, setDate] = useState("25/06/2026");
+  const [date, setDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -60,8 +50,7 @@ export default function RecordPaymentModal({
   async function handleRecord() {
     const due = Number(amountDue) || 0;
     const paid = Number(amountPaid) || 0;
-    const isoDate = toIsoDate(date);
-    if (!clientId || !packageId || !isoDate) return;
+    if (!clientId || !packageId || !date) return;
 
     const status: PaymentStatus =
       paid >= due && due > 0 ? "Paid" : paid > 0 ? "Partially Paid" : "Pending";
@@ -74,7 +63,7 @@ export default function RecordPaymentModal({
         due,
         paid,
         method,
-        date: isoDate,
+        date,
         status,
       });
       onClose();
@@ -150,19 +139,12 @@ export default function RecordPaymentModal({
               <span className="text-xs font-semibold tracking-[0.6px] text-[#434655]">
                 Date
               </span>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className="h-10 w-full rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] pl-4 pr-10 text-base text-[#0B1C30] outline-none focus:ring-2 focus:ring-[#325A5E]/30"
-                />
-                <Calendar
-                  size={16}
-                  stroke="#434655"
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2"
-                />
-              </div>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="h-10 w-full rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] px-4 text-base text-[#0B1C30] outline-none focus:ring-2 focus:ring-[#325A5E]/30"
+              />
             </div>
           </div>
         </div>

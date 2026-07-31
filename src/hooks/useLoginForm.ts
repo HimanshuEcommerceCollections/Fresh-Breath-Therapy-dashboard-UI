@@ -66,11 +66,21 @@ export const useLoginForm = () => {
         return;
       }
 
-      // Email/OTP delivery is temporarily disabled backend-side — go straight
-      // to the home page once login succeeds instead of the OTP step.
-      // CurrentUserProvider only checks the session once on initial app
-      // mount, so without this refetch it still holds user: null and
-      // ProtectedShell bounces us straight back to /login after the push.
+      if (res.otpRequired) {
+        const expiresAtParam = res.expiresAt
+          ? `&expiresAt=${encodeURIComponent(res.expiresAt)}`
+          : "";
+        router.push(
+          `/verify-otp?email=${encodeURIComponent(values.email)}&flow=login${expiresAtParam}`
+        );
+        return;
+      }
+
+      // EMAIL_SERVICE is off backend-side — login already completed and set
+      // the session cookie, so go straight to the home page. CurrentUserProvider
+      // only checks the session once on initial app mount, so without this
+      // refetch it still holds user: null and ProtectedShell bounces us
+      // straight back to /login after the push.
       await refetch();
       router.push("/");
     } catch (err) {

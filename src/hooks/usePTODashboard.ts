@@ -1,7 +1,7 @@
 // src/hooks/usePTODashboard.ts
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ptoService, type PTODashboardData } from "@/src/services/ptoService";
 
 const EMPTY: PTODashboardData = {
@@ -11,27 +11,10 @@ const EMPTY: PTODashboardData = {
 };
 
 export const usePTODashboard = () => {
-  const [data, setData] = useState<PTODashboardData>(EMPTY);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoading(true);
-    ptoService
-      .fetchPTODashboard()
-      .then((result) => {
-        if (isMounted) setData(result);
-      })
-      .catch(() => {
-        // Error toast already surfaced by the apiClient interceptor.
-      })
-      .finally(() => {
-        if (isMounted) setIsLoading(false);
-      });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { data = EMPTY, isLoading } = useQuery({
+    queryKey: ["pto-dashboard"],
+    queryFn: () => ptoService.fetchPTODashboard(),
+  });
 
   return { ...data, isLoading };
 };

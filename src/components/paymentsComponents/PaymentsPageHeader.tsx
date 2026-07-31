@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import RecordPaymentModal from "@/src/sections/paymentsSections/RecordPaymentModal";
 import type { CreatePaymentPayload } from "@/src/services/paymentsService";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { canWrite } from "@/src/lib/permissions";
 
 export default function PaymentsPageHeader({
   onCreate,
@@ -11,6 +13,7 @@ export default function PaymentsPageHeader({
   onCreate: (payload: CreatePaymentPayload) => Promise<void>;
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const { role } = useCurrentUser();
 
   return (
     <div className="flex flex-row items-end justify-between">
@@ -23,14 +26,16 @@ export default function PaymentsPageHeader({
         </p>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setIsModalOpen(true)}
-        className="flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-[#376EF4] px-4 text-sm font-medium text-[#FCFCFC] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-opacity hover:opacity-90"
-      >
-        <Plus size={16} stroke="#FCFCFC" />
-        Record Payment
-      </button>
+      {canWrite(role) && (
+        <button
+          type="button"
+          onClick={() => setIsModalOpen(true)}
+          className="flex h-9 cursor-pointer items-center gap-1.5 rounded-xl bg-[#376EF4] px-4 text-sm font-medium text-[#FCFCFC] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-opacity hover:opacity-90"
+        >
+          <Plus size={16} stroke="#FCFCFC" />
+          Record Payment
+        </button>
+      )}
 
       <RecordPaymentModal
         open={isModalOpen}

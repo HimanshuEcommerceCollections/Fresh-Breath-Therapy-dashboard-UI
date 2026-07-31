@@ -1,13 +1,20 @@
 "use client";
 
 import type { Session } from "@/src/services/sessionsService";
+import type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
 import { statusOptionsData } from "@/src/data/sessionsData/statusOptionsData";
 import { SESSIONS_TABLE_GRID } from "@/src/sections/sessionsSections/sessionsTableGrid";
 import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { canSetTerminalSessionStatus } from "@/src/lib/permissions";
 
-export default function SessionTableRow({ session }: { session: Session }) {
+export default function SessionTableRow({
+  session,
+  onStatusChange,
+}: {
+  session: Session;
+  onStatusChange: (sessionId: string, status: SessionStatus) => Promise<void>;
+}) {
   const { role } = useCurrentUser();
 
   return (
@@ -34,6 +41,9 @@ export default function SessionTableRow({ session }: { session: Session }) {
           status={session.status}
           options={statusOptionsData}
           readOnly={!canSetTerminalSessionStatus(role)}
+          onSelect={(value) => {
+            void onStatusChange(session.id, value as SessionStatus);
+          }}
         />
       </div>
     </div>

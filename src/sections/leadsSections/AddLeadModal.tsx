@@ -6,10 +6,10 @@ import type { LeadStatus } from "@/src/data/leadsData/leadsData";
 import type { CreateLeadPayload, Lead } from "@/src/services/leadsService";
 import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
 import { referralSourceOptions } from "@/src/data/leadsData/referralSourceOptions";
-import { useLocations } from "@/src/hooks/useLocations";
 import { useTherapists } from "@/src/hooks/useTherapists";
 import FormField from "@/src/sections/leadsSections/FormField";
 import FormSelect from "@/src/sections/leadsSections/FormSelect";
+import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 
 const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"];
@@ -19,15 +19,6 @@ function PersonIcon() {
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M16 19V17.5C16 15.8431 14.6569 14.5 13 14.5H9C7.34315 14.5 6 15.8431 6 17.5V19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx="11" cy="8.5" r="3" stroke="currentColor" strokeWidth="1.5" />
-    </svg>
-  );
-}
-
-function PinIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M19 10C19 14.5 12 20 12 20C12 20 5 14.5 5 10C5 6.13401 8.13401 3 12 3C15.866 3 19 6.13401 19 10Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -57,7 +48,6 @@ export default function AddLeadModal({
   onClose: () => void;
   onCreate: (payload: CreateLeadPayload) => Promise<Lead>;
 }) {
-  const { locations } = useLocations();
   const { therapists } = useTherapists();
 
   const [fullName, setFullName] = useState("");
@@ -65,7 +55,7 @@ export default function AddLeadModal({
   const [gender, setGender] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [locationName, setLocationName] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [source, setSource] = useState("");
   const [therapistName, setTherapistName] = useState("");
   const [status, setStatus] = useState<LeadStatus>("New Lead");
@@ -73,7 +63,6 @@ export default function AddLeadModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleAddLead() {
-    const locationId = locations.find((l) => l.name === locationName)?.id;
     if (!locationId) return;
     const therapistId = therapists.find((t) => t.name === therapistName)?.id;
 
@@ -159,14 +148,7 @@ export default function AddLeadModal({
           </div>
 
           <div className="flex gap-6">
-            <FormSelect
-              label="Location"
-              icon={<PinIcon />}
-              placeholder="Select location"
-              options={locations.map((l) => l.name)}
-              value={locationName}
-              onChange={setLocationName}
-            />
+            <LocationSelect value={locationId} onChange={setLocationId} />
             <FormSelect
               label="Referral Source"
               icon={<MegaphoneIcon />}
@@ -225,7 +207,7 @@ export default function AddLeadModal({
           </button>
           <button
             type="button"
-            disabled={!fullName || !locationName || isSubmitting}
+            disabled={!fullName || !locationId || isSubmitting}
             onClick={handleAddLead}
             className="cursor-pointer rounded-lg bg-[#325A5E] px-8 py-2.5 text-xs font-semibold tracking-[0.6px] text-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-50"
           >

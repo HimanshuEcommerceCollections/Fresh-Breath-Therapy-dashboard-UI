@@ -7,9 +7,11 @@
 
 import type { RoleName } from "@/src/services/authService";
 
-// Section 1.3: "Therapist: Read-only everywhere ... own records only."
+// Admin is the only role permitted to create/edit records (leads, clients,
+// sessions, follow-ups, payments, etc). Coordinator is read-only, matching
+// the backend's require_admin() guards on these write endpoints.
 export function canWrite(role: RoleName | null): boolean {
-  return role === "Admin" || role === "Coordinator";
+  return role === "Admin";
 }
 
 // Matrix: "Sessions — Completed/Cancelled/No Show: Admin Yes, Coordinator No (403), Therapist No."

@@ -5,9 +5,19 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import type { CurrentUser } from "@/src/services/authService";
+import type { Therapist } from "@/src/services/therapistsService";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
-export default function HeaderProfileAvatar({ user }: { user: CurrentUser }) {
+export default function HeaderProfileAvatar({
+  user,
+  therapist,
+}: {
+  user: CurrentUser;
+  /** The linked Therapist record — this drives the avatar image/initials,
+   * not `user`, so the navbar shows the same identity as the Sidebar's
+   * profile card. */
+  therapist: Therapist;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { logout } = useCurrentUser();
@@ -34,21 +44,21 @@ export default function HeaderProfileAvatar({ user }: { user: CurrentUser }) {
     <div ref={containerRef} className="relative">
       <button
         type="button"
-        aria-label={`${user.name} profile menu`}
+        aria-label={`${therapist.name} profile menu`}
         onClick={() => setIsOpen((prev) => !prev)}
         className="h-8 w-8 shrink-0 overflow-hidden rounded-full border-2 border-[#325A5E] bg-[#376EF4]"
       >
-        {user.avatarUrl ? (
+        {therapist.avatarUrl ? (
           <Image
-            src={user.avatarUrl}
-            alt={user.name}
+            src={therapist.avatarUrl}
+            alt={therapist.name}
             width={32}
             height={32}
             className="h-full w-full object-cover"
           />
         ) : (
           <span className="flex h-full w-full items-center justify-center text-xs font-semibold text-white">
-            {user.name
+            {therapist.name
               .split(" ")
               .map((part) => part[0])
               .slice(0, 2)

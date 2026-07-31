@@ -1,10 +1,9 @@
 // src/hooks/useFollowUps.ts
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   followUpsService,
-  type FollowUpWithClient,
   type FollowUpStats,
   type CreateFollowUpPayload,
 } from "@/src/services/followUpsService";
@@ -16,49 +15,59 @@ import type { FollowUpFilter } from "@/src/sections/followUpsSections/FilterTabs
 const EMPTY_STATS: FollowUpStats = { pending: 0, overdue: 0, completed: 0 };
 
 export const useFollowUps = (activeTab: FollowUpFilter) => {
-  const [followUps, setFollowUps] = useState<FollowUpWithClient[]>([]);
-  const [stats, setStats] = useState<FollowUpStats>(EMPTY_STATS);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const statusFilter = activeTab === "All" ? undefined : (activeTab as FollowUpStatus);
 
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const statusFilter = activeTab === "All" ? undefined : (activeTab as FollowUpStatus);
+  const { data, isLoading } = useQuery({
+    queryKey: ["follow-ups", statusFilter],
+    queryFn: async () => {
       const [rawFollowUps, clients, freshStats] = await Promise.all([
         followUpsService.fetchFollowUps(statusFilter),
         clientsService.fetchClients(),
         followUpsService.fetchStats(),
       ]);
       const clientNameById = new Map(clients.map((c) => [c.id, c.name]));
-      setFollowUps(
-        rawFollowUps.map((f) => ({
+      return {
+        followUps: rawFollowUps.map((f) => ({
           ...f,
           client: clientNameById.get(f.clientId) ?? "Unknown client",
-        }))
-      );
-      setStats(freshStats);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    } finally {
-      setIsLoading(false);
-    }
-  }, [activeTab]);
+        })),
+        stats: freshStats,
+      };
+    },
+  });
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["follow-ups"] });
+
+  const createFollowUpMutation = useMutation({
+    mutationFn: (payload: CreateFollowUpPayload) => followUpsService.createFollowUp(payload),
+    onSuccess: () => {
+      showSuccessToast("Follow-up created");
+      invalidate();
+    },
+  });
+
+  const completeFollowUpMutation = useMutation({
+    mutationFn: (followUpId: string) => followUpsService.completeFollowUp(followUpId),
+    onSuccess: () => {
+      showSuccessToast("Follow-up marked complete");
+      invalidate();
+    },
+  });
 
   const createFollowUp = async (payload: CreateFollowUpPayload) => {
-    await followUpsService.createFollowUp(payload);
-    showSuccessToast("Follow-up created");
-    await load();
+    await createFollowUpMutation.mutateAsync(payload);
   };
 
   const completeFollowUp = async (followUpId: string) => {
-    await followUpsService.completeFollowUp(followUpId);
-    showSuccessToast("Follow-up marked complete");
-    await load();
+    await completeFollowUpMutation.mutateAsync(followUpId);
   };
 
-  return { followUps, stats, isLoading, createFollowUp, completeFollowUp };
+  return {
+    followUps: data?.followUps ?? [],
+    stats: data?.stats ?? EMPTY_STATS,
+    isLoading,
+    createFollowUp,
+    completeFollowUp,
+  };
 };

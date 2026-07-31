@@ -19,10 +19,12 @@ export default function Sidebar() {
     }))
     .filter((group) => group.items.length > 0);
 
-  // Section 1.4: Therapist role never shows this (redundant with their own
-  // scoped nav); Admin/Coordinator only once a Therapist record is linked
-  // to their email — confirmed via useCurrentUser's linkedTherapist lookup.
-  const showProfileCard = role !== "Therapist" && linkedTherapist !== null;
+  // Role-agnostic: shown for any role as long as the logged-in user has a
+  // linked Therapist record (useCurrentUser's linkedTherapist lookup). A
+  // real Therapist-role account always has one, since it's only ever
+  // approved because a matching Therapist record exists and gets linked at
+  // approval time — no separate role branch needed.
+  const showProfileCard = linkedTherapist !== null;
 
   return (
     <aside

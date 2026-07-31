@@ -1,40 +1,33 @@
 // src/hooks/useTherapists.ts
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   therapistsService,
-  type Therapist,
   type AddTherapistPayload,
 } from "@/src/services/therapistsService";
 import { showSuccessToast } from "@/src/lib/toast";
 
 export const useTherapists = () => {
-  const [therapists, setTherapists] = useState<Therapist[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const refetch = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await therapistsService.fetchTherapists();
-      setTherapists(data);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  const { data: therapists = [], isLoading, refetch } = useQuery({
+    queryKey: ["therapists"],
+    queryFn: () => therapistsService.fetchTherapists(),
+  });
 
-  useEffect(() => {
-    refetch();
-  }, [refetch]);
+  const addTherapistMutation = useMutation({
+    mutationFn: (payload: AddTherapistPayload) => therapistsService.addTherapist(payload),
+    onSuccess: () => {
+      showSuccessToast("Therapist created");
+      queryClient.invalidateQueries({ queryKey: ["therapists"] });
+    },
+  });
 
-  const addTherapist = async (payload: AddTherapistPayload) => {
-    const therapist = await therapistsService.addTherapist(payload);
-    showSuccessToast("Therapist created");
-    setTherapists((prev) => [...prev, therapist]);
-    return therapist;
+  return {
+    therapists,
+    isLoading,
+    refetch,
+    addTherapist: addTherapistMutation.mutateAsync,
   };
-
-  return { therapists, isLoading, refetch, addTherapist };
 };

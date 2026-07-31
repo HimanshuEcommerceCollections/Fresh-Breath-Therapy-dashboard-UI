@@ -1,14 +1,20 @@
 "use client";
 
-import { useFeatureFlags } from "@/src/hooks/useFeatureFlags";
+import { useState } from "react";
+import { notificationSettingsData } from "@/src/data/settingsData/notificationSettingsData";
 import ToggleRow from "@/src/sections/settingsSections/ToggleRow";
-import { ToggleRowSkeleton } from "@/src/sections/settingsSections/ToggleRowSkeleton";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { isAdmin } from "@/src/lib/permissions";
 
+// Static design UI — not backed by an API, same as the SaaS and Security
+// tabs. Toggling here is local-only and doesn't persist.
 export default function NotificationsSettings() {
   const { role } = useCurrentUser();
-  const { flags, isLoading, toggle } = useFeatureFlags("notification");
+  const [settings, setSettings] = useState(notificationSettingsData);
+
+  function toggle(id: string) {
+    setSettings((prev) => prev.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
+  }
 
   return (
     <div className="flex max-w-[630px] flex-col rounded-[18px] border border-[#E0E5EB] bg-white p-5 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
@@ -16,17 +22,15 @@ export default function NotificationsSettings() {
         Notifications
       </h3>
       <div className="flex flex-col divide-y divide-[#E0E5EB]">
-        {isLoading
-          ? Array.from({ length: 4 }).map((_, i) => <ToggleRowSkeleton key={i} />)
-          : flags.map((flag) => (
-              <ToggleRow
-                key={flag.id}
-                label={flag.label}
-                enabled={flag.enabled}
-                onToggle={() => toggle(flag.id, !flag.enabled)}
-                disabled={!isAdmin(role)}
-              />
-            ))}
+        {settings.map((setting) => (
+          <ToggleRow
+            key={setting.id}
+            label={setting.label}
+            enabled={setting.enabled}
+            onToggle={() => toggle(setting.id)}
+            disabled={!isAdmin(role)}
+          />
+        ))}
       </div>
     </div>
   );

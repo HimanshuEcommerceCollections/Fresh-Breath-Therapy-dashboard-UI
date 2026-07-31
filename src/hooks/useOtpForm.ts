@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { otpService } from "@/src/services/authService";
 import { otpContent } from "@/src/data/authData/otpData";
 import { OtpFlow } from "@/src/types/auth";
+import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 
 export type { OtpFlow };
 
@@ -35,6 +36,7 @@ export const useOtpForm = ({
   expiresAt,
 }: UseOtpFormOptions) => {
   const router = useRouter();
+  const { refetch } = useCurrentUser();
   const [digits, setDigits] = useState<string[]>(Array(length).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -88,8 +90,14 @@ export const useOtpForm = ({
         return;
       }
 
-      // Both flows land on the home page once verified. If signup ever needs
-      // an onboarding step instead, branch here on `flow === "signup"`.
+      // Login sets the session cookie server-side on verify — refetch so
+      // CurrentUserProvider picks it up before we navigate, otherwise
+      // ProtectedShell still sees user: null and bounces back to /login.
+      // Signup never sets a cookie (the account is still pending admin
+      // approval), so there's no session to refetch there.
+      if (flow === "login") {
+        await refetch();
+      }
       router.push("/");
     } catch {
       setError("Something went wrong. Please try again.");

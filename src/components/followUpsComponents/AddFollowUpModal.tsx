@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Calendar, X } from "lucide-react";
+import { X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
 import ReminderToggle from "@/src/sections/followUpsSections/ReminderToggle";
@@ -11,17 +11,6 @@ import type { CreateFollowUpPayload } from "@/src/services/followUpsService";
 // #004AC6) is deliberately distinct from the Schedule Session modal's.
 const LABEL_CLASS =
   "text-xs font-semibold leading-4 tracking-[0.6px] text-[#434655]";
-
-// The date input is free-text DD/MM/YYYY (no date picker exists yet — a
-// pre-existing limitation, not introduced here). Converts to the ISO
-// "YYYY-MM-DD" the real API expects; returns null if unparseable so the
-// caller can avoid submitting a malformed date rather than 422'ing.
-function toIsoDate(ddmmyyyy: string): string | null {
-  const match = ddmmyyyy.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (!match) return null;
-  const [, day, month, year] = match;
-  return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
-}
 
 export default function AddFollowUpModal({
   open,
@@ -33,7 +22,7 @@ export default function AddFollowUpModal({
   onCreate: (payload: CreateFollowUpPayload) => Promise<void>;
 }) {
   const [clientId, setClientId] = useState("");
-  const [dueDate, setDueDate] = useState("25/06/2026");
+  const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [reminder, setReminder] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,12 +30,11 @@ export default function AddFollowUpModal({
   if (!open) return null;
 
   async function handleCreate() {
-    const isoDueDate = toIsoDate(dueDate);
-    if (!clientId || !isoDueDate) return;
+    if (!clientId || !dueDate) return;
 
     setIsSubmitting(true);
     try {
-      await onCreate({ clientId, dueDate: isoDueDate, notes: notes || undefined, reminder });
+      await onCreate({ clientId, dueDate, notes: notes || undefined, reminder });
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -82,19 +70,12 @@ export default function AddFollowUpModal({
 
           <div className="flex flex-col gap-1.5">
             <span className={LABEL_CLASS}>Due date</span>
-            <div className="relative">
-              <input
-                type="text"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="h-12 w-full rounded-lg border border-[#C3C6D7] bg-[#EFF4FF] pl-4 pr-11 text-base font-normal leading-6 text-[#0B1C30] outline-none focus:border-[#004AC6]"
-              />
-              <Calendar
-                size={16}
-                stroke="#434655"
-                className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2"
-              />
-            </div>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="h-12 w-full rounded-lg border border-[#C3C6D7] bg-[#EFF4FF] px-4 text-base font-normal leading-6 text-[#0B1C30] outline-none focus:border-[#004AC6]"
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">

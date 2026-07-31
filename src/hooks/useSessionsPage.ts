@@ -14,9 +14,11 @@
 // each view just picks a different date_from/date_to range for the same
 // search call, then the view components group the flat response client-side.
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTherapists } from "@/src/hooks/useTherapists";
-import { sessionsService, type Session, type ScheduleSessionPayload } from "@/src/services/sessionsService";
+import type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
+import { sessionsService, type ScheduleSessionPayload } from "@/src/services/sessionsService";
 import { showSuccessToast } from "@/src/lib/toast";
 import type { SessionsView } from "@/src/sections/sessionsSections/ViewToggle";
 import {
@@ -31,6 +33,8 @@ import {
 } from "@/src/lib/dateRanges";
 
 export function useSessionsPage() {
+  const queryClient = useQueryClient();
+
   // ── View & date ──────────────────────────────────────────────────────────
   const [activeView, setActiveView] = useState<SessionsView>("list");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -147,33 +151,41 @@ export function useSessionsPage() {
   }, [activeView]);
 
   // ── Sessions (real — date-bounded per the active view above) ────────────
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [isLoadingSessions, setIsLoadingSessions] = useState(true);
-
-  const loadSessions = useCallback(async () => {
-    setIsLoadingSessions(true);
-    try {
-      const data = await sessionsService.searchSessions({
+  const { data: sessions = [], isLoading: isLoadingSessions } = useQuery({
+    queryKey: ["sessions", { therapistIds: selectedTherapistIds, ...dateRange }],
+    queryFn: () =>
+      sessionsService.searchSessions({
         therapistIds: selectedTherapistIds.length ? selectedTherapistIds : undefined,
         dateFrom: dateRange.dateFrom,
         dateTo: dateRange.dateTo,
-      });
-      setSessions(data);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    } finally {
-      setIsLoadingSessions(false);
-    }
-  }, [selectedTherapistIds, dateRange]);
+      }),
+  });
 
-  useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
+  const invalidateSessions = () => queryClient.invalidateQueries({ queryKey: ["sessions"] });
+
+  const scheduleSessionMutation = useMutation({
+    mutationFn: (payload: ScheduleSessionPayload) => sessionsService.scheduleSession(payload),
+    onSuccess: () => {
+      showSuccessToast("Session scheduled");
+      invalidateSessions();
+    },
+  });
+
+  const updateSessionStatusMutation = useMutation({
+    mutationFn: ({ sessionId, status }: { sessionId: string; status: SessionStatus }) =>
+      sessionsService.updateSession(sessionId, { status }),
+    onSuccess: () => {
+      showSuccessToast("Session status updated");
+      invalidateSessions();
+    },
+  });
 
   const scheduleSession = async (payload: ScheduleSessionPayload) => {
-    await sessionsService.scheduleSession(payload);
-    showSuccessToast("Session scheduled");
-    await loadSessions();
+    await scheduleSessionMutation.mutateAsync(payload);
+  };
+
+  const updateSessionStatus = async (sessionId: string, status: SessionStatus) => {
+    await updateSessionStatusMutation.mutateAsync({ sessionId, status });
   };
 
   return {
@@ -213,5 +225,6 @@ export function useSessionsPage() {
     sessions,
     isLoadingSessions,
     scheduleSession,
+    updateSessionStatus,
   };
 }

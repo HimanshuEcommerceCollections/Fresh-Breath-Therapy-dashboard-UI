@@ -17,6 +17,7 @@ export interface AuthResponse {
   success: boolean;
   message?: string;
   expiresAt?: string;
+  otpRequired?: boolean;
 }
 
 export type RoleName = "Admin" | "Coordinator" | "Therapist";
@@ -81,7 +82,12 @@ export const loginService = {
         { idempotent: true, idempotencyKey: newIdempotencyKey() }
       );
       showSuccessToast(res.data.detail);
-      return { success: true, message: res.data.detail, expiresAt: res.data.expires_at };
+      return {
+        success: true,
+        message: res.data.detail,
+        expiresAt: res.data.expires_at,
+        otpRequired: res.data.otp_required,
+      };
     } catch (err) {
       return { success: false, message: failureMessage(err, "Invalid email or password.") };
     }

@@ -1,14 +1,20 @@
 "use client";
 
-import { useFeatureFlags } from "@/src/hooks/useFeatureFlags";
+import { useState } from "react";
+import { saasModulesData } from "@/src/data/settingsData/saasModulesData";
 import ToggleRow from "@/src/sections/settingsSections/ToggleRow";
-import { ToggleRowSkeleton } from "@/src/sections/settingsSections/ToggleRowSkeleton";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { isAdmin } from "@/src/lib/permissions";
 
+// Static design UI — these modules aren't wired to a backend; there is
+// nothing behind them yet to persist a toggle state to.
 export default function SaaSSettings() {
   const { role } = useCurrentUser();
-  const { flags, isLoading, toggle } = useFeatureFlags("saas");
+  const [modules, setModules] = useState(saasModulesData);
+
+  function toggle(id: string) {
+    setModules((prev) => prev.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m)));
+  }
 
   return (
     <div className="flex max-w-[630px] flex-col rounded-[18px] border border-[#E0E5EB] bg-white p-5 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
@@ -19,17 +25,15 @@ export default function SaaSSettings() {
         Architecture is multi-tenant ready. Toggle modules as they roll out.
       </p>
       <div className="mt-1 flex flex-col divide-y divide-[#E0E5EB]">
-        {isLoading
-          ? Array.from({ length: 4 }).map((_, i) => <ToggleRowSkeleton key={i} />)
-          : flags.map((flag) => (
-              <ToggleRow
-                key={flag.id}
-                label={flag.label}
-                enabled={flag.enabled}
-                onToggle={() => toggle(flag.id, !flag.enabled)}
-                disabled={!isAdmin(role)}
-              />
-            ))}
+        {modules.map((module) => (
+          <ToggleRow
+            key={module.id}
+            label={module.label}
+            enabled={module.enabled}
+            onToggle={() => toggle(module.id)}
+            disabled={!isAdmin(role)}
+          />
+        ))}
       </div>
     </div>
   );

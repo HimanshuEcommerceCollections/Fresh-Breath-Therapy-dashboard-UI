@@ -52,7 +52,11 @@ export default function SessionsPage() {
       )}
 
       {sessions.activeView === "list" && (
-        <SessionsTable sessions={sessions.sessions} isLoading={sessions.isLoadingSessions} />
+        <SessionsTable
+          sessions={sessions.sessions}
+          isLoading={sessions.isLoadingSessions}
+          onStatusChange={sessions.updateSessionStatus}
+        />
       )}
       {sessions.activeView === "day" && (
         <SessionsDayView

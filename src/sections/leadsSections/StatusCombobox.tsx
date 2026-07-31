@@ -11,6 +11,7 @@ export default function StatusCombobox({
   options,
   widthClass = "w-45",
   readOnly = false,
+  onSelect,
 }: {
   status: string;
   options: string[];
@@ -18,6 +19,9 @@ export default function StatusCombobox({
   /** Renders the same pill with no dropdown/interaction — for roles without
    * write access to this resource. */
   readOnly?: boolean;
+  /** Called with the newly picked option — wire this to a backend update.
+   * Omit to keep the previous local-only behavior. */
+  onSelect?: (value: string) => void;
 }) {
   const [currentStatus, setCurrentStatus] = useState(status);
   const [isOpen, setIsOpen] = useState(false);
@@ -67,7 +71,10 @@ export default function StatusCombobox({
         <StatusDropdownMenu
           options={options}
           selected={currentStatus}
-          onSelect={setCurrentStatus}
+          onSelect={(value) => {
+            setCurrentStatus(value);
+            onSelect?.(value);
+          }}
           onClose={() => setIsOpen(false)}
         />
       )}

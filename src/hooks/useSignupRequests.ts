@@ -5,100 +5,78 @@
 // Manages the signup requests list plus the approve (role-select modal) and
 // reject (confirm-delete) flows. Approvals/rejections can fail for reasons
 // the UI can't predict up front (missing Therapist record, another admin
-// already reviewed the request in another tab) — so both flows refetch the
-// list from the server afterward instead of optimistically mutating local
-// state, which would drift from reality on any of those failures.
+// already reviewed the request in another tab) — so both flows invalidate
+// the list from the server afterward instead of optimistically mutating
+// local state, which would drift from reality on any of those failures.
+//
+// Query key is ["role-requests"] (no status filter) for this page's full
+// list — the Sidebar's pending-count badge (SidebarSignupRequestsItem) uses
+// ["role-requests", "pending"], sharing the same prefix, so invalidating
+// ["role-requests"] here also refreshes the Sidebar badge instantly.
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SignupRequest } from "@/src/data/signupRequestsData/signupRequestsData";
 import { signupRequestsService } from "@/src/services/signupRequestsService";
-import { rolesService, type SettingsRole } from "@/src/services/settingsService";
+import { rolesService } from "@/src/services/settingsService";
 
 export function useSignupRequests() {
-  const [requests, setRequests] = useState<SignupRequest[]>([]);
-  const [roles, setRoles] = useState<SettingsRole[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: requests = [], isLoading } = useQuery({
+    queryKey: ["role-requests"],
+    queryFn: () => signupRequestsService.fetchSignupRequests(),
+  });
+
+  const { data: roles = [] } = useQuery({
+    queryKey: ["settings", "roles"],
+    queryFn: () => rolesService.fetchRoles(),
+  });
 
   // Approve flow — holds the request being approved, or null when the
   // modal is closed.
   const [approveTarget, setApproveTarget] = useState<SignupRequest | null>(null);
-  const [isApproving, setIsApproving] = useState(false);
 
   // Reject flow — holds the ID to delete, or null when closed.
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
-  const refetch = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await signupRequestsService.fetchSignupRequests();
-      setRequests(data);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    refetch();
-    rolesService.fetchRoles().then(setRoles).catch(() => setRoles([]));
-  }, [refetch]);
+  const invalidateRoleRequests = () =>
+    queryClient.invalidateQueries({ queryKey: ["role-requests"] });
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
 
   // Step 1: user clicks Approve → open role-select modal
-  const handleApproveClick = useCallback((request: SignupRequest) => {
-    setApproveTarget(request);
-  }, []);
+  const handleApproveClick = (request: SignupRequest) => setApproveTarget(request);
+  const handleCancelApprove = () => setApproveTarget(null);
 
   // Step 2a: user picks a role and confirms
-  const handleConfirmApprove = useCallback(
-    async (roleId: string) => {
-      if (!approveTarget) return;
-      setIsApproving(true);
-      try {
-        await signupRequestsService.approveRequest(approveTarget.id, roleId);
-        setApproveTarget(null);
-      } catch {
-        // Error toast already surfaced by the apiClient interceptor
-        // (e.g. "No therapist record found...", "Request already
-        // reviewed."). Refetch below regardless so the list reflects
-        // whatever the server's real state ended up being.
-      } finally {
-        setIsApproving(false);
-        await refetch();
-      }
+  const approveMutation = useMutation({
+    mutationFn: (roleId: string) => {
+      if (!approveTarget) throw new Error("No request selected");
+      return signupRequestsService.approveRequest(approveTarget.id, roleId);
     },
-    [approveTarget, refetch]
-  );
-
-  const handleCancelApprove = useCallback(() => {
-    setApproveTarget(null);
-  }, []);
+    onSettled: () => {
+      // Refetch regardless of success/failure — errors (e.g. "No therapist
+      // record found...", "Request already reviewed.") are surfaced
+      // verbatim by the apiClient toast interceptor, and the list should
+      // reflect whatever the server's real state ended up being either way.
+      setApproveTarget(null);
+      invalidateRoleRequests();
+    },
+  });
 
   // Step 1: user clicks trash → open confirm dialog
-  const handleRejectClick = useCallback((id: string) => {
-    setConfirmDeleteId(id);
-  }, []);
+  const handleRejectClick = (id: string) => setConfirmDeleteId(id);
+  const handleCancelReject = () => setConfirmDeleteId(null);
 
   // Step 2a: user confirms → permanently deletes the user account
-  const handleConfirmReject = useCallback(async () => {
-    if (!confirmDeleteId) return;
-    setIsDeleting(true);
-    try {
-      await signupRequestsService.rejectRequest(confirmDeleteId);
-    } catch {
-      // Error toast already surfaced by the apiClient interceptor.
-    } finally {
-      setIsDeleting(false);
+  const rejectMutation = useMutation({
+    mutationFn: (requestId: string) => signupRequestsService.rejectRequest(requestId),
+    onSettled: () => {
       setConfirmDeleteId(null);
-      await refetch();
-    }
-  }, [confirmDeleteId, refetch]);
-
-  // Step 2b: user cancels
-  const handleCancelReject = useCallback(() => {
-    setConfirmDeleteId(null);
-  }, []);
+      invalidateRoleRequests();
+    },
+  });
 
   return {
     requests,
@@ -107,15 +85,16 @@ export function useSignupRequests() {
     pendingCount,
     // Approve flow
     approveTarget,
-    isApproving,
+    isApproving: approveMutation.isPending,
     handleApproveClick,
-    handleConfirmApprove,
+    handleConfirmApprove: (roleId: string) => approveMutation.mutateAsync(roleId).catch(() => {}),
     handleCancelApprove,
     // Reject flow
     confirmDeleteId,
-    isDeleting,
+    isDeleting: rejectMutation.isPending,
     handleRejectClick,
-    handleConfirmReject,
+    handleConfirmReject: () =>
+      confirmDeleteId ? rejectMutation.mutateAsync(confirmDeleteId).catch(() => {}) : undefined,
     handleCancelReject,
   };
 }
