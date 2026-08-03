@@ -38,6 +38,30 @@ export const useClients = () => {
     },
   });
 
+  const updateClientMutation = useMutation({
+    mutationFn: ({
+      clientId,
+      payload,
+    }: {
+      clientId: string;
+      payload: Partial<Parameters<typeof clientsService.createClient>[0]>;
+    }) => clientsService.updateClient(clientId, payload),
+    onSuccess: () => {
+      showSuccessToast("Client updated");
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+
+  const deleteClientMutation = useMutation({
+    mutationFn: (clientId: string) => clientsService.deleteClient(clientId),
+    onSuccess: () => {
+      showSuccessToast("Client deleted");
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+
   // Lead-search "Add Client" flow — real leads, real convert endpoint
   // (POST /api/leads/{lead_id}/convert, section 7).
   const [isAddingClient, setIsAddingClient] = useState(false);
@@ -86,6 +110,9 @@ export const useClients = () => {
     locationId,
     setLocationId,
     createClient: createClientMutation.mutateAsync,
+    updateClient: (clientId: string, payload: Partial<Parameters<typeof clientsService.createClient>[0]>) =>
+      updateClientMutation.mutateAsync({ clientId, payload }),
+    deleteClient: deleteClientMutation.mutateAsync,
     isAddingClient,
     openLeadSearch,
     cancelLeadSearch,

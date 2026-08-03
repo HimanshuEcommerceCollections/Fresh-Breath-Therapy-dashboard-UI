@@ -200,36 +200,38 @@ export default function LocationSelectionMenu({
         {selected === ALL_LOCATIONS && <CheckmarkIcon />}
       </button>
 
-      {locations.map((location) => (
-        <div
-          key={location.id}
-          className={`group flex w-full items-center justify-between rounded-[4px] px-2.5 py-2 text-[13px] font-medium text-[#0F172A] ${
-            location.name === selected ? "bg-[#EFF6FF]" : "hover:bg-slate-50"
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              onSelect(location.name);
-              onClose();
-            }}
-            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
+      <div className="max-h-[240px] overflow-y-auto">
+        {locations.map((location) => (
+          <div
+            key={location.id}
+            className={`group flex w-full items-center justify-between rounded-[4px] px-2.5 py-2 text-[13px] font-medium text-[#0F172A] ${
+              location.name === selected ? "bg-[#EFF6FF]" : "hover:bg-slate-50"
+            }`}
           >
-            <span className="truncate">{location.name}</span>
-            {location.name === selected && <CheckmarkIcon />}
-          </button>
-          {canManage && (
             <button
               type="button"
-              aria-label={`Delete ${location.name}`}
-              onClick={() => setConfirmDelete(location)}
-              className="shrink-0 cursor-pointer rounded p-1 text-[#94A3B8] transition-colors hover:bg-red-50 hover:text-red-500"
+              onClick={() => {
+                onSelect(location.name);
+                onClose();
+              }}
+              className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 text-left"
             >
-              <Trash2 size={13} strokeWidth={1.5} />
+              <span className="truncate">{location.name}</span>
+              {location.name === selected && <CheckmarkIcon />}
             </button>
-          )}
-        </div>
-      ))}
+            {canManage && (
+              <button
+                type="button"
+                aria-label={`Delete ${location.name}`}
+                onClick={() => setConfirmDelete(location)}
+                className="shrink-0 cursor-pointer rounded p-1 text-[#94A3B8] transition-colors hover:bg-red-50 hover:text-red-500"
+              >
+                <Trash2 size={13} strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

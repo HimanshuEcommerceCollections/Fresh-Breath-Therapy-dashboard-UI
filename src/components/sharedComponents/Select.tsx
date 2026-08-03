@@ -86,7 +86,7 @@ export default function Select({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full z-30 mt-1 w-full min-w-[160px] rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-2 shadow-[0px_4px_20px_rgba(0,0,0,0.08)]">
+        <div className="absolute left-0 top-full z-30 mt-1 max-h-[240px] w-full min-w-[160px] overflow-y-auto rounded-xl border border-[rgba(0,0,0,0.05)] bg-white p-2 shadow-[0px_4px_20px_rgba(0,0,0,0.08)]">
           {options.map((option) => (
             <button
               key={option}

@@ -7,9 +7,13 @@ import { TableSkeleton } from "@/src/components/ui/TableRowSkeleton";
 export default function LeadsTable({
   leads,
   isLoading,
+  onEdit,
+  onDelete,
 }: {
   leads: Lead[];
   isLoading?: boolean;
+  onEdit: (lead: Lead) => void;
+  onDelete: (lead: Lead) => void;
 }) {
   return (
     <div className="rounded-[18px] border border-[#E0E5EB] bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
@@ -18,7 +22,9 @@ export default function LeadsTable({
         {isLoading ? (
           <TableSkeleton gridClassName={LEADS_TABLE_GRID} columns={7} rows={7} />
         ) : (
-          leads.map((lead) => <LeadsTableRow key={lead.id} lead={lead} />)
+          leads.map((lead) => (
+            <LeadsTableRow key={lead.id} lead={lead} onEdit={onEdit} onDelete={onDelete} />
+          ))
         )}
       </div>
     </div>

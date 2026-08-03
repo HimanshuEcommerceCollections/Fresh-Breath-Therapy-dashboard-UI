@@ -7,7 +7,15 @@ import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { canWrite } from "@/src/lib/permissions";
 
-export default function LeadsTableRow({ lead }: { lead: Lead }) {
+export default function LeadsTableRow({
+  lead,
+  onEdit,
+  onDelete,
+}: {
+  lead: Lead;
+  onEdit: (lead: Lead) => void;
+  onDelete: (lead: Lead) => void;
+}) {
   const { role } = useCurrentUser();
 
   return (
@@ -58,9 +66,7 @@ export default function LeadsTableRow({ lead }: { lead: Lead }) {
             <button
               type="button"
               aria-label={`Edit ${lead.name}`}
-              onClick={() => {
-                // TODO: open the edit-lead modal once it exists.
-              }}
+              onClick={() => onEdit(lead)}
               className="flex h-9 w-9 items-center justify-center rounded-xl text-[#071123] transition-colors hover:bg-black/4"
             >
               <svg
@@ -90,9 +96,7 @@ export default function LeadsTableRow({ lead }: { lead: Lead }) {
             <button
               type="button"
               aria-label={`Delete ${lead.name}`}
-              onClick={() => {
-                // TODO: open the delete confirmation once it exists.
-              }}
+              onClick={() => onDelete(lead)}
               className="flex h-9 w-9 items-center justify-center rounded-xl text-[#F22A36] transition-colors hover:bg-black/4"
             >
               <svg

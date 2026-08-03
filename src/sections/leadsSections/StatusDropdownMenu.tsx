@@ -57,7 +57,7 @@ export default function StatusDropdownMenu({
   return (
     <div
       ref={panelRef}
-      className="absolute left-0 top-full z-30 mt-1 w-49 rounded-[7px] border border-[#F1F5F9] bg-white py-1 shadow-[0px_6px_9px_-2px_rgba(0,0,0,0.1),0px_2px_4px_-1px_rgba(0,0,0,0.05)]"
+      className="absolute left-0 top-full z-30 mt-1 max-h-[240px] w-49 overflow-y-auto rounded-[7px] border border-[#F1F5F9] bg-white py-1 shadow-[0px_6px_9px_-2px_rgba(0,0,0,0.1),0px_2px_4px_-1px_rgba(0,0,0,0.05)]"
     >
       {options.map((option) => (
         <button

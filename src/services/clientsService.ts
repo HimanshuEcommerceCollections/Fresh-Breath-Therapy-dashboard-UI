@@ -127,4 +127,19 @@ export const clientsService = {
     );
     return toClient(res.data);
   },
+
+  async updateClient(clientId: string, payload: Partial<CreateClientPayload>): Promise<Client> {
+    const res = await apiClient.patch<ApiClient>(`/api/clients/${clientId}`, {
+      name: payload.name,
+      email: payload.email,
+      therapist_id: payload.therapistId,
+      location_id: payload.locationId,
+      status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,
+    });
+    return toClient(res.data);
+  },
+
+  async deleteClient(clientId: string): Promise<void> {
+    await apiClient.delete(`/api/clients/${clientId}`);
+  },
 };

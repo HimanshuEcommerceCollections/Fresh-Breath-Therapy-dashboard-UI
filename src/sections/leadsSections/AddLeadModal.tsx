@@ -6,13 +6,17 @@ import type { LeadStatus } from "@/src/data/leadsData/leadsData";
 import type { CreateLeadPayload, Lead } from "@/src/services/leadsService";
 import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
 import { referralSourceOptions } from "@/src/data/leadsData/referralSourceOptions";
-import { useTherapists } from "@/src/hooks/useTherapists";
 import FormField from "@/src/sections/leadsSections/FormField";
 import FormSelect from "@/src/sections/leadsSections/FormSelect";
 import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
+import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 
 const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"];
+// Mirrors the backend's LeadCreate/LeadUpdate phone validation (schemas/lead.py) —
+// keep these in sync so the frontend blocks the same input the API would reject.
+const PHONE_PATTERN = /^[0-9+\-()\s]{7,20}$/;
+const MAX_AGE = 120;
 
 function PersonIcon() {
   return (
@@ -32,53 +36,61 @@ function MegaphoneIcon() {
   );
 }
 
-function UserIcon() {
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M5 20C5 16.6863 8.13401 14.5 12 14.5C15.866 14.5 19 16.6863 19 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function AddLeadModal({
   onClose,
   onCreate,
+  lead = null,
+  onUpdate,
 }: {
   onClose: () => void;
   onCreate: (payload: CreateLeadPayload) => Promise<Lead>;
+  /** When provided, the modal opens in edit mode: prefilled from this lead,
+   * "Edit Lead" heading, and submits via `onUpdate` instead of `onCreate`. */
+  lead?: Lead | null;
+  onUpdate?: (leadId: string, payload: Partial<CreateLeadPayload>) => Promise<Lead>;
 }) {
-  const { therapists } = useTherapists();
+  const isEditMode = lead !== null;
 
-  const [fullName, setFullName] = useState("");
-  const [age, setAge] = useState("");
-  const [gender, setGender] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [locationId, setLocationId] = useState("");
-  const [source, setSource] = useState("");
-  const [therapistName, setTherapistName] = useState("");
-  const [status, setStatus] = useState<LeadStatus>("New Lead");
+  const [fullName, setFullName] = useState(lead?.name ?? "");
+  const [age, setAge] = useState(lead?.age != null ? String(lead.age) : "");
+  const [gender, setGender] = useState(lead?.genderOrPronoun ?? "");
+  const [email, setEmail] = useState(lead?.email ?? "");
+  const [phone, setPhone] = useState(lead?.phone ?? "");
+  const [locationId, setLocationId] = useState(lead?.locationId ?? "");
+  const [source, setSource] = useState(lead?.source ?? "");
+  const [therapistId, setTherapistId] = useState(lead?.therapistId ?? "");
+  const [status, setStatus] = useState<LeadStatus>(lead?.status ?? "New Lead");
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const isPhoneValid = PHONE_PATTERN.test(phone.trim());
+  const isAgeValid = age.trim().length === 0 || (Number(age) >= 0 && Number(age) <= MAX_AGE);
+  const isFormValid = Boolean(fullName.trim()) && Boolean(locationId) && isPhoneValid && isAgeValid;
+
   async function handleAddLead() {
-    if (!locationId) return;
-    const therapistId = therapists.find((t) => t.name === therapistName)?.id;
+    if (!isFormValid) return;
+
+    const payload = {
+      name: fullName,
+      age: age ? Number(age) : undefined,
+      genderOrPronoun: gender || undefined,
+      email,
+      phone,
+      locationId,
+      // Empty string means "nothing selected" — must become undefined so it's
+      // omitted from the request instead of being sent as an invalid UUID.
+      therapistId: therapistId || undefined,
+      source: source || undefined,
+      status,
+    };
 
     setIsSubmitting(true);
     try {
-      await onCreate({
-        name: fullName,
-        age: age ? Number(age) : undefined,
-        genderOrPronoun: gender || undefined,
-        email,
-        phone,
-        locationId,
-        therapistId,
-        source: source || undefined,
-        status,
-      });
+      if (isEditMode && onUpdate) {
+        await onUpdate(lead.id, payload);
+      } else {
+        await onCreate(payload);
+      }
       onClose();
     } finally {
       setIsSubmitting(false);
@@ -89,7 +101,9 @@ export default function AddLeadModal({
     <ModalOverlay onClose={onClose}>
       <div className="flex w-full max-w-2xl flex-col rounded-2xl border border-[#C3C6D7] bg-white shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)]">
         <div className="flex items-center justify-between border-b border-[#C3C6D7] px-6 py-4">
-          <h2 className="text-[22px] font-bold text-[#0F172A]">New Lead</h2>
+          <h2 className="text-[22px] font-bold text-[#0F172A]">
+            {isEditMode ? "Edit Lead" : "New Lead"}
+          </h2>
           <button
             type="button"
             aria-label="Close"
@@ -117,8 +131,11 @@ export default function AddLeadModal({
               label="Age"
               type="number"
               placeholder="Enter age"
+              min={0}
+              max={MAX_AGE}
               value={age}
               onChange={(e) => setAge(e.target.value)}
+              error={!isAgeValid ? `Age must be between 0 and ${MAX_AGE}.` : undefined}
             />
             <FormSelect
               label="Gender"
@@ -142,8 +159,14 @@ export default function AddLeadModal({
               label="Phone"
               type="tel"
               placeholder="Enter phone number"
+              maxLength={20}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
+              error={
+                phone.trim().length > 0 && !isPhoneValid
+                  ? "Enter 7-20 digits (spaces, +, -, and () are okay)."
+                  : undefined
+              }
             />
           </div>
 
@@ -160,14 +183,7 @@ export default function AddLeadModal({
           </div>
 
           <div className="flex gap-6">
-            <FormSelect
-              label="Assigned Therapist"
-              icon={<UserIcon />}
-              placeholder="Select therapist"
-              options={therapists.map((t) => t.name)}
-              value={therapistName}
-              onChange={setTherapistName}
-            />
+            <TherapistSelect value={therapistId} onChange={setTherapistId} />
             <div className="flex flex-1 flex-col gap-1.5">
               <span className="text-xs font-semibold tracking-[0.6px] text-[#434655]">
                 Status
@@ -207,11 +223,17 @@ export default function AddLeadModal({
           </button>
           <button
             type="button"
-            disabled={!fullName || !locationId || isSubmitting}
+            disabled={!isFormValid || isSubmitting}
             onClick={handleAddLead}
             className="cursor-pointer rounded-lg bg-[#325A5E] px-8 py-2.5 text-xs font-semibold tracking-[0.6px] text-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-opacity hover:opacity-90 disabled:cursor-default disabled:opacity-50"
           >
-            {isSubmitting ? "Adding…" : "Add Lead"}
+            {isSubmitting
+              ? isEditMode
+                ? "Saving…"
+                : "Adding…"
+              : isEditMode
+                ? "Save Changes"
+                : "Add Lead"}
           </button>
         </div>
       </div>

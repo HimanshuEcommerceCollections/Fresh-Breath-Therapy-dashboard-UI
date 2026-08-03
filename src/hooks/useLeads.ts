@@ -42,6 +42,25 @@ export const useLeads = () => {
     },
   });
 
+  const updateLeadMutation = useMutation({
+    mutationFn: ({ leadId, payload }: { leadId: string; payload: Partial<CreateLeadPayload> }) =>
+      leadsService.updateLead(leadId, payload),
+    onSuccess: () => {
+      showSuccessToast("Lead updated");
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+
+  const deleteLeadMutation = useMutation({
+    mutationFn: (leadId: string) => leadsService.deleteLead(leadId),
+    onSuccess: () => {
+      showSuccessToast("Lead deleted");
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+
   return {
     leads,
     isLoading,
@@ -52,5 +71,8 @@ export const useLeads = () => {
     locationId,
     setLocationId,
     createLead: createLeadMutation.mutateAsync,
+    updateLead: (leadId: string, payload: Partial<CreateLeadPayload>) =>
+      updateLeadMutation.mutateAsync({ leadId, payload }),
+    deleteLead: deleteLeadMutation.mutateAsync,
   };
 };

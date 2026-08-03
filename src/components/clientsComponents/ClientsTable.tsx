@@ -16,9 +16,13 @@ const COLUMNS = [
 export default function ClientsTable({
   clients,
   isLoading,
+  onEdit,
+  onDelete,
 }: {
   clients: Client[];
   isLoading?: boolean;
+  onEdit: (client: Client) => void;
+  onDelete: (client: Client) => void;
 }) {
   return (
     <div className="rounded-[18px] border border-[#E0E5EB] bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
@@ -36,7 +40,9 @@ export default function ClientsTable({
         {isLoading ? (
           <TableSkeleton gridClassName={CLIENTS_TABLE_GRID} columns={COLUMNS.length} rows={7} />
         ) : (
-          clients.map((client) => <ClientTableRow key={client.id} client={client} />)
+          clients.map((client) => (
+            <ClientTableRow key={client.id} client={client} onEdit={onEdit} onDelete={onDelete} />
+          ))
         )}
       </div>
     </div>

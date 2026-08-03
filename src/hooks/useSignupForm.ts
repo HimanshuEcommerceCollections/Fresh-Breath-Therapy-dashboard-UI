@@ -60,16 +60,18 @@ export const useSignupForm = () => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setServerError(null);
 
     if (!validate()) return;
 
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
       const res = await signupService.createAccount(values);
 
       if (!res.success) {
         setServerError(res.message ?? "Something went wrong. Please try again.");
+        setIsSubmitting(false);
         return;
       }
 
@@ -79,9 +81,11 @@ export const useSignupForm = () => {
       router.push(
         `/verify-otp?email=${encodeURIComponent(values.email)}&flow=signup${expiresAtParam}`
       );
+      // Leave isSubmitting true through the redirect — see useOtpForm's
+      // handleSubmit for why resetting it here would let a second click
+      // through before the route actually changes.
     } catch (err) {
       setServerError("Something went wrong. Please try again.");
-    } finally {
       setIsSubmitting(false);
     }
   };

@@ -74,6 +74,10 @@ export const useOtpForm = ({
   const canResend = secondsLeft === 0 && !isResending;
 
   const handleSubmit = async () => {
+    // Guards against a second click landing while isSubmitting is true but
+    // React hasn't re-rendered the disabled button yet.
+    if (isSubmitting) return;
+
     setError(null);
 
     if (!isComplete) {
@@ -81,12 +85,13 @@ export const useOtpForm = ({
       return;
     }
 
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
       const res = await otpService.verifyOtp({ email, code, flow });
 
       if (!res.success) {
         setError(res.message ?? "That code didn't work. Please try again.");
+        setIsSubmitting(false);
         return;
       }
 
@@ -99,9 +104,14 @@ export const useOtpForm = ({
         await refetch();
       }
       router.push("/");
+      // Deliberately NOT resetting isSubmitting here: router.push() only
+      // schedules the navigation, it doesn't wait for it, so there's a brief
+      // window where this page is still mounted. Resetting the flag in that
+      // window re-enables the button and lets a second click fire another
+      // verify-otp request before the redirect lands. Leaving it disabled
+      // through to unmount is what actually prevents the double-submit.
     } catch {
       setError("Something went wrong. Please try again.");
-    } finally {
       setIsSubmitting(false);
     }
   };
