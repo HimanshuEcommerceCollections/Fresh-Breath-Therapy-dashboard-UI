@@ -51,9 +51,14 @@ const LEAD_FUNNEL_STAGE_LABELS: Record<string, string> = {
 
 // Backend now sends Enrollment status (active/completed), not a per-payment
 // status — a ledger row has no status of its own, see paymentStatusData.ts.
+// Same four states, labels and colours as the Payments page's donut and its
+// row badges (PaymentStatusSelect) — the two charts read the same backend
+// derivation, so they must not diverge in presentation either.
 const PAYMENT_STATUS_LABELS: Record<string, { label: PaymentStatusSlice["status"]; color: string }> = {
-  active: { label: "Active", color: "#376EF4" },
-  completed: { label: "Completed", color: "#3FC168" },
+  paid: { label: "Paid", color: "#16A34A" },
+  partially_paid: { label: "Partially Paid", color: "#F2A618" },
+  pending: { label: "Pending", color: "#376EF4" },
+  overdue: { label: "Overdue", color: "#EF4444" },
 };
 
 const FOLLOW_UP_STATUS_LABELS: Record<string, FollowUpStatus> = {

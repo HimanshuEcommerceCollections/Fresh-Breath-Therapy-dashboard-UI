@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
-import CsvButton from "@/src/sections/reportsSections/CsvButton";
+import ExportButtons from "@/src/sections/reportsSections/ExportButtons";
 import { reportsService, type ReportFilters, type SalesReportPoint } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
 import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
@@ -41,7 +41,13 @@ export default function SalesReportChart({ filters }: { filters: ReportFilters }
 
   return (
     <div className="h-[386px]">
-      <ChartCard title="Sales Report" action={<CsvButton />}>
+      <ChartCard title="Sales Report" action={
+          <ExportButtons
+            path="/api/exports/reports/sales"
+            params={{ range: filters.range, location_id: filters.locationId }}
+            baseName="fbt-sales-report"
+          />
+        }>
         <div ref={ref} className="min-h-0 flex-1">
           {isInView && (
             <ResponsiveContainer width="100%" height="100%">

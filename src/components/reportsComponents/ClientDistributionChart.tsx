@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
-import CsvButton from "@/src/sections/reportsSections/CsvButton";
+import ExportButtons from "@/src/sections/reportsSections/ExportButtons";
 import {
   reportsService,
   type ReportFilters,
@@ -45,7 +45,13 @@ export default function ClientDistributionChart({ filters }: { filters: ReportFi
 
   return (
     <div className="h-[460px]">
-      <ChartCard title="Client Distribution by Status" action={<CsvButton />}>
+      <ChartCard title="Client Distribution by Status" action={
+          <ExportButtons
+            path="/api/exports/reports/clients"
+            params={{ range: filters.range, location_id: filters.locationId }}
+            baseName="fbt-clients-report"
+          />
+        }>
         <div ref={ref} className="min-h-0 flex-1">
           {isInView && (
             <ResponsiveContainer width="100%" height="100%">

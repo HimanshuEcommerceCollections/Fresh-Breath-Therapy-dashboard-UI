@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
-import CsvButton from "@/src/sections/reportsSections/CsvButton";
+import ExportButtons from "@/src/sections/reportsSections/ExportButtons";
 import ConversionStageBar from "@/src/sections/reportsSections/ConversionStageBar";
 import { reportsService, type ReportFilters, type ConversionReport } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
@@ -26,7 +26,13 @@ export default function LeadConversionReport({ filters }: { filters: ReportFilte
   }
 
   return (
-    <ChartCard title="Lead Conversion" action={<CsvButton />}>
+    <ChartCard title="Lead Conversion" action={
+          <ExportButtons
+            path="/api/exports/reports/conversion"
+            params={{ range: filters.range, location_id: filters.locationId }}
+            baseName="fbt-conversion-report"
+          />
+        }>
       <div ref={ref} className="flex flex-col gap-4">
         <div className="flex items-baseline gap-2">
           <span className="text-3xl font-bold text-[#376EF4]">

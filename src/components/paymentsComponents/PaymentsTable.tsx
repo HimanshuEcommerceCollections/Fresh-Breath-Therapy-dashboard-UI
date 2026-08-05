@@ -1,28 +1,26 @@
-import type { Payment } from "@/src/services/paymentsService";
+"use client";
+
+import type { Invoice, PaymentStatus } from "@/src/services/enrollmentsService";
 import { PAYMENTS_TABLE_GRID } from "@/src/sections/paymentsSections/paymentsTableGrid";
 import PaymentsTableRow from "@/src/sections/paymentsSections/PaymentsTableRow";
 import { TableSkeleton } from "@/src/components/ui/TableRowSkeleton";
 import InfiniteScrollSentinel from "@/src/components/sharedComponents/InfiniteScrollSentinel";
 
-const COLUMNS = [
-  "Client",
-  "Package",
-  "Amount Paid",
-  "Balance After",
-  "Method",
-  "Date",
-  "Status",
-];
+const COLUMNS = ["Client", "Package", "Due", "Paid", "Balance", "Started", "Status"];
 
 export default function PaymentsTable({
-  payments,
+  invoices,
   isLoading,
+  canEdit,
+  onStatusChange,
   hasNextPage,
   isFetchingNextPage,
   onLoadMore,
 }: {
-  payments: Payment[];
+  invoices: Invoice[];
   isLoading: boolean;
+  canEdit: boolean;
+  onStatusChange: (invoiceId: string, status: PaymentStatus) => void;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   onLoadMore?: () => void;
@@ -42,9 +40,19 @@ export default function PaymentsTable({
       <div>
         {isLoading ? (
           <TableSkeleton gridClassName={PAYMENTS_TABLE_GRID} columns={COLUMNS.length} />
+        ) : invoices.length === 0 ? (
+          <div className="px-6 py-12 text-center text-sm text-[#94A3B8]">
+            No invoices yet. Use “New Invoice” to assign a package to a client,
+            or “Record Payment” to log a payment.
+          </div>
         ) : (
-          payments.map((payment) => (
-            <PaymentsTableRow key={payment.id} payment={payment} />
+          invoices.map((invoice) => (
+            <PaymentsTableRow
+              key={invoice.id}
+              invoice={invoice}
+              canEdit={canEdit}
+              onStatusChange={onStatusChange}
+            />
           ))
         )}
       </div>
