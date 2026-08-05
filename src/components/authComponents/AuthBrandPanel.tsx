@@ -23,7 +23,7 @@ const AuthBrandPanel = () => {
         alt="Fresh Breath Therapy"
         width={152}
         height={54}
-        className="h-12 w-auto object-contain"
+        className="h-12 w-auto self-start object-contain"
       />
 
       {/* Middle content */}
