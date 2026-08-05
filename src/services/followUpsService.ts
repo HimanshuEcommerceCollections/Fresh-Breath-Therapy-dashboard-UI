@@ -7,6 +7,7 @@
 // resource, only status_filter.
 
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
+import type { Page } from "@/src/lib/pagination";
 import type { FollowUpStatus } from "@/src/data/followUpsData/followUpsData";
 
 type ApiFollowUpStatus = "pending" | "overdue" | "completed";
@@ -54,6 +55,12 @@ export interface CreateFollowUpPayload {
   reminder?: boolean;
 }
 
+interface ApiPage<T> {
+  items: T[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
 interface ApiFollowUp {
   id: string;
   client_id: string;
@@ -79,11 +86,19 @@ function toFollowUp(raw: ApiFollowUp): FollowUp {
 }
 
 export const followUpsService = {
-  async fetchFollowUps(statusFilter?: FollowUpStatus): Promise<FollowUp[]> {
-    const res = await apiClient.get<ApiFollowUp[]>("/api/follow-ups", {
-      params: { status_filter: statusFilter ? LABEL_TO_STATUS[statusFilter] : undefined },
+  async fetchFollowUps(statusFilter?: FollowUpStatus, cursor?: string, limit?: number): Promise<Page<FollowUp>> {
+    const res = await apiClient.get<ApiPage<ApiFollowUp>>("/api/follow-ups", {
+      params: {
+        status_filter: statusFilter ? LABEL_TO_STATUS[statusFilter] : undefined,
+        cursor,
+        limit,
+      },
     });
-    return res.data.map(toFollowUp);
+    return {
+      items: res.data.items.map(toFollowUp),
+      nextCursor: res.data.next_cursor,
+      hasMore: res.data.has_more,
+    };
   },
 
   async fetchStats(): Promise<FollowUpStats> {

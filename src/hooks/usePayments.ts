@@ -1,34 +1,43 @@
 // src/hooks/usePayments.ts
 "use client";
 
+import { useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   paymentsService,
   type Payment,
   type CreatePaymentPayload,
+  type CreatePaymentResult,
 } from "@/src/services/paymentsService";
+import { enrollmentsService, type EnrollmentWithDetails } from "@/src/services/enrollmentsService";
 import { clientsService } from "@/src/services/clientsService";
+import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { showSuccessToast } from "@/src/lib/toast";
 import type { PaymentStat } from "@/src/data/paymentsData/paymentsStatsData";
 import type { RevenueBarPoint } from "@/src/data/paymentsData/revenueTrendBarData";
 import type { PaymentStatusSlice } from "@/src/data/dashboardData/paymentStatusData";
 
-const STATUS_COLORS: Record<Payment["status"], string> = {
-  Paid: "#3FC168",
-  "Partially Paid": "#F2A618",
-  Pending: "#376EF4",
-  Overdue: "#F22A36",
+const STATUS_COLORS: Record<EnrollmentWithDetails["status"], string> = {
+  active: "#376EF4",
+  completed: "#3FC168",
+};
+const STATUS_LABELS: Record<EnrollmentWithDetails["status"], string> = {
+  active: "Active",
+  completed: "Completed",
 };
 
 function formatCurrency(value: number): string {
   return `$${Math.round(value).toLocaleString()}`;
 }
 
-// Client-computed — see the MISMATCH note at the top of paymentsService.ts.
-function computeStats(payments: Payment[]): PaymentStat[] {
-  const totalRevenue = payments.reduce((sum, p) => sum + p.due, 0);
-  const collected = payments.reduce((sum, p) => sum + p.paid, 0);
-  const pendingRevenue = payments.reduce((sum, p) => sum + p.balance, 0);
+// Total/pending revenue come from enrollments (the only place "amount due"
+// or "package value" lives now) — a ledger row only knows what was paid.
+function computeStats(enrollments: EnrollmentWithDetails[], payments: Payment[]): PaymentStat[] {
+  const totalRevenue = enrollments.reduce((sum, e) => sum + e.packagePriceSnapshot, 0);
+  const collected = payments.reduce((sum, p) => sum + p.amountPaid, 0);
+  const pendingRevenue = enrollments
+    .filter((e) => e.status === "active")
+    .reduce((sum, e) => sum + e.amountDue, 0);
 
   const now = new Date();
   const monthlyRevenue = payments
@@ -36,7 +45,7 @@ function computeStats(payments: Payment[]): PaymentStat[] {
       const d = new Date(p.date);
       return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
     })
-    .reduce((sum, p) => sum + p.due, 0);
+    .reduce((sum, p) => sum + p.amountPaid, 0);
 
   return [
     { label: "Total Revenue", value: formatCurrency(totalRevenue), iconColor: "#3FC168", iconBg: "rgba(63,193,104,0.1)" },
@@ -63,58 +72,106 @@ function computeRevenueTrend(payments: Payment[]): RevenueBarPoint[] {
         const d = new Date(p.date);
         return `${d.getFullYear()}-${d.getMonth()}` === key;
       })
-      .reduce((sum, p) => sum + p.paid, 0);
+      .reduce((sum, p) => sum + p.amountPaid, 0);
     return { month: label, revenue };
   });
 }
 
-function computeStatusDistribution(payments: Payment[]): PaymentStatusSlice[] {
-  const counts = new Map<Payment["status"], number>();
-  for (const p of payments) counts.set(p.status, (counts.get(p.status) ?? 0) + 1);
-  return Array.from(counts.entries()).map(([status, value]) => ({
-    status,
-    value,
-    color: STATUS_COLORS[status],
-  }));
+function computeStatusDistribution(enrollments: EnrollmentWithDetails[]): PaymentStatusSlice[] {
+  const counts: Record<EnrollmentWithDetails["status"], number> = { active: 0, completed: 0 };
+  for (const e of enrollments) counts[e.status] += 1;
+
+  return (Object.keys(counts) as EnrollmentWithDetails["status"][])
+    .filter((status) => counts[status] > 0)
+    .map((status) => ({ status: STATUS_LABELS[status], value: counts[status], color: STATUS_COLORS[status] }));
 }
 
 export const usePayments = () => {
   const queryClient = useQueryClient();
 
-  const { data: payments = [], isLoading } = useQuery({
+  // Client name-lookup needs the full roster — a partial, scrolled-in page
+  // of clients would leave later payments joined as "Unknown client".
+  const { data: allClients = [] } = useQuery({
+    queryKey: ["clients", "all", {}],
+    queryFn: () => clientsService.fetchAllClients(),
+  });
+  const clientNameById = useMemo(
+    () => new Map(allClients.map((c) => [c.id, c.name])),
+    [allClients]
+  );
+
+  const {
+    items: rawPayments,
+    isLoading: isLoadingPayments,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteList({
     queryKey: ["payments"],
-    queryFn: async () => {
-      const [rawPayments, clients] = await Promise.all([
-        paymentsService.fetchPayments(),
-        clientsService.fetchClients(),
-      ]);
-      const clientNameById = new Map(clients.map((c) => [c.id, c.name]));
-      return rawPayments.map((p) => ({
+    queryFn: (cursor) => paymentsService.fetchPayments(undefined, cursor),
+  });
+  const payments = useMemo(
+    () =>
+      rawPayments.map((p) => ({
         ...p,
         client: clientNameById.get(p.clientId) ?? "Unknown client",
-      }));
-    },
+      })),
+    [rawPayments, clientNameById]
+  );
+
+  // Stats/charts need the FULL ledger (monthly revenue trend spans however
+  // many payments fall in the last 6 months) — not just the visible page.
+  const { data: allPaymentsRaw = [], isLoading: isLoadingAllPayments } = useQuery({
+    queryKey: ["payments", "all"],
+    queryFn: () => paymentsService.fetchAllPayments(),
   });
+  const allPayments = useMemo(
+    () =>
+      allPaymentsRaw.map((p) => ({
+        ...p,
+        client: clientNameById.get(p.clientId) ?? "Unknown client",
+      })),
+    [allPaymentsRaw, clientNameById]
+  );
+
+  // Enrollments carry the "amount due" / "total paid" concept the old flat
+  // payment rows used to fake with a due column — stats and the status
+  // chart are computed from this, not from the ledger.
+  const { data: enrollments = [], isLoading: isLoadingEnrollments } = useQuery({
+    queryKey: ["enrollments"],
+    queryFn: () => enrollmentsService.fetchAll(),
+  });
+
+  const isLoading = isLoadingPayments || isLoadingEnrollments || isLoadingAllPayments;
 
   const createPaymentMutation = useMutation({
     mutationFn: (payload: CreatePaymentPayload) => paymentsService.createPayment(payload),
-    onSuccess: () => {
-      showSuccessToast("Payment recorded");
+    onSuccess: (result: CreatePaymentResult) => {
+      showSuccessToast(result.isNewCycle ? "Started a new payment cycle" : "Payment recorded");
+      if (result.enrollment.status === "completed") {
+        showSuccessToast("Package completed ✅");
+      }
       queryClient.invalidateQueries({ queryKey: ["payments"] });
+      queryClient.invalidateQueries({ queryKey: ["enrollments"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      // Lifetime value on the Clients page is derived from this same ledger.
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
   });
 
   const createPayment = async (payload: CreatePaymentPayload) => {
-    await createPaymentMutation.mutateAsync(payload);
+    return await createPaymentMutation.mutateAsync(payload);
   };
 
   return {
     payments,
     isLoading,
-    stats: computeStats(payments),
-    revenueTrend: computeRevenueTrend(payments),
-    statusDistribution: computeStatusDistribution(payments),
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    stats: computeStats(enrollments, allPayments),
+    revenueTrend: computeRevenueTrend(allPayments),
+    statusDistribution: computeStatusDistribution(enrollments),
     createPayment,
   };
 };

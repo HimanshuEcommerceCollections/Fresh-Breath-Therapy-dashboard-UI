@@ -100,7 +100,7 @@ function StatusDistributionChart({
     return (
       <ChartSkeleton
         title="Status Distribution"
-        subtitle="Distribution across all invoices"
+        subtitle="Active vs completed payment cycles"
         heightClassName="h-full"
       />
     );
@@ -109,7 +109,7 @@ function StatusDistributionChart({
   return (
     <ChartCard
       title="Status Distribution"
-      subtitle="Distribution across all invoices"
+      subtitle="Active vs completed payment cycles"
     >
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">
         <div ref={ref} className="min-h-0 w-full flex-1">

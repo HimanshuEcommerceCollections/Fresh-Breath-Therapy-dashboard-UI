@@ -21,6 +21,10 @@ export default function ClientsPage() {
   const {
     clients,
     isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    allClients,
     search,
     setSearch,
     setLocationId,
@@ -46,7 +50,7 @@ export default function ClientsPage() {
     return (
       <div className="flex flex-col gap-4 px-8 pb-12 pt-24">
         <LeadSearchSection
-          clientCount={clients.length}
+          clientCount={allClients.length}
           searchQuery={leadSearchQuery}
           onSearchQueryChange={setLeadSearchQuery}
           leads={filteredLeads}
@@ -61,7 +65,7 @@ export default function ClientsPage() {
 
   return (
     <div className="flex flex-col gap-4 px-8 pb-12 pt-24">
-      <ClientsHeader count={clients.length} onAddClient={openLeadSearch} />
+      <ClientsHeader count={allClients.length} onAddClient={openLeadSearch} />
       <ClientsToolbar
         search={search}
         onSearchChange={setSearch}
@@ -73,6 +77,9 @@ export default function ClientsPage() {
         isLoading={isLoading}
         onEdit={setEditingClient}
         onDelete={setDeletingClient}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onLoadMore={fetchNextPage}
       />
 
       {editingClient && (

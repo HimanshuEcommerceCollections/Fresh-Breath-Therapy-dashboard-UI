@@ -13,6 +13,7 @@
 
 import type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
+import type { Page } from "@/src/lib/pagination";
 
 type ApiSessionStatus = "scheduled" | "completed" | "cancelled" | "no_show" | "rescheduled";
 type ApiSessionType =
@@ -74,6 +75,12 @@ export interface SessionSearchFilters {
   dateTo?: string;
 }
 
+interface ApiPage<T> {
+  items: T[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
 export interface ScheduleSessionPayload {
   clientId: string;
   therapistId: string;
@@ -119,15 +126,25 @@ function toSession(raw: ApiSession): Session {
 }
 
 export const sessionsService = {
-  async searchSessions(filters?: SessionSearchFilters): Promise<Session[]> {
-    const res = await apiClient.post<ApiSession[]>("/api/sessions/search", {
+  async searchSessions(
+    filters?: SessionSearchFilters,
+    cursor?: string,
+    limit?: number
+  ): Promise<Page<Session>> {
+    const res = await apiClient.post<ApiPage<ApiSession>>("/api/sessions/search", {
       therapist_ids: filters?.therapistIds?.length ? filters.therapistIds : null,
       client_id: filters?.clientId ?? null,
       status: filters?.status ? LABEL_TO_STATUS[filters.status] : null,
       date_from: filters?.dateFrom ?? null,
       date_to: filters?.dateTo ?? null,
+      cursor: cursor ?? null,
+      limit: limit ?? undefined,
     });
-    return res.data.map(toSession);
+    return {
+      items: res.data.items.map(toSession),
+      nextCursor: res.data.next_cursor,
+      hasMore: res.data.has_more,
+    };
   },
 
   async scheduleSession(payload: ScheduleSessionPayload): Promise<Session> {

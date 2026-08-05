@@ -13,14 +13,30 @@ import { useFollowUps } from "@/src/hooks/useFollowUps";
 export default function FollowUpsPage() {
   const [activeTab, setActiveTab] = useState<FollowUpFilter>("All");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const { followUps, stats, createFollowUp, completeFollowUp, isLoading } = useFollowUps(activeTab);
+  const {
+    followUps,
+    stats,
+    createFollowUp,
+    completeFollowUp,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useFollowUps(activeTab);
 
   return (
     <div className="flex flex-col gap-4 px-8 pb-12 pt-24">
       <FollowUpsHeader onAddClick={() => setIsAddModalOpen(true)} />
       <FollowUpsStatCards stats={stats} isLoading={isLoading} />
       <FilterTabs activeTab={activeTab} onChange={setActiveTab} />
-      <FollowUpsTable followUps={followUps} onMarkDone={completeFollowUp} isLoading={isLoading} />
+      <FollowUpsTable
+        followUps={followUps}
+        onMarkDone={completeFollowUp}
+        isLoading={isLoading}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onLoadMore={fetchNextPage}
+      />
 
       <AddFollowUpModal
         open={isAddModalOpen}

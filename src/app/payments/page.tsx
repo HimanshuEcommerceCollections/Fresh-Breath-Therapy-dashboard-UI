@@ -9,7 +9,17 @@ import { useRequireRole } from "@/src/hooks/useRequireRole";
 
 export default function PaymentsPage() {
   const { isChecking } = useRequireRole(["Admin", "Coordinator"], "/leads");
-  const { payments, stats, revenueTrend, statusDistribution, createPayment, isLoading } = usePayments();
+  const {
+    payments,
+    stats,
+    revenueTrend,
+    statusDistribution,
+    createPayment,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = usePayments();
 
   if (isChecking) return null;
 
@@ -22,7 +32,13 @@ export default function PaymentsPage() {
         statusDistribution={statusDistribution}
         isLoading={isLoading}
       />
-      <PaymentsTable payments={payments} isLoading={isLoading} />
+      <PaymentsTable
+        payments={payments}
+        isLoading={isLoading}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onLoadMore={fetchNextPage}
+      />
     </div>
   );
 }

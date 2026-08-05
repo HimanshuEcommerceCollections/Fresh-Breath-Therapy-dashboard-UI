@@ -19,6 +19,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTherapists } from "@/src/hooks/useTherapists";
 import type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
 import { sessionsService, type ScheduleSessionPayload } from "@/src/services/sessionsService";
+import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { showSuccessToast } from "@/src/lib/toast";
 import type { SessionsView } from "@/src/sections/sessionsSections/ViewToggle";
 import {
@@ -31,6 +32,12 @@ import {
   getWeekRange,
   toISODate,
 } from "@/src/lib/dateRanges";
+
+// Calendar views (Day/Week/Month) are already bounded by a date range and
+// need every session in that range in one shot to render the grid — 100 is
+// a generous ceiling for a single day/week/month at one practice. Only the
+// unbounded List view actually paginates via scroll.
+const CALENDAR_VIEW_LIMIT = 100;
 
 export function useSessionsPage() {
   const queryClient = useQueryClient();
@@ -151,15 +158,39 @@ export function useSessionsPage() {
   }, [activeView]);
 
   // ── Sessions (real — date-bounded per the active view above) ────────────
-  const { data: sessions = [], isLoading: isLoadingSessions } = useQuery({
-    queryKey: ["sessions", { therapistIds: selectedTherapistIds, ...dateRange }],
-    queryFn: () =>
-      sessionsService.searchSessions({
-        therapistIds: selectedTherapistIds.length ? selectedTherapistIds : undefined,
-        dateFrom: dateRange.dateFrom,
-        dateTo: dateRange.dateTo,
-      }),
+  // List view is unbounded, so it paginates via scroll; the calendar views
+  // are already bounded by dateRange and just fetch one generously-sized page.
+  const isListView = activeView === "list";
+
+  const sessionSearchFilters = useMemo(
+    () => ({
+      therapistIds: selectedTherapistIds.length ? selectedTherapistIds : undefined,
+      dateFrom: dateRange.dateFrom,
+      dateTo: dateRange.dateTo,
+    }),
+    [selectedTherapistIds, dateRange]
+  );
+
+  const {
+    items: listSessions,
+    isLoading: isLoadingListSessions,
+    isFetchingNextPage: isFetchingNextSessionsPage,
+    hasNextPage: hasNextSessionsPage,
+    fetchNextPage: fetchNextSessionsPage,
+  } = useInfiniteList({
+    queryKey: ["sessions", sessionSearchFilters],
+    queryFn: (cursor) => sessionsService.searchSessions(sessionSearchFilters, cursor),
+    enabled: isListView,
   });
+
+  const { data: calendarSessionsPage, isLoading: isLoadingCalendarSessions } = useQuery({
+    queryKey: ["sessions", "calendar", sessionSearchFilters],
+    queryFn: () => sessionsService.searchSessions(sessionSearchFilters, undefined, CALENDAR_VIEW_LIMIT),
+    enabled: !isListView,
+  });
+
+  const sessions = isListView ? listSessions : calendarSessionsPage?.items ?? [];
+  const isLoadingSessions = isListView ? isLoadingListSessions : isLoadingCalendarSessions;
 
   const invalidateSessions = () => queryClient.invalidateQueries({ queryKey: ["sessions"] });
 
@@ -224,6 +255,9 @@ export function useSessionsPage() {
     // Sessions
     sessions,
     isLoadingSessions,
+    isFetchingNextSessionsPage,
+    hasNextSessionsPage,
+    fetchNextSessionsPage,
     scheduleSession,
     updateSessionStatus,
   };

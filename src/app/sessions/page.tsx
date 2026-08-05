@@ -56,6 +56,9 @@ export default function SessionsPage() {
           sessions={sessions.sessions}
           isLoading={sessions.isLoadingSessions}
           onStatusChange={sessions.updateSessionStatus}
+          hasNextPage={sessions.hasNextSessionsPage}
+          isFetchingNextPage={sessions.isFetchingNextSessionsPage}
+          onLoadMore={sessions.fetchNextSessionsPage}
         />
       )}
       {sessions.activeView === "day" && (

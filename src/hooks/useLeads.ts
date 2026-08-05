@@ -4,13 +4,15 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { leadsService, type CreateLeadPayload, type LeadFilters } from "@/src/services/leadsService";
+import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { useDebouncedValue } from "@/src/hooks/useDebouncedValue";
 import { showSuccessToast } from "@/src/lib/toast";
 import type { LeadStatus } from "@/src/data/leadsData/leadsData";
+import type { LeadsView } from "@/src/sections/leadsSections/ViewToggleTabs";
 
 const SEARCH_DEBOUNCE_MS = 350;
 
-export const useLeads = () => {
+export const useLeads = (activeView: LeadsView = "table") => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<LeadStatus | null>(null);
@@ -27,9 +29,24 @@ export const useLeads = () => {
     [debouncedSearch, statusFilter, locationId]
   );
 
-  const { data: leads = [], isLoading } = useQuery({
+  const {
+    items: leads,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteList({
     queryKey: ["leads", filters],
-    queryFn: () => leadsService.fetchLeads(filters),
+    queryFn: (cursor) => leadsService.fetchLeads(filters, cursor),
+    enabled: activeView === "table",
+  });
+
+  // The pipeline (kanban) board groups the FULL filtered set by status
+  // across columns, and the page header's totals need the true count — both
+  // would be wrong reading off just whatever page has scrolled into view.
+  const { data: allLeads = [], isLoading: isLoadingAllLeads } = useQuery({
+    queryKey: ["leads", "all", filters],
+    queryFn: () => leadsService.fetchAllLeads(filters),
   });
 
   const createLeadMutation = useMutation({
@@ -64,6 +81,11 @@ export const useLeads = () => {
   return {
     leads,
     isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    allLeads,
+    isLoadingAllLeads,
     search,
     setSearch,
     statusFilter,

@@ -53,9 +53,65 @@ function errorDetailToMessage(error: AxiosError<ErrorResponseBody>): string {
   return "Something went wrong. Please try again.";
 }
 
+// Endpoints where a 401 doesn't mean "an existing session died" — it's part
+// of the normal auth flow itself (wrong password, not-yet-verified OTP, the
+// routine "am I logged in?" probe on every app load) and is already handled
+// inline by whatever called it. Re-checking /me or force-redirecting on
+// these would either loop or fire on a page the user is already on.
+const AUTH_FLOW_PATHS = [
+  "/api/auth/login",
+  "/api/auth/signup",
+  "/api/auth/verify-login-otp",
+  "/api/auth/verify-signup-otp",
+  "/api/auth/resend-otp",
+  "/api/auth/me",
+  "/api/auth/google",
+];
+
+function isAuthFlowRequest(url: string | undefined): boolean {
+  return !!url && AUTH_FLOW_PATHS.some((path) => url.includes(path));
+}
+
+const PUBLIC_ROUTES = ["/login", "/signup", "/verify-otp"];
+
+function redirectToLogin() {
+  if (typeof window === "undefined") return;
+  if (PUBLIC_ROUTES.some((route) => window.location.pathname.startsWith(route))) return;
+  // Hard navigation, not a router.push — this must fully reset every piece
+  // of client state (React Query cache, CurrentUserProvider, component
+  // state) rather than leave stale authenticated UI mounted behind a
+  // client-side redirect.
+  window.location.href = "/login";
+}
+
+// Any 401 on a real resource request re-checks /api/auth/me immediately: if
+// the session is still valid, this 401 was something else and just gets
+// surfaced normally; if /me also 401s, the session is genuinely gone
+// (expired, logged out elsewhere, token revoked) and the user is sent to
+// /login right away instead of being left looking at a dead page.
+let isVerifyingSession = false;
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ErrorResponseBody>) => {
+  async (error: AxiosError<ErrorResponseBody>) => {
+    const status = error.response?.status;
+    const url = error.config?.url;
+
+    if (status === 401 && !isAuthFlowRequest(url) && !isVerifyingSession) {
+      isVerifyingSession = true;
+      try {
+        await apiClient.get("/api/auth/me", { skipErrorToast: true });
+      } catch (meError) {
+        if (meError instanceof AxiosError && meError.response?.status === 401) {
+          isVerifyingSession = false;
+          redirectToLogin();
+          return Promise.reject(error);
+        }
+      } finally {
+        isVerifyingSession = false;
+      }
+    }
+
     if (!error.config?.skipErrorToast) {
       showErrorToast(errorDetailToMessage(error));
     }

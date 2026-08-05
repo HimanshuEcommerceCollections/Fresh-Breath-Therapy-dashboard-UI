@@ -2,13 +2,13 @@ import type { Payment } from "@/src/services/paymentsService";
 import { PAYMENTS_TABLE_GRID } from "@/src/sections/paymentsSections/paymentsTableGrid";
 import PaymentsTableRow from "@/src/sections/paymentsSections/PaymentsTableRow";
 import { TableSkeleton } from "@/src/components/ui/TableRowSkeleton";
+import InfiniteScrollSentinel from "@/src/components/sharedComponents/InfiniteScrollSentinel";
 
 const COLUMNS = [
   "Client",
   "Package",
-  "Due",
-  "Paid",
-  "Balance",
+  "Amount Paid",
+  "Balance After",
   "Method",
   "Date",
   "Status",
@@ -17,9 +17,15 @@ const COLUMNS = [
 export default function PaymentsTable({
   payments,
   isLoading,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
 }: {
   payments: Payment[];
   isLoading: boolean;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 }) {
   return (
     <div className="rounded-[18px] border border-[#E0E5EB] bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
@@ -42,6 +48,13 @@ export default function PaymentsTable({
           ))
         )}
       </div>
+      {!isLoading && onLoadMore && (
+        <InfiniteScrollSentinel
+          onIntersect={onLoadMore}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={Boolean(isFetchingNextPage)}
+        />
+      )}
     </div>
   );
 }

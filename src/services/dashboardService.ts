@@ -49,11 +49,11 @@ const LEAD_FUNNEL_STAGE_LABELS: Record<string, string> = {
   inactive_client: "Inactive Client",
 };
 
+// Backend now sends Enrollment status (active/completed), not a per-payment
+// status — a ledger row has no status of its own, see paymentStatusData.ts.
 const PAYMENT_STATUS_LABELS: Record<string, { label: PaymentStatusSlice["status"]; color: string }> = {
-  paid: { label: "Paid", color: "#3FC168" },
-  partially_paid: { label: "Partially Paid", color: "#F2A618" },
-  pending: { label: "Pending", color: "#376EF4" },
-  overdue: { label: "Overdue", color: "#F22A36" },
+  active: { label: "Active", color: "#376EF4" },
+  completed: { label: "Completed", color: "#3FC168" },
 };
 
 const FOLLOW_UP_STATUS_LABELS: Record<string, FollowUpStatus> = {
@@ -146,7 +146,7 @@ function toDashboardData(raw: ApiDashboard): DashboardData {
       pending: parseFloat(p.pending),
     })),
     paymentStatus: raw.payment_status.map((p) => ({
-      status: PAYMENT_STATUS_LABELS[p.status]?.label ?? "Pending",
+      status: PAYMENT_STATUS_LABELS[p.status]?.label ?? p.status,
       value: p.count,
       color: PAYMENT_STATUS_LABELS[p.status]?.color ?? "#376EF4",
     })),

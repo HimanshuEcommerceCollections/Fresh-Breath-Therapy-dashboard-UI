@@ -2,6 +2,7 @@ import type { Client } from "@/src/services/clientsService";
 import { CLIENTS_TABLE_GRID } from "@/src/sections/clientsSections/clientsTableGrid";
 import ClientTableRow from "@/src/sections/clientsSections/ClientTableRow";
 import { TableSkeleton } from "@/src/components/ui/TableRowSkeleton";
+import InfiniteScrollSentinel from "@/src/components/sharedComponents/InfiniteScrollSentinel";
 
 const COLUMNS = [
   "Client",
@@ -18,11 +19,17 @@ export default function ClientsTable({
   isLoading,
   onEdit,
   onDelete,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
 }: {
   clients: Client[];
   isLoading?: boolean;
   onEdit: (client: Client) => void;
   onDelete: (client: Client) => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 }) {
   return (
     <div className="rounded-[18px] border border-[#E0E5EB] bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
@@ -45,6 +52,13 @@ export default function ClientsTable({
           ))
         )}
       </div>
+      {!isLoading && onLoadMore && (
+        <InfiniteScrollSentinel
+          onIntersect={onLoadMore}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={Boolean(isFetchingNextPage)}
+        />
+      )}
     </div>
   );
 }

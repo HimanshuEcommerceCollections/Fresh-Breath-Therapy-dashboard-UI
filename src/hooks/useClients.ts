@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { clientsService } from "@/src/services/clientsService";
 import { leadsService } from "@/src/services/leadsService";
+import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { useDebouncedValue } from "@/src/hooks/useDebouncedValue";
 import { showSuccessToast } from "@/src/lib/toast";
 
@@ -23,9 +24,22 @@ export const useClients = () => {
     [debouncedSearch, locationId]
   );
 
-  const { data: clients = [], isLoading } = useQuery({
+  const {
+    items: clients,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteList({
     queryKey: ["clients", clientFilters],
-    queryFn: () => clientsService.fetchClients(clientFilters),
+    queryFn: (cursor) => clientsService.fetchClients(clientFilters, cursor),
+  });
+
+  // The page header's total count needs every matching client, not just
+  // whatever page has scrolled into view.
+  const { data: allClients = [] } = useQuery({
+    queryKey: ["clients", "all", clientFilters],
+    queryFn: () => clientsService.fetchAllClients(clientFilters),
   });
 
   const createClientMutation = useMutation({
@@ -71,12 +85,13 @@ export const useClients = () => {
 
   const debouncedLeadSearch = useDebouncedValue(leadSearchQuery, SEARCH_DEBOUNCE_MS);
 
-  const { data: filteredLeads = [] } = useQuery({
+  const { data: filteredLeadsPage } = useQuery({
     queryKey: ["leads", { search: debouncedLeadSearch || undefined }],
     queryFn: () => leadsService.fetchLeads({ search: debouncedLeadSearch || undefined }),
     // Only search leads while the "Add Client" panel is actually open.
     enabled: isAddingClient,
   });
+  const filteredLeads = filteredLeadsPage?.items ?? [];
 
   const openLeadSearch = () => setIsAddingClient(true);
   const cancelLeadSearch = () => {
@@ -105,6 +120,10 @@ export const useClients = () => {
   return {
     clients,
     isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    allClients,
     search,
     setSearch,
     locationId,

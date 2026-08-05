@@ -1,9 +1,16 @@
 "use client";
 
 import type { Payment } from "@/src/services/paymentsService";
-import { paymentStatusOptions } from "@/src/data/paymentsData/paymentsData";
 import { PAYMENTS_TABLE_GRID } from "@/src/sections/paymentsSections/paymentsTableGrid";
-import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";
+
+const STATUS_STYLES: Record<Payment["enrollment"]["status"], string> = {
+  active: "border-[#BFDBFE] bg-[#EFF6FF] text-[#376EF4]",
+  completed: "border-[#BBF7D0] bg-[#F0FDF4] text-[#16A34A]",
+};
+const STATUS_LABELS: Record<Payment["enrollment"]["status"], string> = {
+  active: "Active",
+  completed: "Completed",
+};
 
 export default function PaymentsTableRow({ payment }: { payment: Payment }) {
   return (
@@ -17,13 +24,10 @@ export default function PaymentsTableRow({ payment }: { payment: Payment }) {
         {payment.packageName}
       </div>
       <div className="px-2 py-3 text-sm font-normal leading-5 text-[#071123]">
-        ${payment.due.toLocaleString()}
+        ${payment.amountPaid.toLocaleString()}
       </div>
       <div className="px-2 py-3 text-sm font-normal leading-5 text-[#071123]">
-        ${payment.paid.toLocaleString()}
-      </div>
-      <div className="px-2 py-3 text-sm font-normal leading-5 text-[#071123]">
-        ${payment.balance.toLocaleString()}
+        ${payment.balanceAfter.toLocaleString()}
       </div>
       <div className="truncate px-2 py-3 text-sm font-normal leading-5 text-[#071123]">
         {payment.method}
@@ -32,11 +36,11 @@ export default function PaymentsTableRow({ payment }: { payment: Payment }) {
         {payment.date}
       </div>
       <div className="px-2 py-2">
-        <StatusCombobox
-          status={payment.status}
-          options={paymentStatusOptions}
-          widthClass="w-35"
-        />
+        <span
+          className={`inline-flex h-8 items-center rounded-xl border px-3 text-sm font-normal ${STATUS_STYLES[payment.enrollment.status]}`}
+        >
+          {STATUS_LABELS[payment.enrollment.status]}
+        </span>
       </div>
     </div>
   );

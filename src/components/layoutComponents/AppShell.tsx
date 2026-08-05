@@ -6,7 +6,7 @@
 // authenticated polling) and a protected shell (everything else — requires
 // a real session, redirects to /login otherwise).
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import Sidebar from "@/src/components/layoutComponents/Sidebar/Sidebar";
@@ -28,8 +28,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 function ProtectedShell({ children }: { children: React.ReactNode }) {
-  const { hasChecked, user } = useCurrentUser();
+  const { hasChecked, user, refetch } = useCurrentUser();
   const router = useRouter();
+  const pathname = usePathname();
+  const isFirstPathname = useRef(true);
+
+  // CurrentUserProvider only checks /api/auth/me once, on initial app load —
+  // a client-side route change never re-verifies on its own. Without this, a
+  // session that goes stale while the SPA is open (expired, logged out in
+  // another tab, revoked) would keep rendering pages from the last-known
+  // `user` in memory until some unrelated API call happened to 401. Re-check
+  // on every navigation instead, so "not logged in anymore" is caught at the
+  // moment the user tries to go anywhere, not only when data happens to load.
+  useEffect(() => {
+    if (isFirstPathname.current) {
+      isFirstPathname.current = false;
+      return;
+    }
+    if (hasChecked) {
+      refetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   useEffect(() => {
     if (hasChecked && !user) {

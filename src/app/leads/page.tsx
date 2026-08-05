@@ -23,6 +23,10 @@ export default function LeadsPage() {
   const {
     leads,
     isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    allLeads,
     search,
     setSearch,
     statusFilter,
@@ -31,7 +35,7 @@ export default function LeadsPage() {
     createLead,
     updateLead,
     deleteLead,
-  } = useLeads();
+  } = useLeads(activeView);
 
   const handleLocationNameChange = (name: string) => {
     setLocationName(name);
@@ -40,7 +44,7 @@ export default function LeadsPage() {
 
   return (
     <div className="flex flex-col gap-6 px-8 pb-12 pt-24">
-      <LeadsPageHeader leads={leads} onCreate={createLead} />
+      <LeadsPageHeader leads={allLeads} onCreate={createLead} />
       <LeadsToolbar
         activeView={activeView}
         onViewChange={setActiveView}
@@ -57,9 +61,12 @@ export default function LeadsPage() {
           isLoading={isLoading}
           onEdit={setEditingLead}
           onDelete={setDeletingLead}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          onLoadMore={fetchNextPage}
         />
       ) : (
-        <LeadsPipelineBoard leads={leads} />
+        <LeadsPipelineBoard leads={allLeads} />
       )}
 
       {editingLead && (

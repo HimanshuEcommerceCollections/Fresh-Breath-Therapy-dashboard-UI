@@ -8,6 +8,7 @@
 // no changes beyond their `Lead` type import source.
 
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
+import { fetchAllPages, type Page } from "@/src/lib/pagination";
 import type { LeadStatus } from "@/src/data/leadsData/leadsData";
 
 type ApiLeadStatus =
@@ -82,6 +83,12 @@ export interface CreateLeadPayload {
   status?: LeadStatus;
 }
 
+interface ApiPage<T> {
+  items: T[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
 interface ApiLead {
   id: string;
   name: string;
@@ -119,15 +126,28 @@ function toLead(raw: ApiLead): Lead {
 }
 
 export const leadsService = {
-  async fetchLeads(filters?: LeadFilters): Promise<Lead[]> {
-    const res = await apiClient.get<ApiLead[]>("/api/leads", {
+  async fetchLeads(filters?: LeadFilters, cursor?: string, limit?: number): Promise<Page<Lead>> {
+    const res = await apiClient.get<ApiPage<ApiLead>>("/api/leads", {
       params: {
         status_filter: filters?.statusFilter ? LABEL_TO_STATUS[filters.statusFilter] : undefined,
         location_id: filters?.locationId || undefined,
         search: filters?.search || undefined,
+        cursor,
+        limit,
       },
     });
-    return res.data.map(toLead);
+    return {
+      items: res.data.items.map(toLead),
+      nextCursor: res.data.next_cursor,
+      hasMore: res.data.has_more,
+    };
+  },
+
+  // For call sites that need every matching lead at once — the pipeline
+  // (kanban) board groups by status across the full filtered set, not just
+  // whatever page has scrolled into view.
+  async fetchAllLeads(filters?: LeadFilters): Promise<Lead[]> {
+    return fetchAllPages((cursor) => leadsService.fetchLeads(filters, cursor, 100));
   },
 
   async createLead(payload: CreateLeadPayload): Promise<Lead> {

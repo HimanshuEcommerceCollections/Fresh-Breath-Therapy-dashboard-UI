@@ -40,7 +40,7 @@ export default function ClientSelect({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    clientsService.fetchClients().then(setClients).catch(() => {});
+    clientsService.fetchAllClients().then(setClients).catch(() => {});
   }, []);
 
   // Derived display name for the currently selected client

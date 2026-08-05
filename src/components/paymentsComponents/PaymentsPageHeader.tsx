@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import RecordPaymentModal from "@/src/sections/paymentsSections/RecordPaymentModal";
-import type { CreatePaymentPayload } from "@/src/services/paymentsService";
+import type { CreatePaymentPayload, CreatePaymentResult } from "@/src/services/paymentsService";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { canWrite } from "@/src/lib/permissions";
 
 export default function PaymentsPageHeader({
   onCreate,
 }: {
-  onCreate: (payload: CreatePaymentPayload) => Promise<void>;
+  onCreate: (payload: CreatePaymentPayload) => Promise<CreatePaymentResult>;
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { role } = useCurrentUser();

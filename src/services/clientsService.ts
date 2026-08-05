@@ -14,6 +14,7 @@
 // leads without a therapist instead of relying on that error.
 
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
+import { fetchAllPages, type Page } from "@/src/lib/pagination";
 import type { ClientStatus } from "@/src/data/clientsData/clientsData";
 
 type ApiClientStatus =
@@ -64,6 +65,12 @@ export interface CreateClientPayload {
   status?: ClientStatus;
 }
 
+interface ApiPage<T> {
+  items: T[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
 interface ApiClient {
   id: string;
   name: string;
@@ -93,15 +100,28 @@ function toClient(raw: ApiClient): Client {
 }
 
 export const clientsService = {
-  async fetchClients(filters?: ClientFilters): Promise<Client[]> {
-    const res = await apiClient.get<ApiClient[]>("/api/clients", {
+  async fetchClients(filters?: ClientFilters, cursor?: string, limit?: number): Promise<Page<Client>> {
+    const res = await apiClient.get<ApiPage<ApiClient>>("/api/clients", {
       params: {
         status_filter: filters?.statusFilter ? LABEL_TO_STATUS[filters.statusFilter] : undefined,
         location_id: filters?.locationId || undefined,
         search: filters?.search || undefined,
+        cursor,
+        limit,
       },
     });
-    return res.data.map(toClient);
+    return {
+      items: res.data.items.map(toClient),
+      nextCursor: res.data.next_cursor,
+      hasMore: res.data.has_more,
+    };
+  },
+
+  // For call sites that need the full client roster at once — name-lookup
+  // joins (Payments/Follow-ups tables) and the client-picker dropdown
+  // (ClientSelect) can't work off just the first page.
+  async fetchAllClients(filters?: ClientFilters): Promise<Client[]> {
+    return fetchAllPages((cursor) => clientsService.fetchClients(filters, cursor, 100));
   },
 
   async createClient(payload: CreateClientPayload): Promise<Client> {
