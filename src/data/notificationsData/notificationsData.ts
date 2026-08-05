@@ -89,11 +89,26 @@ export const notificationsPageContent = {
 
 export type NotificationTab = (typeof notificationsPageContent.tabs)[number];
 
-// Section 5.1's exact ?tab= contract.
-export const tabToQueryParam: Record<NotificationTab, string> = {
-  All: "all",
-  Unread: "unread",
-  "Follow-Up Reminders": "follow_up_reminders",
-  Alerts: "alerts",
-  Read: "read",
-};
+// Mirrors the backend's tab filter exactly (routers/notifications.py:
+// FOLLOW_UP_BADGES / ALERT_BADGES) so switching tabs can filter the
+// already-fetched list client-side instead of re-fetching per tab.
+const FOLLOW_UP_BADGES: NotificationBadgeType[] = ["reminder", "scheduled", "completed"];
+const ALERT_BADGES: NotificationBadgeType[] = ["overdue"];
+
+export function filterNotificationsByTab(
+  notifications: NotificationItem[],
+  tab: NotificationTab
+): NotificationItem[] {
+  switch (tab) {
+    case "Unread":
+      return notifications.filter((n) => !n.isRead);
+    case "Read":
+      return notifications.filter((n) => n.isRead);
+    case "Follow-Up Reminders":
+      return notifications.filter((n) => FOLLOW_UP_BADGES.includes(n.badge));
+    case "Alerts":
+      return notifications.filter((n) => ALERT_BADGES.includes(n.badge));
+    default:
+      return notifications;
+  }
+}

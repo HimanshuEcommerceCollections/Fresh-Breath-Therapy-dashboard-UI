@@ -7,8 +7,6 @@ export interface AvatarStackItem {
 }
 
 export interface AuthBrandContent {
-  logoText: string;
-  logoSubText: string;
   trustBadge: string;
   heading: string[]; // array so we can render line breaks exactly like Figma
   subheading: string;
@@ -20,8 +18,6 @@ export interface AuthBrandContent {
 }
 
 export const authBrandContent: AuthBrandContent = {
-  logoText: "FRESH BREATH",
-  logoSubText: "THERAPY",
   trustBadge: "Trusted by 1,200+ therapy clinics",
   heading: ["Breathe easier.", "Care smarter."],
   subheading:

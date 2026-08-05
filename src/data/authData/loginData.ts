@@ -11,7 +11,7 @@ export const loginContent = {
     },
     password: {
       label: "Password",
-      placeholder: "Create a password",
+      placeholder: "Enter a password",
     },
   },
   submitLabel: "login",

@@ -1,20 +1,17 @@
 // src/hooks/usePackagesSettings.ts
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   packagesService,
   type PackagePayload,
 } from "@/src/services/packagesService";
+import { usePackages } from "@/src/hooks/usePackages";
 import { showSuccessToast } from "@/src/lib/toast";
 
 export const usePackagesSettings = () => {
   const queryClient = useQueryClient();
-
-  const { data: packages = [], isLoading } = useQuery({
-    queryKey: ["packages"],
-    queryFn: () => packagesService.fetchPackages(),
-  });
+  const { packages, isLoading } = usePackages();
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["packages"] });
 

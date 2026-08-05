@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import FormField from "@/src/sections/leadsSections/FormField";
 import FormSelect from "@/src/sections/leadsSections/FormSelect";
 import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
-import { packagesService, type ServicePackage } from "@/src/services/packagesService";
+import { usePackages } from "@/src/hooks/usePackages";
 import type { CreatePaymentPayload } from "@/src/services/paymentsService";
 import type { PaymentMethod, PaymentStatus } from "@/src/data/paymentsData/paymentsData";
 
@@ -21,7 +21,10 @@ export default function RecordPaymentModal({
   onClose: () => void;
   onCreate: (payload: CreatePaymentPayload) => Promise<void>;
 }) {
-  const [packages, setPackages] = useState<ServicePackage[]>([]);
+  // Shared cache with Settings > Packages (same ["packages"] query key) — a
+  // package created/edited there invalidates this too, so it's never stale
+  // here regardless of whether this modal happened to be open at the time.
+  const { packages } = usePackages();
   const [clientId, setClientId] = useState("");
   const [packageId, setPackageId] = useState("");
   const [amountDue, setAmountDue] = useState("");
@@ -29,10 +32,6 @@ export default function RecordPaymentModal({
   const [method, setMethod] = useState<PaymentMethod>("Credit Card");
   const [date, setDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (open) packagesService.fetchPackages().then(setPackages).catch(() => {});
-  }, [open]);
 
   if (!open) return null;
 

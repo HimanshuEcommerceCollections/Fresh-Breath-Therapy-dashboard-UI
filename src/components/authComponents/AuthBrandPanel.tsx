@@ -1,13 +1,10 @@
 // src/components/authComponents/AuthBrandPanel.tsx
 import Image from "next/image";
-import { Wind } from "lucide-react";
 import { authBrandContent } from "@/src/data/authData/authBrandData";
 import AvatarStack from "./AvatarStack";
 
 const AuthBrandPanel = () => {
   const {
-    logoText,
-    logoSubText,
     trustBadge,
     heading,
     subheading,
@@ -20,16 +17,14 @@ const AuthBrandPanel = () => {
 
   return (
     <section className="relative hidden h-full w-full flex-col justify-between overflow-hidden rounded-[32px] bg-[#325A5E] p-10 text-white lg:flex">
-      {/* Logo */}
-      <div className="flex items-center gap-2">
-        <Wind className="h-6 w-6" strokeWidth={1.5} />
-        <div className="leading-tight">
-          <p className="text-sm font-semibold tracking-wide">{logoText}</p>
-          <p className="text-[10px] tracking-[0.2em] text-white/70">
-            {logoSubText}
-          </p>
-        </div>
-      </div>
+      {/* Logo — same asset as the sidebar (Sidebar.tsx), not a placeholder */}
+      <Image
+        src="/dashboard/dashboardicons/sidebaricons/fbtIcon.png"
+        alt="Fresh Breath Therapy"
+        width={152}
+        height={54}
+        className="h-12 w-auto object-contain"
+      />
 
       {/* Middle content */}
       <div className="flex flex-col gap-6">
