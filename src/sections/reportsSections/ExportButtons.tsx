@@ -12,6 +12,7 @@ export default function ExportButtons({
   path,
   params,
   baseName,
+  formats = ["csv", "pdf"],
 }: {
   /** Export endpoint, e.g. "/api/exports/reports/sales". */
   path: string;
@@ -19,6 +20,9 @@ export default function ExportButtons({
   params?: Record<string, string | undefined>;
   /** Fallback filename if the response has no Content-Disposition. */
   baseName: string;
+  /** Which buttons to render. The report chart cards show CSV only — PDF for
+   * reports lives on the page toolbar's "Export PDF" button instead. */
+  formats?: ("csv" | "pdf")[];
 }) {
   const [busy, setBusy] = useState<"csv" | "pdf" | null>(null);
 
@@ -39,22 +43,26 @@ export default function ExportButtons({
 
   return (
     <div className="flex items-center gap-2">
-      <button type="button" onClick={() => run("csv")} disabled={busy !== null} className={cls}>
-        {busy === "csv" ? (
-          <Loader2 size={16} className="animate-spin" />
-        ) : (
-          <Download size={16} stroke="#071123" />
-        )}
-        CSV
-      </button>
-      <button type="button" onClick={() => run("pdf")} disabled={busy !== null} className={cls}>
-        {busy === "pdf" ? (
-          <Loader2 size={16} className="animate-spin" />
-        ) : (
-          <FileText size={16} stroke="#071123" />
-        )}
-        PDF
-      </button>
+      {formats.includes("csv") && (
+        <button type="button" onClick={() => run("csv")} disabled={busy !== null} className={cls}>
+          {busy === "csv" ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Download size={16} stroke="#071123" />
+          )}
+          CSV
+        </button>
+      )}
+      {formats.includes("pdf") && (
+        <button type="button" onClick={() => run("pdf")} disabled={busy !== null} className={cls}>
+          {busy === "pdf" ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <FileText size={16} stroke="#071123" />
+          )}
+          PDF
+        </button>
+      )}
     </div>
   );
 }

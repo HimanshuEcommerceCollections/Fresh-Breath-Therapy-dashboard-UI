@@ -30,6 +30,7 @@ export default function LeadConversionReport({ filters }: { filters: ReportFilte
           <ExportButtons
             path="/api/exports/reports/conversion"
             params={{ range: filters.range, location_id: filters.locationId }}
+            formats={["csv"]}
             baseName="fbt-conversion-report"
           />
         }>

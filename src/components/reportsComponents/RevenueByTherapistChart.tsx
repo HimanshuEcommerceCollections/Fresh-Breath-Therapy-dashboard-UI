@@ -49,6 +49,7 @@ export default function RevenueByTherapistChart({ filters }: { filters: ReportFi
           <ExportButtons
             path="/api/exports/reports/revenue"
             params={{ range: filters.range, location_id: filters.locationId }}
+            formats={["csv"]}
             baseName="fbt-revenue-report"
           />
         }>

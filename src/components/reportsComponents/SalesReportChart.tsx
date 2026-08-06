@@ -45,6 +45,7 @@ export default function SalesReportChart({ filters }: { filters: ReportFilters }
           <ExportButtons
             path="/api/exports/reports/sales"
             params={{ range: filters.range, location_id: filters.locationId }}
+            formats={["csv"]}
             baseName="fbt-sales-report"
           />
         }>

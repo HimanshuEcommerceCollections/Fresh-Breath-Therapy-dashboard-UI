@@ -49,6 +49,7 @@ export default function ClientDistributionChart({ filters }: { filters: ReportFi
           <ExportButtons
             path="/api/exports/reports/clients"
             params={{ range: filters.range, location_id: filters.locationId }}
+            formats={["csv"]}
             baseName="fbt-clients-report"
           />
         }>

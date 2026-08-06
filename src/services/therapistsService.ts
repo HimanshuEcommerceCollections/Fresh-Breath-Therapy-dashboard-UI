@@ -21,6 +21,8 @@ export interface Therapist {
   id: string;
   name: string;
   credential: string | null;
+  specialization: string | null;
+  employmentStatus: string | null;
   email: string;
   avatarUrl: string | null;
   isActive: boolean;
@@ -31,23 +33,38 @@ export interface Therapist {
   ptoBalance: number;
 }
 
-// MISMATCH: the Add Therapist form also has "Specialization" and
-// "Employment Status" fields — neither exists on the backend's Therapist
-// model (section 6's create body is only name/credential/location_id/email/
-// avatar_url). Kept in the UI per the "don't guess, flag it" instruction,
-// but they are NOT sent in this payload.
+// Specialization and Employment Status are real backend fields now — the
+// form used to collect both and silently drop them on submit.
 export interface AddTherapistPayload {
   name: string;
   credential?: string;
+  specialization?: string;
+  employmentStatus?: string;
   locationId: string;
   email: string;
   avatarUrl?: string;
+}
+
+// Every field optional: PATCH sends only what changed. isActive is how a
+// therapist is deactivated (drives the INACTIVE badge on the card) — separate
+// from employmentStatus, which is the terms they work on.
+export interface UpdateTherapistPayload {
+  name?: string;
+  credential?: string | null;
+  specialization?: string | null;
+  employmentStatus?: string | null;
+  locationId?: string;
+  email?: string;
+  avatarUrl?: string | null;
+  isActive?: boolean;
 }
 
 interface ApiTherapist {
   id: string;
   name: string;
   credential: string | null;
+  specialization: string | null;
+  employment_status: string | null;
   email: string;
   avatar_url: string | null;
   is_active: boolean;
@@ -63,6 +80,8 @@ function toTherapist(raw: ApiTherapist): Therapist {
     id: raw.id,
     name: raw.name,
     credential: raw.credential,
+    specialization: raw.specialization,
+    employmentStatus: raw.employment_status,
     email: raw.email,
     avatarUrl: raw.avatar_url,
     isActive: raw.is_active,
@@ -86,11 +105,38 @@ export const therapistsService = {
     const res = await apiClient.post<ApiTherapist>("/api/therapists", {
       name: payload.name,
       credential: payload.credential,
+      specialization: payload.specialization,
+      employment_status: payload.employmentStatus,
       location_id: payload.locationId,
       email: payload.email,
       avatar_url: payload.avatarUrl,
     });
     return toTherapist(res.data);
+  },
+
+  async updateTherapist(
+    therapistId: string,
+    payload: UpdateTherapistPayload
+  ): Promise<Therapist> {
+    // Only send keys the caller actually set — PATCH treats an explicit null
+    // as "clear this field", so passing undefined through would wipe values
+    // the edit form never touched.
+    const body: Record<string, unknown> = {};
+    if (payload.name !== undefined) body.name = payload.name;
+    if (payload.credential !== undefined) body.credential = payload.credential;
+    if (payload.specialization !== undefined) body.specialization = payload.specialization;
+    if (payload.employmentStatus !== undefined) body.employment_status = payload.employmentStatus;
+    if (payload.locationId !== undefined) body.location_id = payload.locationId;
+    if (payload.email !== undefined) body.email = payload.email;
+    if (payload.avatarUrl !== undefined) body.avatar_url = payload.avatarUrl;
+    if (payload.isActive !== undefined) body.is_active = payload.isActive;
+
+    const res = await apiClient.patch<ApiTherapist>(`/api/therapists/${therapistId}`, body);
+    return toTherapist(res.data);
+  },
+
+  async deleteTherapist(therapistId: string): Promise<void> {
+    await apiClient.delete(`/api/therapists/${therapistId}`);
   },
 
   async uploadAvatar(file: File): Promise<string> {

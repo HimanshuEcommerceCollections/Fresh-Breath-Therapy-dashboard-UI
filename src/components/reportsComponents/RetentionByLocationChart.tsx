@@ -49,6 +49,7 @@ export default function RetentionByLocationChart({ filters }: { filters: ReportF
           <ExportButtons
             path="/api/exports/reports/retention"
             params={{ range: filters.range, location_id: filters.locationId }}
+            formats={["csv"]}
             baseName="fbt-retention-report"
           />
         }>

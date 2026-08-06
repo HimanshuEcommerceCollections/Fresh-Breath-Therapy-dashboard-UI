@@ -49,6 +49,7 @@ export default function TherapistUtilizationChart({ filters }: { filters: Report
           <ExportButtons
             path="/api/exports/reports/utilization"
             params={{ range: filters.range, location_id: filters.locationId }}
+            formats={["csv"]}
             baseName="fbt-utilization-report"
           />
         }>

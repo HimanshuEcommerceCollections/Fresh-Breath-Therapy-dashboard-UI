@@ -52,6 +52,8 @@ export default function ReportsPage() {
         onDateRangeChange={setDateRange}
         locationName={locationName}
         onLocationNameChange={setLocationName}
+        activeTab={activeTab}
+        locationId={locationId}
       />
       <ReportsTabList activeTab={activeTab} onChange={setActiveTab} />
       {TAB_CONTENT[activeTab]}

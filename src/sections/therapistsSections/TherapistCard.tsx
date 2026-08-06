@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { Pencil } from "lucide-react";
 import type { Therapist } from "@/src/services/therapistsService";
 
 // e.g. 600 → "$0.6k", 1100 → "$1.1k", 0 → "$0.0k"
@@ -11,13 +12,17 @@ function formatRevenueK(dollars: number): string {
 
 export default function TherapistCard({
   therapist,
+  canEdit = false,
+  onEdit,
 }: {
   therapist: Therapist;
+  canEdit?: boolean;
+  onEdit?: (therapist: Therapist) => void;
 }) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="flex flex-col gap-3 rounded-[18px] border border-[#E0E5EB] bg-white p-5 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
+    <div className="group relative flex flex-col gap-3 rounded-[18px] border border-[#E0E5EB] bg-white p-5 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
       <div className="flex flex-row items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[rgba(55,110,244,0.1)]">
           {imgError || !therapist.avatarUrl ? (
@@ -51,12 +56,40 @@ export default function TherapistCard({
             {therapist.email}
           </span>
         </div>
-        {!therapist.isActive && (
-          <span className="shrink-0 rounded-full bg-[#F1F5F9] px-2 py-0.5 text-[10px] font-medium uppercase text-[#596475]">
-            Inactive
-          </span>
-        )}
+        <div className="flex shrink-0 items-center gap-1.5">
+          {!therapist.isActive && (
+            <span className="rounded-full bg-[#F1F5F9] px-2 py-0.5 text-[10px] font-medium uppercase text-[#596475]">
+              Inactive
+            </span>
+          )}
+          {canEdit && onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(therapist)}
+              aria-label={`Edit ${therapist.name}`}
+              title="Edit therapist"
+              className="cursor-pointer rounded-lg border border-transparent p-1.5 text-[#596475] transition-colors hover:border-[#E0E5EB] hover:bg-[#F7FBFD] hover:text-[#071123]"
+            >
+              <Pencil size={15} />
+            </button>
+          )}
+        </div>
       </div>
+
+      {(therapist.specialization || therapist.employmentStatus) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {therapist.specialization && (
+            <span className="truncate rounded-full bg-[rgba(55,110,244,0.08)] px-2 py-0.5 text-[11px] font-medium text-[#376EF4]">
+              {therapist.specialization}
+            </span>
+          )}
+          {therapist.employmentStatus && (
+            <span className="rounded-full bg-[#F1F5F9] px-2 py-0.5 text-[11px] font-medium text-[#596475]">
+              {therapist.employmentStatus}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex justify-between">
         {[
