@@ -5,6 +5,7 @@ import { ChangeEvent, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loginService, loginWithGoogle } from "@/src/services/authService";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
+import { MAX_EMAIL_LENGTH } from "@/src/lib/validation";
 
 export interface LoginFormValues {
   email: string;
@@ -39,6 +40,8 @@ export const useLoginForm = () => {
 
     if (!values.email.trim()) {
       nextErrors.email = "Email is required.";
+    } else if (values.email.trim().length > MAX_EMAIL_LENGTH) {
+      nextErrors.email = `Email must be ${MAX_EMAIL_LENGTH} characters or fewer.`;
     } else if (!emailRegex.test(values.email)) {
       nextErrors.email = "Enter a valid email address.";
     }

@@ -8,6 +8,7 @@ import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
 import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
 import type { ClientStatus } from "@/src/data/clientsData/clientsData";
 import type { Client, CreateClientPayload } from "@/src/services/clientsService";
+import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, emailError, nameError } from "@/src/lib/validation";
 
 const CLIENT_STATUS_OPTIONS: ClientStatus[] = [
   "Consultation Completed",
@@ -33,7 +34,11 @@ export default function EditClientModal({
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isFormValid = Boolean(name.trim()) && Boolean(email.trim()) && Boolean(locationId) && Boolean(therapistId);
+  const nameErr = nameError(name);
+  const emailErr = emailError(email);
+  const isFormValid =
+    Boolean(name.trim()) && Boolean(email.trim()) && Boolean(locationId)
+    && Boolean(therapistId) && !nameErr && !emailErr;
 
   async function handleSave() {
     if (!isFormValid) return;
@@ -76,16 +81,20 @@ export default function EditClientModal({
             label="Full Name *"
             type="text"
             placeholder="Enter client name"
+            maxLength={MAX_NAME_LENGTH}
             value={name}
             onChange={(e) => setName(e.target.value)}
+            error={nameErr ?? undefined}
           />
 
           <FormField
             label="Email"
             type="email"
             placeholder="Enter email address"
+            maxLength={MAX_EMAIL_LENGTH}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={emailErr ?? undefined}
           />
 
           <div className="flex gap-6">

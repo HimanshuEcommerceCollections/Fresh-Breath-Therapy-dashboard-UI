@@ -11,6 +11,7 @@ import FormSelect from "@/src/sections/leadsSections/FormSelect";
 import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
 import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
+import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, emailError, nameError } from "@/src/lib/validation";
 
 const GENDER_OPTIONS = ["Male", "Female", "Non-binary", "Prefer not to say"];
 // Mirrors the backend's LeadCreate/LeadUpdate phone validation (schemas/lead.py) —
@@ -65,7 +66,11 @@ export default function AddLeadModal({
 
   const isPhoneValid = PHONE_PATTERN.test(phone.trim());
   const isAgeValid = age.trim().length === 0 || (Number(age) >= 0 && Number(age) <= MAX_AGE);
-  const isFormValid = Boolean(fullName.trim()) && Boolean(locationId) && isPhoneValid && isAgeValid;
+  const nameErr = nameError(fullName);
+  const emailErr = emailError(email);
+  const isFormValid =
+    Boolean(fullName.trim()) && Boolean(locationId) && isPhoneValid && isAgeValid
+    && !nameErr && !emailErr;
 
   async function handleAddLead() {
     if (!isFormValid) return;
@@ -118,12 +123,42 @@ export default function AddLeadModal({
         </div>
 
         <div className="flex max-h-[70vh] flex-col gap-6 overflow-y-auto p-6">
+          {/* Website-form detail, only present on leads that arrived via the
+              lead webhook. Read-only: it's what the client actually submitted,
+              not something an admin should rewrite. */}
+          {isEditMode && (lead.message || lead.preferredDatetime) && (
+            <div className="flex flex-col gap-2 rounded-xl border border-[#C3C6D7] bg-[#F8F9FF] p-4">
+              <span className="text-xs font-semibold tracking-[0.6px] text-[#434655]">
+                FROM THE WEBSITE FORM
+              </span>
+              {lead.preferredDatetime && (
+                <p className="text-sm text-[#0B1C30]">
+                  <span className="text-[#6B7280]">Preferred date &amp; time: </span>
+                  {lead.preferredDatetime}
+                </p>
+              )}
+              {lead.message && (
+                <p className="whitespace-pre-wrap text-sm text-[#0B1C30]">
+                  <span className="text-[#6B7280]">Message: </span>
+                  {lead.message}
+                </p>
+              )}
+              <p className="text-xs text-[#6B7280]">
+                {lead.consentGiven
+                  ? "Consented to the privacy policy and HIPAA notice on submission."
+                  : "No consent recorded on submission."}
+              </p>
+            </div>
+          )}
+
           <FormField
             label="Full Name *"
             type="text"
             placeholder="Enter patient name"
+            maxLength={MAX_NAME_LENGTH}
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
+            error={nameErr ?? undefined}
           />
 
           <div className="flex gap-6">
@@ -152,8 +187,10 @@ export default function AddLeadModal({
               label="Email"
               type="email"
               placeholder="Enter email address"
+              maxLength={MAX_EMAIL_LENGTH}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              error={emailErr ?? undefined}
             />
             <FormField
               label="Phone"

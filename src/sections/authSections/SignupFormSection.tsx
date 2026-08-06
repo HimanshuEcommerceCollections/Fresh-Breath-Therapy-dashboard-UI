@@ -10,6 +10,7 @@ import PrimaryButton from "@/src/components/authComponents/PrimaryButton";
 import StepBadge from "@/src/components/authComponents/StepBadge";
 import { signupContent } from "@/src/data/authData/signupData";
 import { useSignupForm } from "@/src/hooks/useSignupForm";
+import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH } from "@/src/lib/validation";
 
 const SignupFormSection = () => {
   const {
@@ -43,6 +44,7 @@ const SignupFormSection = () => {
             placeholder={signupContent.fields.fullName.placeholder}
             icon={User}
             name="fullName"
+            maxLength={MAX_NAME_LENGTH}
             value={values.fullName}
             onChange={handleChange}
             error={errors.fullName}
@@ -55,6 +57,7 @@ const SignupFormSection = () => {
             icon={Mail}
             type="email"
             name="email"
+            maxLength={MAX_EMAIL_LENGTH}
             value={values.email}
             onChange={handleChange}
             error={errors.email}

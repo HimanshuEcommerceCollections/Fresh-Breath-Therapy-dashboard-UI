@@ -8,6 +8,7 @@ import LocationChip from "@/src/sections/settingsSections/LocationChip";
 import { Skeleton } from "@/src/components/ui/Skeleton";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { isAdmin } from "@/src/lib/permissions";
+import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH } from "@/src/lib/validation";
 
 export default function OrganizationSettings() {
   const { role } = useCurrentUser();
@@ -52,12 +53,19 @@ export default function OrganizationSettings() {
         </>
       ) : (
         <>
-          <SettingsField label="Organization Name" value={name} onChange={setName} disabled={!canEdit} />
+          <SettingsField
+            label="Organization Name"
+            value={name}
+            onChange={setName}
+            maxLength={MAX_NAME_LENGTH}
+            disabled={!canEdit}
+          />
           <SettingsField
             label="Primary Email"
             value={primaryEmail}
             onChange={setPrimaryEmail}
             type="email"
+            maxLength={MAX_EMAIL_LENGTH}
             disabled={!canEdit}
           />
           {/* Plain text input for now — a real timezone select is a future enhancement. */}

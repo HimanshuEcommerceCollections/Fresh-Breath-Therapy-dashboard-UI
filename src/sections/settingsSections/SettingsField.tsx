@@ -8,12 +8,14 @@ export default function SettingsField({
   onChange,
   type = "text",
   disabled = false,
+  maxLength,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   type?: string;
   disabled?: boolean;
+  maxLength?: number;
 }) {
   return (
     <label className="flex flex-col gap-2">
@@ -21,6 +23,7 @@ export default function SettingsField({
         {label}
       </span>
       <input
+        maxLength={maxLength}
         type={type}
         value={value}
         disabled={disabled}

@@ -61,6 +61,11 @@ export interface Lead {
   source: string;
   status: LeadStatus;
   convertedClientId: string | null;
+  // Captured by the public website form and delivered via the lead webhook
+  // (POST /api/webhooks/leads). Empty for leads added by hand.
+  message: string;
+  preferredDatetime: string;
+  consentGiven: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -99,6 +104,9 @@ interface ApiLead {
   source: string | null;
   status: ApiLeadStatus;
   converted_client_id: string | null;
+  message: string | null;
+  preferred_datetime: string | null;
+  consent_given: boolean;
   created_at: string;
   updated_at: string;
   location: { id: string; name: string };
@@ -120,6 +128,9 @@ function toLead(raw: ApiLead): Lead {
     source: raw.source ?? "",
     status: STATUS_TO_LABEL[raw.status],
     convertedClientId: raw.converted_client_id,
+    message: raw.message ?? "",
+    preferredDatetime: raw.preferred_datetime ?? "",
+    consentGiven: raw.consent_given ?? false,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
   };

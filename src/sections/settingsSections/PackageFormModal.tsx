@@ -6,6 +6,7 @@ import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import FormField from "@/src/sections/leadsSections/FormField";
 import ToggleRow from "@/src/sections/settingsSections/ToggleRow";
 import type { PackagePayload, ServicePackage } from "@/src/services/packagesService";
+import { MAX_NAME_LENGTH } from "@/src/lib/validation";
 
 export default function PackageFormModal({
   open,
@@ -33,7 +34,8 @@ export default function PackageFormModal({
 
   if (!open) return null;
 
-  const isValid = name.trim().length > 0 && Number(price) > 0;
+  const isValid =
+    name.trim().length > 0 && name.trim().length <= MAX_NAME_LENGTH && Number(price) > 0;
 
   async function handleSubmit() {
     if (!isValid) return;
@@ -64,6 +66,7 @@ export default function PackageFormModal({
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. 4 Sessions Starter"
+            maxLength={MAX_NAME_LENGTH}
           />
           <FormField
             label="Price ($)"

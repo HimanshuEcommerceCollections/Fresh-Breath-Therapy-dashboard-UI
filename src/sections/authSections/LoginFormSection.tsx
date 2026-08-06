@@ -11,6 +11,7 @@ import PrimaryButton from "@/src/components/authComponents/PrimaryButton";
 import StepBadge from "@/src/components/authComponents/StepBadge";
 import { loginContent } from "@/src/data/authData/loginData";
 import { useLoginForm } from "@/src/hooks/useLoginForm";
+import { MAX_EMAIL_LENGTH } from "@/src/lib/validation";
 
 // Set by the backend redirect after the Google OAuth callback completes
 // (GET /api/auth/google/callback) — success lands straight on "/" with the
@@ -79,6 +80,7 @@ const LoginFormSection = () => {
             icon={Mail}
             type="email"
             name="email"
+            maxLength={MAX_EMAIL_LENGTH}
             value={values.email}
             onChange={handleChange}
             error={errors.email}

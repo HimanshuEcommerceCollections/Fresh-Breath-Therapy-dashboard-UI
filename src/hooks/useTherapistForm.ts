@@ -8,6 +8,7 @@ import {
   type Therapist,
   type UpdateTherapistPayload,
 } from "@/src/services/therapistsService";
+import { emailError, nameError } from "@/src/lib/validation";
 
 // Backs both Add and Edit Therapist. Passing an existing therapist puts it in
 // edit mode: fields start from that record and submit PATCHes only what
@@ -39,11 +40,16 @@ export const useTherapistForm = ({
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const nameErr = nameError(fullName);
+  const emailErr = emailError(email);
+
   const isValid = useMemo(
     () =>
       fullName.trim().length > 0 &&
       email.trim().length > 0 &&
-      locationId.length > 0,
+      locationId.length > 0 &&
+      !nameError(fullName) &&
+      !emailError(email),
     [fullName, email, locationId]
   );
 
@@ -98,6 +104,8 @@ export const useTherapistForm = ({
 
   return {
     isEdit,
+    nameErr,
+    emailErr,
     fullName,
     setFullName,
     email,

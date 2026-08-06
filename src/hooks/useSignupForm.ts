@@ -4,6 +4,7 @@
 import { ChangeEvent, FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signupService, loginWithGoogle } from "@/src/services/authService";
+import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH } from "@/src/lib/validation";
 
 export interface SignupFormValues {
   fullName: string;
@@ -40,12 +41,16 @@ export const useSignupForm = () => {
 
     if (!values.fullName.trim()) {
       nextErrors.fullName = "Full name is required.";
+    } else if (values.fullName.trim().length > MAX_NAME_LENGTH) {
+      nextErrors.fullName = `Full name must be ${MAX_NAME_LENGTH} characters or fewer.`;
     }
 
     if (!values.email.trim()) {
       nextErrors.email = "Email is required.";
     } else if (!emailRegex.test(values.email)) {
       nextErrors.email = "Enter a valid email address.";
+    } else if (values.email.trim().length > MAX_EMAIL_LENGTH) {
+      nextErrors.email = `Email must be ${MAX_EMAIL_LENGTH} characters or fewer.`;
     }
 
     if (!values.password) {

@@ -12,6 +12,7 @@ import type {
   Therapist,
   UpdateTherapistPayload,
 } from "@/src/services/therapistsService";
+import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH } from "@/src/lib/validation";
 
 const INPUT_CLASS =
   "rounded-lg border border-[#E2E8F0] py-3 pl-4 pr-4 text-base text-[#1E293B] outline-none placeholder:text-[#94A3B8] focus:ring-2 focus:ring-[#2563EB]/30";
@@ -115,8 +116,12 @@ export default function TherapistFormModal({
               value={form.fullName}
               onChange={(e) => form.setFullName(e.target.value)}
               placeholder="Jane Doe"
+              maxLength={MAX_NAME_LENGTH}
               className={INPUT_CLASS}
             />
+            {form.nameErr && (
+              <span className="text-xs text-red-500">{form.nameErr}</span>
+            )}
           </label>
 
           <label className="flex min-w-0 flex-col gap-1.5">
@@ -126,8 +131,12 @@ export default function TherapistFormModal({
               value={form.email}
               onChange={(e) => form.setEmail(e.target.value)}
               placeholder="jane@freshbreath.co"
+              maxLength={MAX_EMAIL_LENGTH}
               className={INPUT_CLASS}
             />
+            {form.emailErr && (
+              <span className="text-xs text-red-500">{form.emailErr}</span>
+            )}
           </label>
           {form.isEdit && (
             <p className="-mt-4 text-xs text-[#94A3B8]">
