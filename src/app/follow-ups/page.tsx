@@ -19,9 +19,6 @@ export default function FollowUpsPage() {
     createFollowUp,
     completeFollowUp,
     isLoading,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
   } = useFollowUps(activeTab);
 
   return (
@@ -33,9 +30,6 @@ export default function FollowUpsPage() {
         followUps={followUps}
         onMarkDone={completeFollowUp}
         isLoading={isLoading}
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onLoadMore={fetchNextPage}
       />
 
       <AddFollowUpModal

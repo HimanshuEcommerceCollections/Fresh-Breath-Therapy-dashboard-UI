@@ -11,6 +11,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import Sidebar from "@/src/components/layoutComponents/Sidebar/Sidebar";
 import Header from "@/src/components/layoutComponents/Header/Header";
+import { cancelStaleRequests, setActivePathname } from "@/src/lib/apiClient";
 
 const PUBLIC_ROUTES = ["/login", "/signup", "/verify-otp"];
 
@@ -32,6 +33,22 @@ function ProtectedShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const isFirstPathname = useRef(true);
+  const lastTaggedPathname = useRef<string | null>(null);
+
+  // Tagged during RENDER, not in an effect: React commits child (page)
+  // effects before this component's own effects, so a page's data-fetching
+  // hooks can fire in the same commit that brought the new pathname in. If
+  // this ran in a useEffect instead, those fresh requests would still be
+  // tagged with the OLD pathname for a tick and could get swept up by the
+  // stale-request cancellation below. Comparing against a ref (not state)
+  // means this doesn't trigger a re-render — it's bookkeeping, not UI.
+  if (lastTaggedPathname.current !== pathname) {
+    if (lastTaggedPathname.current !== null) {
+      cancelStaleRequests(pathname);
+    }
+    setActivePathname(pathname);
+    lastTaggedPathname.current = pathname;
+  }
 
   // CurrentUserProvider only checks /api/auth/me once, on initial app load —
   // a client-side route change never re-verifies on its own. Without this, a

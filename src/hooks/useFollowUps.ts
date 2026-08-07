@@ -9,7 +9,6 @@ import {
   type CreateFollowUpPayload,
 } from "@/src/services/followUpsService";
 import { clientsService } from "@/src/services/clientsService";
-import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { showSuccessToast } from "@/src/lib/toast";
 import type { FollowUpStatus } from "@/src/data/followUpsData/followUpsData";
 import type { FollowUpFilter } from "@/src/sections/followUpsSections/FilterTabs";
@@ -18,7 +17,6 @@ const EMPTY_STATS: FollowUpStats = { pending: 0, overdue: 0, completed: 0 };
 
 export const useFollowUps = (activeTab: FollowUpFilter) => {
   const queryClient = useQueryClient();
-  const statusFilter = activeTab === "All" ? undefined : (activeTab as FollowUpStatus);
 
   // Client name-lookup needs the full roster — a partial page of clients
   // would leave later follow-ups joined as "Unknown client".
@@ -31,24 +29,29 @@ export const useFollowUps = (activeTab: FollowUpFilter) => {
     [allClients]
   );
 
-  const {
-    items: rawFollowUps,
-    isLoading: isLoadingFollowUps,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-  } = useInfiniteList({
-    queryKey: ["follow-ups", statusFilter],
-    queryFn: (cursor) => followUpsService.fetchFollowUps(statusFilter, cursor),
+  // The complete follow-up list, fetched once. The tabs below filter this
+  // in memory — switching tabs is instant and fires no request, since the
+  // list is already whole (this is what "the list must be complete before
+  // you filter it" requires: without this, filtering a partial page would
+  // just hide rows that never loaded rather than actually filtering).
+  const { data: allFollowUps = [], isLoading: isLoadingFollowUps } = useQuery({
+    queryKey: ["follow-ups", "all"],
+    queryFn: () => followUpsService.fetchAllFollowUps(),
   });
-  const followUps = useMemo(
+
+  const followUpsWithClient = useMemo(
     () =>
-      rawFollowUps.map((f) => ({
+      allFollowUps.map((f) => ({
         ...f,
         client: clientNameById.get(f.clientId) ?? "Unknown client",
       })),
-    [rawFollowUps, clientNameById]
+    [allFollowUps, clientNameById]
   );
+
+  const followUps = useMemo(() => {
+    if (activeTab === "All") return followUpsWithClient;
+    return followUpsWithClient.filter((f) => f.status === (activeTab as FollowUpStatus));
+  }, [followUpsWithClient, activeTab]);
 
   const { data: stats = EMPTY_STATS, isLoading: isLoadingStats } = useQuery({
     queryKey: ["follow-ups", "stats"],
@@ -89,9 +92,6 @@ export const useFollowUps = (activeTab: FollowUpFilter) => {
     followUps,
     stats,
     isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
     createFollowUp,
     completeFollowUp,
   };

@@ -7,7 +7,7 @@
 // resource, only status_filter.
 
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
-import type { Page } from "@/src/lib/pagination";
+import { fetchAllPages, type Page } from "@/src/lib/pagination";
 import type { FollowUpStatus } from "@/src/data/followUpsData/followUpsData";
 
 type ApiFollowUpStatus = "pending" | "overdue" | "completed";
@@ -99,6 +99,13 @@ export const followUpsService = {
       nextCursor: res.data.next_cursor,
       hasMore: res.data.has_more,
     };
+  },
+
+  // The Follow-Ups page's tabs (All/Pending/Overdue/Completed) filter this
+  // client-side instead of refetching per tab — so this needs the FULL list
+  // up front, not one paginated page.
+  async fetchAllFollowUps(): Promise<FollowUp[]> {
+    return fetchAllPages((cursor) => followUpsService.fetchFollowUps(undefined, cursor, 100));
   },
 
   async fetchStats(): Promise<FollowUpStats> {

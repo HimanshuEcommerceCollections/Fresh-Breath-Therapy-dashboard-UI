@@ -15,7 +15,6 @@ import {
   type Invoice,
   type PaymentStatus,
 } from "@/src/services/enrollmentsService";
-import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { showSuccessToast } from "@/src/lib/toast";
 import type { PaymentStat } from "@/src/data/paymentsData/paymentsStatsData";
 import type { RevenueBarPoint } from "@/src/data/paymentsData/revenueTrendBarData";
@@ -100,28 +99,22 @@ export const usePayments = () => {
   const queryClient = useQueryClient();
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | null>(null);
 
-  const filters = useMemo(
-    () => ({ paymentStatus: statusFilter ?? undefined }),
-    [statusFilter]
-  );
-
-  // The table: one row per invoice, paged as the user scrolls.
-  const {
-    items: invoices,
-    isLoading: isLoadingInvoices,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
-  } = useInfiniteList({
-    queryKey: ["enrollments", filters],
-    queryFn: (cursor) => enrollmentsService.fetchInvoices(filters, cursor),
-  });
-
-  // Stats + donut span every invoice, not just the loaded pages.
+  // The full invoice list is already fetched once (needed for stats and the
+  // status donut regardless of any filter), so the status tabs filter it
+  // client-side instead of re-querying the server on every tab click — the
+  // list is complete, there's nothing a second fetch would add.
   const { data: allInvoices = [], isLoading: isLoadingAll } = useQuery({
     queryKey: ["enrollments", "all"],
     queryFn: () => enrollmentsService.fetchAllInvoices(),
   });
+
+  const invoices = useMemo(
+    () =>
+      statusFilter
+        ? allInvoices.filter((e) => e.paymentStatus === statusFilter)
+        : allInvoices,
+    [allInvoices, statusFilter]
+  );
 
   // Monthly revenue and the 6-month trend need the payment ledger's dates.
   const { data: allPayments = [], isLoading: isLoadingPayments } = useQuery({
@@ -129,7 +122,7 @@ export const usePayments = () => {
     queryFn: () => paymentsService.fetchAllPayments(),
   });
 
-  const isLoading = isLoadingInvoices || isLoadingAll || isLoadingPayments;
+  const isLoading = isLoadingAll || isLoadingPayments;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["enrollments"] });
@@ -179,9 +172,6 @@ export const usePayments = () => {
   return {
     invoices,
     isLoading,
-    isFetchingNextPage,
-    hasNextPage,
-    fetchNextPage,
     statusFilter,
     setStatusFilter,
     stats: computeStats(allInvoices, allPayments),

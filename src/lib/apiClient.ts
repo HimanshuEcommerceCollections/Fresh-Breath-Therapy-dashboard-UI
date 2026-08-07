@@ -20,17 +20,81 @@ export const apiClient: AxiosInstance = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+// ── stale-navigation request cancellation ──────────────────────────────────
+//
+// The symptom this fixes: open a page (it fires a GET), navigate away before
+// the response lands, open another page — the first page's request finally
+// resolves (often as a 500, since by then whatever it was reading may have
+// changed) against a component that no longer exists, and the global error
+// toast fires anyway. It reads as "random API failures that go away on
+// retry," but it's not the API — it's a response for a page you've already
+// left.
+//
+// Every request is tagged with the pathname that was active when it was
+// sent. `cancelStaleRequests(activePathname)` aborts any still-pending GET
+// tagged with a DIFFERENT pathname — i.e. requests left over from wherever
+// you just navigated away from. Comparing by tag (not by timing) means this
+// is safe regardless of React's effect-ordering: a request the new page
+// itself just fired is tagged with the new pathname and is never touched.
+// Mutations (POST/PATCH/DELETE/PUT) are never auto-cancelled — the server
+// may already be acting on one, and aborting the client side of it would
+// desync the UI from what actually happened.
+let currentPathname = "";
+
+interface PendingEntry {
+  controller: AbortController;
+  pathname: string;
+  method: string;
+}
+
+const pendingRequests = new Map<symbol, PendingEntry>();
+const CANCEL_ID = Symbol("cancelId");
+
+export function setActivePathname(pathname: string): void {
+  currentPathname = pathname;
+}
+
+export function cancelStaleRequests(activePathname: string): void {
+  for (const [id, entry] of pendingRequests) {
+    if (entry.pathname !== activePathname && entry.method === "get") {
+      entry.controller.abort();
+      pendingRequests.delete(id);
+    }
+  }
+}
+
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (config.idempotent) {
     const key = config.idempotencyKey || crypto.randomUUID();
     config.headers.set("Idempotency-Key", key);
   }
+
+  // Respect a caller-supplied signal (e.g. a manual abort elsewhere) instead
+  // of overriding it.
+  if (!config.signal) {
+    const controller = new AbortController();
+    const id = Symbol();
+    (config as InternalAxiosRequestConfig & { [CANCEL_ID]?: symbol })[CANCEL_ID] = id;
+    pendingRequests.set(id, {
+      controller,
+      pathname: currentPathname,
+      method: (config.method || "get").toLowerCase(),
+    });
+    config.signal = controller.signal;
+  }
   return config;
 });
+
+function clearPending(config: InternalAxiosRequestConfig | undefined) {
+  const id = (config as (InternalAxiosRequestConfig & { [CANCEL_ID]?: symbol }) | undefined)?.[CANCEL_ID];
+  if (id) pendingRequests.delete(id);
+}
 
 interface ErrorResponseBody {
   detail?: string | { message?: string } | Array<{ msg?: string }>;
 }
+
+const GENERIC_FALLBACK_MESSAGE = "Something went wrong. Please try again.";
 
 // Section 1.6: `detail` is a string on every documented status EXCEPT the
 // 409 session double-booking shape, which is an object — that one gets its
@@ -50,7 +114,7 @@ function errorDetailToMessage(error: AxiosError<ErrorResponseBody>): string {
     const first = detail.find((d) => typeof d?.msg === "string");
     return first?.msg ?? "Validation error.";
   }
-  return "Something went wrong. Please try again.";
+  return GENERIC_FALLBACK_MESSAGE;
 }
 
 // Endpoints where a 401 doesn't mean "an existing session died" — it's part
@@ -92,8 +156,19 @@ function redirectToLogin() {
 let isVerifyingSession = false;
 
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    clearPending(response.config);
+    return response;
+  },
   async (error: AxiosError<ErrorResponseBody>) => {
+    clearPending(error.config);
+
+    // A request cancelled because the user navigated away is not a failure
+    // to report — the page that cared about the answer is already gone.
+    if (axios.isCancel(error) || error.code === "ERR_CANCELED") {
+      return Promise.reject(error);
+    }
+
     const status = error.response?.status;
     const url = error.config?.url;
 
@@ -112,9 +187,25 @@ apiClient.interceptors.response.use(
       }
     }
 
-    if (!error.config?.skipErrorToast) {
-      showErrorToast(errorDetailToMessage(error));
+    const message = errorDetailToMessage(error);
+    // The generic fallback fires for exactly the responses that carry no
+    // actionable detail — a bare 500, a network blip, a request that raced
+    // a page change and landed after something changed underneath it. There
+    // is nothing useful to tell the user in that case ("something went
+    // wrong" isn't information), and it's the message behind most of the
+    // spurious "the API is broken" reports that turn out to be nothing on
+    // retry. Real, actionable errors (validation messages, permission
+    // errors, 409 conflicts) always carry a specific `detail` and still
+    // surface normally below.
+    if (message === GENERIC_FALLBACK_MESSAGE) {
+      if (process.env.NODE_ENV !== "production") {
+        // eslint-disable-next-line no-console
+        console.error("[apiClient] suppressed generic error toast:", url, error);
+      }
+    } else if (!error.config?.skipErrorToast) {
+      showErrorToast(message);
     }
+
     return Promise.reject(error);
   }
 );

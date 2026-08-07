@@ -24,9 +24,6 @@ export default function PaymentsPage() {
     statusFilter,
     setStatusFilter,
     isLoading,
-    hasNextPage,
-    isFetchingNextPage,
-    fetchNextPage,
   } = usePayments();
 
   if (isChecking) return null;
@@ -50,9 +47,6 @@ export default function PaymentsPage() {
         isLoading={isLoading}
         canEdit={canWrite(role)}
         onStatusChange={(id, status) => void setPaymentStatus(id, status)}
-        hasNextPage={hasNextPage}
-        isFetchingNextPage={isFetchingNextPage}
-        onLoadMore={fetchNextPage}
       />
     </div>
   );

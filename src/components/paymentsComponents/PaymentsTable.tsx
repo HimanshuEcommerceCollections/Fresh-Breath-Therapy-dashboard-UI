@@ -4,26 +4,22 @@ import type { Invoice, PaymentStatus } from "@/src/services/enrollmentsService";
 import { PAYMENTS_TABLE_GRID } from "@/src/sections/paymentsSections/paymentsTableGrid";
 import PaymentsTableRow from "@/src/sections/paymentsSections/PaymentsTableRow";
 import { TableSkeleton } from "@/src/components/ui/TableRowSkeleton";
-import InfiniteScrollSentinel from "@/src/components/sharedComponents/InfiniteScrollSentinel";
 
 const COLUMNS = ["Client", "Package", "Due", "Paid", "Balance", "Started", "Status"];
 
+// `invoices` is always the complete, already-fetched list (optionally
+// pre-filtered by status) — there is no further page to load here, so no
+// infinite-scroll wiring.
 export default function PaymentsTable({
   invoices,
   isLoading,
   canEdit,
   onStatusChange,
-  hasNextPage,
-  isFetchingNextPage,
-  onLoadMore,
 }: {
   invoices: Invoice[];
   isLoading: boolean;
   canEdit: boolean;
   onStatusChange: (invoiceId: string, status: PaymentStatus) => void;
-  hasNextPage?: boolean;
-  isFetchingNextPage?: boolean;
-  onLoadMore?: () => void;
 }) {
   return (
     <div className="rounded-[18px] border border-[#E0E5EB] bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
@@ -56,13 +52,6 @@ export default function PaymentsTable({
           ))
         )}
       </div>
-      {!isLoading && onLoadMore && (
-        <InfiniteScrollSentinel
-          onIntersect={onLoadMore}
-          hasNextPage={hasNextPage}
-          isFetchingNextPage={Boolean(isFetchingNextPage)}
-        />
-      )}
     </div>
   );
 }
