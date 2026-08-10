@@ -126,15 +126,40 @@ export default function AddLeadModal({
           {/* Website-form detail, only present on leads that arrived via the
               lead webhook. Read-only: it's what the client actually submitted,
               not something an admin should rewrite. */}
-          {isEditMode && (lead.message || lead.preferredDatetime) && (
+          {isEditMode &&
+            (lead.message || lead.preferredDatetime || lead.customerId ||
+              lead.paymentStatus || lead.visitStatus) && (
             <div className="flex flex-col gap-2 rounded-xl border border-[#C3C6D7] bg-[#F8F9FF] p-4">
               <span className="text-xs font-semibold tracking-[0.6px] text-[#434655]">
                 FROM THE WEBSITE FORM
               </span>
+              {lead.customerId && (
+                <p className="text-sm text-[#0B1C30]">
+                  <span className="text-[#6B7280]">Customer ID: </span>
+                  {lead.customerId}
+                </p>
+              )}
               {lead.preferredDatetime && (
                 <p className="text-sm text-[#0B1C30]">
                   <span className="text-[#6B7280]">Preferred date &amp; time: </span>
                   {lead.preferredDatetime}
+                </p>
+              )}
+              {(lead.paymentStatus || lead.visitStatus) && (
+                <p className="text-sm text-[#0B1C30]">
+                  {lead.paymentStatus && (
+                    <>
+                      <span className="text-[#6B7280]">Payment status: </span>
+                      {lead.paymentStatus}
+                    </>
+                  )}
+                  {lead.paymentStatus && lead.visitStatus && "  ·  "}
+                  {lead.visitStatus && (
+                    <>
+                      <span className="text-[#6B7280]">Visit status: </span>
+                      {lead.visitStatus}
+                    </>
+                  )}
                 </p>
               )}
               {lead.message && (

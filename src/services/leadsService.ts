@@ -66,6 +66,13 @@ export interface Lead {
   message: string;
   preferredDatetime: string;
   consentGiven: boolean;
+  // The automation's own tracking fields, sent as "Customer ID" / "Payment
+  // Status" / "Visit Status" in the webhook payload — free text, never set
+  // by the admin-facing create/edit forms, so always empty on any lead
+  // added a different way.
+  customerId: string;
+  paymentStatus: string;
+  visitStatus: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -107,6 +114,9 @@ interface ApiLead {
   message: string | null;
   preferred_datetime: string | null;
   consent_given: boolean;
+  customer_id: string | null;
+  payment_status: string | null;
+  visit_status: string | null;
   created_at: string;
   updated_at: string;
   location: { id: string; name: string };
@@ -131,6 +141,9 @@ function toLead(raw: ApiLead): Lead {
     message: raw.message ?? "",
     preferredDatetime: raw.preferred_datetime ?? "",
     consentGiven: raw.consent_given ?? false,
+    customerId: raw.customer_id ?? "",
+    paymentStatus: raw.payment_status ?? "",
+    visitStatus: raw.visit_status ?? "",
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
   };
