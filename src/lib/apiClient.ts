@@ -4,7 +4,8 @@ import { showErrorToast } from "@/src/lib/toast";
 // Exported so anything that needs a full-page browser navigation to the
 // backend (e.g. the Google OAuth redirect, which can't go through Axios —
 // see authService.ts) targets the exact same host as every XHR call here.
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://fresh-breath-therapy-dashboard-serv.vercel.app";
+export const API_BASE_URL = "http://127.0.0.1:8000"
+// process.env.NEXT_PUBLIC_API_URL || "https://fresh-breath-therapy-dashboard-serv.vercel.app";
 
 declare module "axios" {
   export interface AxiosRequestConfig {
@@ -45,6 +46,7 @@ interface PendingEntry {
   controller: AbortController;
   pathname: string;
   method: string;
+  url: string;
 }
 
 const pendingRequests = new Map<symbol, PendingEntry>();
@@ -56,6 +58,13 @@ export function setActivePathname(pathname: string): void {
 
 export function cancelStaleRequests(activePathname: string): void {
   for (const [id, entry] of pendingRequests) {
+    // The session probe is NEVER cancelled. It isn't page data — it's the
+    // answer to "are you still logged in", and CurrentUserProvider treats a
+    // failed /me as "not logged in" and bounces to /login. Sweeping it up
+    // with the page's own requests logged the user out for the crime of
+    // clicking a sidebar link while it was still in flight.
+    if (isAuthFlowRequest(entry.url)) continue;
+
     if (entry.pathname !== activePathname && entry.method === "get") {
       entry.controller.abort();
       pendingRequests.delete(id);
@@ -79,6 +88,8 @@ apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       controller,
       pathname: currentPathname,
       method: (config.method || "get").toLowerCase(),
+      // Recorded so cancelStaleRequests can spare the auth-flow endpoints.
+      url: config.url || "",
     });
     config.signal = controller.signal;
   }
@@ -212,6 +223,20 @@ apiClient.interceptors.response.use(
 
 export function newIdempotencyKey(): string {
   return crypto.randomUUID();
+}
+
+/**
+ * True when a request failed because it was aborted, not because it failed.
+ *
+ * Callers that treat any rejection as a negative answer need this: a
+ * cancelled GET /api/auth/me is not "you are logged out", and acting as
+ * though it were signs the user out mid-navigation.
+ */
+export function isRequestCancelled(error: unknown): boolean {
+  return (
+    axios.isCancel(error) ||
+    (error instanceof AxiosError && error.code === "ERR_CANCELED")
+  );
 }
 
 export default apiClient;

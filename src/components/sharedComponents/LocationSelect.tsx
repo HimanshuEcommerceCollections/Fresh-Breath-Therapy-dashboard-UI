@@ -12,8 +12,11 @@
 // Selected value is the location's `id` (not its name), consistent with
 // ClientSelect's id-based selection.
 
-import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown, Plus, Search } from "lucide-react";
+
+// Above this many locations, scrolling to find one stops being reasonable.
+const SEARCH_THRESHOLD = 8;
 import { useLocations } from "@/src/hooks/useLocations";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { isAdmin } from "@/src/lib/permissions";
@@ -43,15 +46,25 @@ export default function LocationSelect({
   const [isAdding, setIsAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   const selected = locations.find((l) => l.id === value) ?? null;
+  const showSearch = locations.length > SEARCH_THRESHOLD;
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return locations;
+    return locations.filter((l) => l.name.toLowerCase().includes(q));
+  }, [locations, query]);
 
   function closeDropdown() {
     setIsOpen(false);
     setIsAdding(false);
     setNewName("");
+    setQuery("");
   }
 
   useEffect(() => {
@@ -95,7 +108,12 @@ export default function LocationSelect({
 
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
+        onClick={() => {
+          const next = !isOpen;
+          setIsOpen(next);
+          setQuery("");
+          if (next) setTimeout(() => searchRef.current?.focus(), 0);
+        }}
         className={`flex w-full cursor-pointer items-center justify-between px-4 text-left outline-none ${shellClassName}`}
       >
         <span className={`truncate text-base ${selected ? "text-[#0B1C30]" : "text-[#6B7280]"}`}>
@@ -106,11 +124,30 @@ export default function LocationSelect({
 
       {isOpen && (
         <div className="absolute left-0 top-[calc(100%+4px)] z-30 w-full overflow-hidden rounded-xl border border-[#E2E8F0] bg-white shadow-[0px_4px_20px_rgba(0,0,0,0.08)]">
-          <div className="max-h-[240px] overflow-y-auto py-1">
+          {showSearch && (
+            <div className="flex items-center gap-2 border-b border-[#E2E8F0] px-3 py-2">
+              <Search size={14} className="shrink-0 text-[#94A3B8]" />
+              <input
+                ref={searchRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search locations…"
+                className="w-full bg-transparent text-sm text-[#0B1C30] outline-none placeholder:text-[#94A3B8]"
+              />
+              <span className="shrink-0 text-xs text-[#94A3B8]">
+                {filtered.length}/{locations.length}
+              </span>
+            </div>
+          )}
+          <div className="max-h-60 overflow-y-auto py-1">
             {locations.length === 0 ? (
               <p className="px-4 py-3 text-sm text-[#94A3B8]">No locations yet</p>
+            ) : filtered.length === 0 ? (
+              <p className="px-4 py-6 text-center text-sm text-[#94A3B8]">
+                Nothing matches &ldquo;{query}&rdquo;.
+              </p>
             ) : (
-              locations.map((location) => (
+              filtered.map((location) => (
                 <button
                   key={location.id}
                   type="button"

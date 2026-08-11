@@ -9,6 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { isRequestCancelled } from "@/src/lib/apiClient";
 import { sessionAuthService, type CurrentUser, type RoleName } from "@/src/services/authService";
 import { therapistsService, type Therapist } from "@/src/services/therapistsService";
 
@@ -43,6 +44,7 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
     try {
       const currentUser = await sessionAuthService.me();
       setUser(currentUser);
+      setHasChecked(true);
 
       try {
         const therapists = await therapistsService.fetchTherapists();
@@ -51,15 +53,23 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
             (t) => t.email.toLowerCase() === currentUser.email.toLowerCase()
           ) ?? null
         );
-      } catch {
-        setLinkedTherapist(null);
+      } catch (error) {
+        // An aborted lookup tells us nothing about whether they're linked,
+        // so keep whatever we already knew rather than dropping the card.
+        if (!isRequestCancelled(error)) setLinkedTherapist(null);
       }
-    } catch {
+    } catch (error) {
+      // A CANCELLED probe is not an answer. Treating it as "logged out" is
+      // what signed people out the instant they clicked a sidebar link while
+      // this was still in flight. Leave the known state alone, and leave
+      // hasChecked as-is so the shell waits rather than bouncing to /login —
+      // the next navigation re-runs this and gets a real answer.
+      if (isRequestCancelled(error)) return;
       setUser(null);
       setLinkedTherapist(null);
+      setHasChecked(true);
     } finally {
       setIsLoading(false);
-      setHasChecked(true);
     }
   }, []);
 

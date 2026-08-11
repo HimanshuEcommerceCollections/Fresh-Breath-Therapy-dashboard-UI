@@ -43,6 +43,10 @@ export const navigationGroups: NavGroup[] = [
     groupLabel: "INSIGHTS",
     items: [
       { label: "Reports", href: "/reports", icon: `${ICON_BASE}/reportsicon.png`, roles: ["Admin", "Coordinator"] },
+      // Admin only: a bulk import writes patient records straight into every
+      // table, which is a heavier privilege than anything else a Coordinator
+      // can do from the dashboard.
+      { label: "Import Data", href: "/imports", icon: `${ICON_BASE}/reportsicon.png`, roles: ["Admin"] },
       { label: "Settings", href: "/settings", icon: `${ICON_BASE}/settingsicon.png`, roles: ["Admin", "Coordinator"] },
     ],
   },
