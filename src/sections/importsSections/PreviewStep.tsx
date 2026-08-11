@@ -122,6 +122,16 @@ export default function PreviewStep({
         <div className="flex items-center justify-between gap-3 border-b border-[#E0E5EB] px-5 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-[#596475]">
             {filter ? ROW_STATUS_LABELS[filter] : "All rows"} · {rows.length} shown
+            {/* The counts above are over every row; this list is capped by the
+                server. Say so rather than letting "4,800 will add" sit above a
+                list of 200. Anything needing attention is sorted to the top, so
+                it is always inside the returned slice. */}
+            {!filter && preview.totalRows > preview.rows.length && (
+              <span className="font-normal normal-case text-[#94A3B8]">
+                {" "}
+                of {preview.totalRows.toLocaleString()} — problems first
+              </span>
+            )}
           </p>
           {isRefreshing && (
             <Loader2 size={14} className="animate-spin text-[#376EF4]" />
