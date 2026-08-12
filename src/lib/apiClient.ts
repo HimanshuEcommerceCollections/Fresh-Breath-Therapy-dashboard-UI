@@ -190,7 +190,11 @@ apiClient.interceptors.response.use(
       try {
         await apiClient.get("/api/auth/me", { skipErrorToast: true });
       } catch (meError) {
-        if (meError instanceof AxiosError && meError.response?.status === 401) {
+        // Same rule as CurrentUserProvider, from the same helper: only a
+        // verdict logs someone out. If /me itself 500s or the network drops,
+        // this 401 stays unexplained and the user keeps their session — a
+        // failed probe is not evidence the session is gone.
+        if (isUnauthenticatedError(meError)) {
           isVerifyingSession = false;
           redirectToLogin();
           return Promise.reject(error);
@@ -234,6 +238,21 @@ export function newIdempotencyKey(): string {
  * cancelled GET /api/auth/me is not "you are logged out", and acting as
  * though it were signs the user out mid-navigation.
  */
+/**
+ * True only when the server actually said "we don't know who you are".
+ *
+ * 401 (no or invalid session) and 404 (the account is gone) are answers. A
+ * 500, a gateway error, a timeout or a dropped connection are NOT — they mean
+ * the question could not be asked, and treating them as a negative answer
+ * signs a perfectly valid session out. Anything that reaches this without a
+ * response at all (network failure) is deliberately false.
+ */
+export function isUnauthenticatedError(error: unknown): boolean {
+  const status =
+    error instanceof AxiosError ? error.response?.status : undefined;
+  return status === 401 || status === 404;
+}
+
 export function isRequestCancelled(error: unknown): boolean {
   return (
     axios.isCancel(error) ||

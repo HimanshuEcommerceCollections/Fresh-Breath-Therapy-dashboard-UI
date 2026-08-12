@@ -4,14 +4,14 @@
 //
 // Schedule Session modal — fully wired to useScheduleSessionForm (form state
 // + validation + service stub). Reuses ModalOverlay from leadsSections.
-// Client uses the shared ClientSelect combobox; Therapist and Type are
-// native <select> elements populated from existing data sources.
+// Client and Therapist use the shared searchable comboboxes; Type stays a
+// native <select> because five options need no filtering.
 
-import { User, X } from "lucide-react";
+import { X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
+import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
 import { useScheduleSessionForm } from "@/src/hooks/useScheduleSessionForm";
-import { useTherapists } from "@/src/hooks/useTherapists";
 import { sessionTypeOptions } from "@/src/data/sessionsData/sessionTypeOptions";
 import type { ScheduleSessionPayload } from "@/src/services/sessionsService";
 
@@ -48,7 +48,6 @@ export default function ScheduleSessionModal({
   onClose: () => void;
   onSchedule: (payload: ScheduleSessionPayload) => Promise<void>;
 }) {
-  const { therapists } = useTherapists();
   const form = useScheduleSessionForm(onSchedule, onClose);
 
   if (!open) return null;
@@ -80,30 +79,18 @@ export default function ScheduleSessionModal({
             onChange={form.setClientId}
           />
 
-          {/* Therapist */}
-          <div className="flex flex-col gap-1.5">
-            <span className={LABEL_CLASS}>Therapist</span>
-            <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[#94A3B8]">
-                <User size={18} />
-              </span>
-              <select
-                value={form.therapistId}
-                onChange={(e) => form.setTherapistId(e.target.value)}
-                className={`${SELECT_CLASS} pl-11 pr-11`}
-              >
-                <option value="" disabled>
-                  Select a therapist…
-                </option>
-                {therapists.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} — {t.location.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronIcon />
-            </div>
-          </div>
+          {/* Therapist — the shared searchable combobox, not a native
+              <select>. With 150 therapists on file the native list rendered as
+              an unscoped wall of names taller than the modal itself, with no
+              way to filter it. */}
+          <TherapistSelect
+            label="Therapist"
+            placeholder="Select a therapist…"
+            value={form.therapistId}
+            onChange={form.setTherapistId}
+            labelClassName={LABEL_CLASS}
+            shellClassName={SELECT_CLASS}
+          />
 
           {/* Date + Time side by side */}
           <div className="flex gap-4">

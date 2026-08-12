@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { isRequestCancelled } from "@/src/lib/apiClient";
+import { isRequestCancelled, isUnauthenticatedError } from "@/src/lib/apiClient";
 import { sessionAuthService, type CurrentUser, type RoleName } from "@/src/services/authService";
 import { therapistsService, type Therapist } from "@/src/services/therapistsService";
 
@@ -59,12 +59,23 @@ export function CurrentUserProvider({ children }: { children: ReactNode }) {
         if (!isRequestCancelled(error)) setLinkedTherapist(null);
       }
     } catch (error) {
-      // A CANCELLED probe is not an answer. Treating it as "logged out" is
-      // what signed people out the instant they clicked a sidebar link while
-      // this was still in flight. Leave the known state alone, and leave
-      // hasChecked as-is so the shell waits rather than bouncing to /login —
-      // the next navigation re-runs this and gets a real answer.
-      if (isRequestCancelled(error)) return;
+      // ONLY a 401 or 404 clears the session.
+      //
+      // Everything else — a 500, a gateway error, a timeout, a dropped
+      // connection, a cancelled request — means the question could not be
+      // asked, not that the answer was no. Clearing `user` on those is what
+      // dumped people on /login every time the API hiccuped, mid-session,
+      // with a perfectly valid cookie.
+      //
+      // hasChecked is deliberately left alone too: the shell waits on it, so
+      // an unanswered probe shows the loading state and the next navigation
+      // re-runs this and gets a real answer, rather than bouncing to /login.
+      if (!isUnauthenticatedError(error)) {
+        if (!isRequestCancelled(error)) {
+          console.warn("[auth] /me failed without a verdict; session kept", error);
+        }
+        return;
+      }
       setUser(null);
       setLinkedTherapist(null);
       setHasChecked(true);
