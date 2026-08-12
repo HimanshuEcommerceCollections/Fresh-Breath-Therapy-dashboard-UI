@@ -2,6 +2,7 @@
 
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import PreviewRowItem from "@/src/sections/importsSections/PreviewRowItem";
+import { CHUNK_SIZE } from "@/src/data/importsData/importsData";
 import type { CommitProgress } from "@/src/hooks/useImportBatch";
 import type { ImportEntity, PreviewRow } from "@/src/services/importsService";
 
@@ -60,15 +61,40 @@ export default function CommitStep({
         <Loader2 size={32} className="animate-spin text-[#376EF4]" />
       )}
 
+      {progress?.queued && (
+        <div className="w-full max-w-125 rounded-xl border border-[#D8B4FE] bg-[#FAF5FF] px-4 py-3 text-left">
+          <p className="text-sm font-medium text-[#6B21A8]">
+            Waiting for &ldquo;{progress.queuedBehind}&rdquo; to finish
+          </p>
+          <p className="mt-0.5 text-xs text-[#7C3AED]">
+            {/* Queued, not refused: the request is recorded server-side and
+                starts on its own. Nothing here needs doing. */}
+            {progress.queuePosition
+              ? `${progress.queuePosition} import(s) ahead of this one. `
+              : "Next in line. "}
+            This starts by itself — you can leave the page open.
+          </p>
+        </div>
+      )}
+
       <div>
         <h3 className="text-lg font-semibold tracking-[-0.3px] text-[#071123]">
-          {isDone ? "Import finished" : "Importing…"}
+          {isDone
+            ? "Import finished"
+            : progress?.queued
+              ? "Queued"
+              : "Writing records…"}
         </h3>
         <p className="mt-1 text-sm text-[#596475]">
           {progress
-            ? `${progress.processed.toLocaleString()} of ${progress.total.toLocaleString()} rows`
-            : "Starting…"}
+            ? `${progress.processed.toLocaleString()} of ${progress.total.toLocaleString()} rows · ${percent}%`
+            : "Starting — claiming the import so nothing else can run…"}
         </p>
+        {!isDone && progress && (
+          <p className="mt-1 text-xs text-[#94A3B8]">
+            Written in batches of {CHUNK_SIZE}; it&apos;s safe to leave this open.
+          </p>
+        )}
       </div>
 
       <div className="h-2 w-full max-w-95 overflow-hidden rounded-full bg-[#E2E8F0]">

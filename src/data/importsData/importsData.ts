@@ -45,6 +45,7 @@ export const BATCH_STATUS_LABELS: Record<string, string> = {
   parsing: "Reading file",
   mapping: "Matching columns",
   preview: "Awaiting review",
+  queued: "Queued",
   committing: "Importing",
   committed: "Imported",
   failed: "Failed",
@@ -88,6 +89,11 @@ export const DATE_ORDER_OPTIONS = [
 // format) and .tsv are not parsed by the backend, and letting them through the
 // picker only moves the failure from "can't select that" to a server error
 // after the upload.
+// Rows the server writes per commit call. Mirrors CHUNK_SIZE in
+// services/importer/commit.py — shown to the admin so a progress bar that
+// advances in visible jumps reads as batching rather than stalling.
+export const CHUNK_SIZE = 200;
+
 export const ACCEPTED_FILE_TYPES = ".csv,.xlsx";
 export const ACCEPTED_EXTENSIONS = [".csv", ".xlsx"] as const;
 

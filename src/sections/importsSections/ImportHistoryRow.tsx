@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Undo2 } from "lucide-react";
+import { Clock, Loader2, Undo2 } from "lucide-react";
 import ImportStatusBadge from "@/src/sections/importsSections/ImportStatusBadge";
 import { IMPORTS_TABLE_GRID } from "@/src/sections/importsSections/importsTableGrid";
 import { batchStatusBadges } from "@/src/data/importsData/importStatusBadges";
@@ -24,7 +24,16 @@ export default function ImportHistoryRow({
 }) {
   const badge = batchStatusBadges[batch.status] ?? batchStatusBadges.parsing;
   const isCommitted = batch.status === "committed";
-  const isUnfinished = ["mapping", "preview", "parsing"].includes(batch.status);
+  const isRunning = batch.status === "committing";
+  const isQueued = batch.status === "queued";
+  // Resume means "an attempt stopped part-way, continue it" — so it appears
+  // only when one actually did. A batch that has never been started shows
+  // Review instead, and one that is running or queued shows neither: offering
+  // Resume on an in-flight import invited a second request for the same rows.
+  const hasFailed = Boolean(batch.lastFailure);
+  const isReviewable =
+    !isRunning && !isQueued &&
+    ["mapping", "preview", "parsing"].includes(batch.status);
 
   return (
     <div className={`${IMPORTS_TABLE_GRID} border-b border-[#E0E5EB] px-5 py-3.5 last:border-b-0`}>
@@ -42,6 +51,11 @@ export default function ImportHistoryRow({
         />
         {batch.migrationMode && (
           <p className="mt-1 text-xs text-[#7C3AED]">Migration mode</p>
+        )}
+        {hasFailed && (
+          <p className="mt-1 text-xs text-[#B91C1C]" title={batch.lastFailure ?? ""}>
+            {batch.lastFailure}
+          </p>
         )}
       </div>
 
@@ -67,14 +81,26 @@ export default function ImportHistoryRow({
       </p>
 
       <div className="flex items-center justify-end gap-1.5">
-        {isUnfinished && (
+        {isRunning && (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-[#2C7EA1]">
+            <Loader2 size={12} className="animate-spin" />
+            Importing…
+          </span>
+        )}
+        {isQueued && (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-[#7C3AED]">
+            <Clock size={12} />
+            Waiting its turn
+          </span>
+        )}
+        {isReviewable && (
           <>
             <button
               type="button"
               onClick={() => onResume(batch)}
               className="cursor-pointer rounded-lg px-2.5 py-1.5 text-xs font-medium text-[#376EF4] transition-colors hover:bg-[#F5F8FF]"
             >
-              Resume
+              {hasFailed ? "Resume" : "Review"}
             </button>
             <button
               type="button"

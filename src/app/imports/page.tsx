@@ -29,6 +29,7 @@ export default function ImportsPage() {
   const {
     entities,
     history,
+    busyEntities,
     isLoading,
     createImport,
     isCreating,
@@ -85,6 +86,7 @@ export default function ImportsPage() {
       <ImportEntityGrid
         entities={entities}
         isLoading={isLoading}
+        busyEntities={busyEntities}
         onSelect={setUploadingFor}
       />
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Loader2 } from "lucide-react";
 import ImportEntityCard from "@/src/sections/importsSections/ImportEntityCard";
 import { SummaryCardSkeleton } from "@/src/components/ui/SummaryCardSkeleton";
 import type { ImportEntity } from "@/src/services/importsService";
@@ -14,10 +15,14 @@ import type { ImportEntity } from "@/src/services/importsService";
 export default function ImportEntityGrid({
   entities,
   isLoading,
+  busyEntities,
   onSelect,
 }: {
   entities: ImportEntity[];
   isLoading: boolean;
+  /** Entity key -> what is occupying it. Per entity, because two imports into
+   *  different tables do not contend and must not block each other. */
+  busyEntities?: Map<string, { filename: string; status: string }>;
   onSelect: (entity: ImportEntity) => void;
 }) {
   const entityLabels = useMemo(
@@ -36,6 +41,24 @@ export default function ImportEntityGrid({
         </p>
       </div>
 
+      {busyEntities && busyEntities.size > 0 && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-[#7DD3FC] bg-[#F0F9FF] px-4 py-3">
+          <Loader2 size={16} className="mt-0.5 shrink-0 animate-spin text-[#2C7EA1]" />
+          <div>
+            <p className="text-sm font-medium text-[#075985]">
+              {[...busyEntities.entries()]
+                .map(([key, v]) => `${entityLabels[key] ?? key}: ${v.filename}`)
+                .join(" · ")}
+            </p>
+            <p className="mt-0.5 text-xs text-[#0C7396]">
+              One import at a time per table. Everything else stays open —
+              only the tables listed above are busy, and a second import of
+              one of them is queued rather than refused.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {isLoading
           ? Array.from({ length: 8 }).map((_, index) => (
@@ -46,6 +69,13 @@ export default function ImportEntityGrid({
                 key={entity.key}
                 entity={entity}
                 entityLabels={entityLabels}
+                disabledReason={
+                  busyEntities?.has(entity.key)
+                    ? busyEntities.get(entity.key)!.status === "queued"
+                      ? "An import of this table is already queued"
+                      : "This table is being imported right now"
+                    : null
+                }
                 onSelect={onSelect}
               />
             ))}

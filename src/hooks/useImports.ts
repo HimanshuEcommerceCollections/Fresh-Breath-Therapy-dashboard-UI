@@ -2,7 +2,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { importsService } from "@/src/services/importsService";
+import { importsService, type ImportBatch } from "@/src/services/importsService";
 import { showSuccessToast } from "@/src/lib/toast";
 
 /**
@@ -23,7 +23,34 @@ export const useImports = () => {
   const { data: history = [], isLoading: isLoadingHistory } = useQuery({
     queryKey: ["imports", "history"],
     queryFn: () => importsService.fetchHistory(),
+    // While something is being written, poll — the run may have been started
+    // in another tab or by another admin, and this list is how everyone else
+    // finds out that imports are currently blocked.
+    refetchInterval: (query) =>
+      (query.state.data as ImportBatch[] | undefined)?.some(
+        (b) => b.status === "committing" || b.status === "queued"
+      )
+        ? 2000
+        : false,
   });
+
+  /**
+   * Which entities are currently busy, and with what.
+   *
+   * Per entity rather than one global flag: a therapists import and a sessions
+   * import touch different tables and no longer wait on each other, so only
+   * the entity actually being written may be blocked. Queued batches count as
+   * busy too — starting a third while one runs and one waits would just join
+   * the back of the same queue.
+   */
+  const busyEntities = new Map<string, { filename: string; status: string }>();
+  for (const b of history) {
+    if (b.status === "committing" || b.status === "queued") {
+      if (!busyEntities.has(b.entity)) {
+        busyEntities.set(b.entity, { filename: b.filename, status: b.status });
+      }
+    }
+  }
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["imports"] });
@@ -58,6 +85,7 @@ export const useImports = () => {
   return {
     entities,
     history,
+    busyEntities,
     isLoading: isLoadingEntities || isLoadingHistory,
     createImport: createImportMutation.mutateAsync,
     isCreating: createImportMutation.isPending,

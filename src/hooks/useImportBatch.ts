@@ -17,6 +17,12 @@ export interface CommitProgress {
   updated: number;
   failed: number;
   done: boolean;
+  // Set while another import of the same entity holds the table. The request
+  // is accepted and recorded server-side; this loop keeps polling and starts
+  // by itself when the entity frees up.
+  queued?: boolean;
+  queuePosition?: number;
+  queuedBehind?: string | null;
 }
 
 /**

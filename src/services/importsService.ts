@@ -70,6 +70,12 @@ export interface ImportBatch {
   entity: string;
   filename: string;
   status: string;
+  // Why the previous attempt stopped (a timeout, usually). Present on a batch
+  // that is back at "preview" after failing, which is what distinguishes
+  // "never started" from "started and needs resuming".
+  lastFailure: string | null;
+  runStartedAt: string | null;
+  queuedAt: string | null;
   totalRows: number;
   createCount: number;
   updateCount: number;
@@ -158,6 +164,11 @@ export interface ImportPreview {
 }
 
 export interface CommitResult {
+  // Another import of the same entity is writing. The request was accepted and
+  // recorded, not refused — keep polling and it starts by itself.
+  queued: boolean;
+  queuePosition: number;
+  queuedBehind: string | null;
   processed: number;
   created: number;
   updated: number;
@@ -195,6 +206,9 @@ interface ApiValueMapping {
 }
 interface ApiBatch {
   id: string; entity: string; filename: string; status: string;
+  last_failure: string | null;
+  run_started_at: string | null;
+  queued_at: string | null;
   total_rows: number; create_count: number; update_count: number;
   skip_count: number; error_count: number; migration_mode: boolean;
   date_order: string; created_at: string; committed_at: string | null;
@@ -261,6 +275,9 @@ const toBatch = (b: ApiBatch): ImportBatch => ({
   createdAt: b.created_at,
   committedAt: b.committed_at,
   error: b.error,
+  lastFailure: b.last_failure ?? null,
+  runStartedAt: b.run_started_at ?? null,
+  queuedAt: b.queued_at ?? null,
 });
 
 const toValueMapping = (v: ApiValueMapping): ValueMapping => ({
@@ -498,8 +515,15 @@ export const importsService = {
     const { data } = await apiClient.post<{
       processed: number; created: number; updated: number; failed: number;
       remaining: number; done: boolean; batch: ApiBatch;
+      queued?: boolean; queue_position?: number; queued_behind?: string | null;
     }>(`/api/imports/${batchId}/commit`, null, { params: { limit } });
-    return { ...data, batch: toBatch(data.batch) };
+    return {
+      ...data,
+      queued: data.queued ?? false,
+      queuePosition: data.queue_position ?? 0,
+      queuedBehind: data.queued_behind ?? null,
+      batch: toBatch(data.batch),
+    };
   },
 
   async rollback(batchId: string): Promise<RollbackResult> {

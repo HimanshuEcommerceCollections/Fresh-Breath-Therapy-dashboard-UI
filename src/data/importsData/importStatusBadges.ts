@@ -23,6 +23,9 @@ export const batchStatusBadges: Record<string, { bg: string; text: string }> = {
   parsing: { bg: "#E2E8F0", text: "#475569" },
   mapping: { bg: "#FFEDD5", text: "#9A611D" },
   preview: { bg: "#DCF4FF", text: "#2C7EA1" },
+  // Waiting its turn behind another import of the same entity. Purple rather
+  // than blue so "queued" and "importing" are not mistaken for each other.
+  queued: { bg: "#F3E8FF", text: "#7C3AED" },
   committing: { bg: "#DCF4FF", text: "#2C7EA1" },
   committed: { bg: "#DCFCE7", text: "#15803D" },
   failed: { bg: "#FEE2E2", text: "#B91C1C" },
