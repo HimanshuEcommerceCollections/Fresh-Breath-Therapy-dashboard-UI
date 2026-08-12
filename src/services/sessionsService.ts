@@ -73,6 +73,8 @@ export interface SessionSearchFilters {
   status?: SessionStatus;
   dateFrom?: string;
   dateTo?: string;
+  /** Free text matched server-side against the client's AND therapist's name. */
+  search?: string;
 }
 
 interface ApiPage<T> {
@@ -95,6 +97,10 @@ export interface UpdateSessionPayload {
   time?: string;
   type?: string;
   status?: SessionStatus;
+  // Reassignment. A session booked against the wrong clinician was previously
+  // only fixable by deleting and re-creating it, losing its history and id.
+  therapistId?: string;
+  clientId?: string;
 }
 
 interface ApiSession {
@@ -137,6 +143,7 @@ export const sessionsService = {
       status: filters?.status ? LABEL_TO_STATUS[filters.status] : null,
       date_from: filters?.dateFrom ?? null,
       date_to: filters?.dateTo ?? null,
+      search: filters?.search?.trim() || null,
       cursor: cursor ?? null,
       limit: limit ?? undefined,
     });
@@ -171,6 +178,8 @@ export const sessionsService = {
         time: payload.time,
         type: payload.type ? LABEL_TO_TYPE[payload.type] : undefined,
         status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,
+        therapist_id: payload.therapistId,
+        client_id: payload.clientId,
       },
       { idempotent: true, idempotencyKey: newIdempotencyKey() }
     );

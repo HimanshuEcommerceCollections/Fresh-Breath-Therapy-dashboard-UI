@@ -9,10 +9,14 @@ export default function SessionsWeekView({
   selectedDate,
   sessions,
   isLoading,
+  onDayClick,
 }: {
   selectedDate: Date;
   sessions: Session[];
   isLoading: boolean;
+  /** Given the exact Date of the column clicked — not just its day number,
+   *  which would be ambiguous on a week that straddles two months. */
+  onDayClick?: (day: Date) => void;
 }) {
   const { start } = getWeekRange(selectedDate);
   const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
@@ -38,6 +42,7 @@ export default function SessionsWeekView({
             label={WEEKDAY_LABELS[i]}
             dateNumber={day.getDate()}
             sessions={daySessions}
+            onClick={onDayClick ? () => onDayClick(day) : undefined}
           />
         );
       })}

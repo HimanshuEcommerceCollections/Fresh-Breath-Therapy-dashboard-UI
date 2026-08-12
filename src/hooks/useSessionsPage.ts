@@ -14,11 +14,15 @@
 // each view just picks a different date_from/date_to range for the same
 // search call, then the view components group the flat response client-side.
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTherapists } from "@/src/hooks/useTherapists";
 import type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
-import { sessionsService, type ScheduleSessionPayload } from "@/src/services/sessionsService";
+import {
+  sessionsService,
+  type ScheduleSessionPayload,
+  type UpdateSessionPayload,
+} from "@/src/services/sessionsService";
 import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { showSuccessToast } from "@/src/lib/toast";
 import type { SessionsView } from "@/src/sections/sessionsSections/ViewToggle";
@@ -162,6 +166,17 @@ export function useSessionsPage() {
   // are already bounded by dateRange and just fetch one generously-sized page.
   const isListView = activeView === "list";
 
+  const [searchTerm, setSearchTermState] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** Updates the input immediately; the query 300ms later. */
+  const setSearchTerm = useCallback((value: string) => {
+    setSearchTermState(value);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => setDebouncedSearch(value), 300);
+  }, []);
+
   const sessionSearchFilters = useMemo(
     () => ({
       therapistIds: selectedTherapistIds.length ? selectedTherapistIds : undefined,
@@ -170,6 +185,28 @@ export function useSessionsPage() {
     }),
     [selectedTherapistIds, dateRange]
   );
+
+  // ── Search ──────────────────────────────────────────────────────────────
+  //
+  // Deliberately NOT date-bounded, unlike the calendar queries above. The
+  // admin searching for "Sarah Chen" wants to find a session to correct, and
+  // constraining that to whichever week happens to be on screen would hide
+  // the one they are looking for. Results render in their own panel above the
+  // calendar; the calendar itself is left alone.
+  const searchFilters = useMemo(
+    () => ({
+      therapistIds: selectedTherapistIds.length ? selectedTherapistIds : undefined,
+      search: debouncedSearch.trim() || undefined,
+    }),
+    [selectedTherapistIds, debouncedSearch]
+  );
+
+  const { data: searchPage, isLoading: isSearching } = useQuery({
+    queryKey: ["sessions", "search", searchFilters],
+    queryFn: () => sessionsService.searchSessions(searchFilters, undefined, 50),
+    enabled: Boolean(debouncedSearch.trim()),
+  });
+  const searchResults = searchPage?.items ?? [];
 
   const {
     items: listSessions,
@@ -213,6 +250,22 @@ export function useSessionsPage() {
 
   const scheduleSession = async (payload: ScheduleSessionPayload) => {
     await scheduleSessionMutation.mutateAsync(payload);
+  };
+
+  const updateSessionMutation = useMutation({
+    mutationFn: ({ sessionId, payload }: {
+      sessionId: string;
+      payload: UpdateSessionPayload;
+    }) => sessionsService.updateSession(sessionId, payload),
+    onSuccess: () => {
+      showSuccessToast("Session updated");
+      invalidateSessions();
+    },
+  });
+
+  /** Full edit: date, time, type, status, therapist, client. */
+  const updateSession = async (sessionId: string, payload: UpdateSessionPayload) => {
+    await updateSessionMutation.mutateAsync({ sessionId, payload });
   };
 
   const updateSessionStatus = async (sessionId: string, status: SessionStatus) => {
@@ -260,5 +313,14 @@ export function useSessionsPage() {
     fetchNextSessionsPage,
     scheduleSession,
     updateSessionStatus,
+    updateSession,
+    isUpdatingSession: updateSessionMutation.isPending,
+
+    // Search
+    searchTerm,
+    setSearchTerm,
+    searchResults,
+    isSearching,
+    isSearchActive: Boolean(debouncedSearch.trim()),
   };
 }

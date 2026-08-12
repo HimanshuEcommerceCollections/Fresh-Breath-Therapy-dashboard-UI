@@ -1,7 +1,14 @@
+import { Pencil } from "lucide-react";
 import type { Session } from "@/src/services/sessionsService";
 import { dayStatusColorData } from "@/src/data/sessionsData/dayStatusColorData";
 
-export default function DayListItem({ session }: { session: Session }) {
+export default function DayListItem({
+  session,
+  onEdit,
+}: {
+  session: Session;
+  onEdit?: (session: Session) => void;
+}) {
   const pill = dayStatusColorData[session.status];
 
   return (
@@ -14,16 +21,29 @@ export default function DayListItem({ session }: { session: Session }) {
           {session.type} · {session.therapist}
         </span>
       </div>
-      <span
-        className="shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-semibold leading-4"
-        style={{
-          backgroundColor: pill.bg,
-          borderColor: pill.border,
-          color: pill.text,
-        }}
-      >
-        {session.status}
-      </span>
+      <div className="flex shrink-0 items-center gap-2">
+        <span
+          className="rounded-full border px-2.5 py-0.5 text-xs font-semibold leading-4"
+          style={{
+            backgroundColor: pill.bg,
+            borderColor: pill.border,
+            color: pill.text,
+          }}
+        >
+          {session.status}
+        </span>
+        {onEdit && (
+          <button
+            type="button"
+            onClick={() => onEdit(session)}
+            aria-label={`Edit ${session.client}'s session`}
+            className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[#376EF4] transition-colors hover:bg-[#F5F8FF]"
+          >
+            <Pencil size={12} />
+            Edit
+          </button>
+        )}
+      </div>
     </div>
   );
 }

@@ -7,10 +7,12 @@ export default function SessionsDayView({
   selectedDate,
   sessions,
   isLoading,
+  onEdit,
 }: {
   selectedDate: Date;
   sessions: Session[];
   isLoading: boolean;
+  onEdit?: (session: Session) => void;
 }) {
   const sorted = [...sessions].sort((a, b) => a.time.localeCompare(b.time));
 
@@ -28,7 +30,7 @@ export default function SessionsDayView({
       ) : (
         <div className="flex flex-col">
           {sorted.map((session) => (
-            <DayListItem key={session.id} session={session} />
+            <DayListItem key={session.id} session={session} onEdit={onEdit} />
           ))}
         </div>
       )}
