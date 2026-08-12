@@ -30,6 +30,7 @@ export type RowStatus =
 export const ROW_STATUS_LABELS: Record<string, string> = {
   create: "Will add",
   update: "Will update",
+  duplicate: "Duplicate",
   skip: "No change",
   needs_input: "Needs a decision",
   error: "Can't import",

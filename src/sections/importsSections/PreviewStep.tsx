@@ -7,7 +7,9 @@ import { rowStatusBadges } from "@/src/data/importsData/importStatusBadges";
 import { ROW_STATUS_LABELS } from "@/src/data/importsData/importsData";
 import type { ImportEntity, ImportPreview } from "@/src/services/importsService";
 
-const FILTERS = ["create", "update", "skip", "needs_input", "error"] as const;
+const FILTERS = [
+  "create", "update", "duplicate", "skip", "needs_input", "error",
+] as const;
 
 /**
  * Step 3 — the dry run.
@@ -67,10 +69,13 @@ export default function PreviewStep({
     : preview.rows;
 
   const willWrite = (preview.counts.create ?? 0) + (preview.counts.update ?? 0);
+  const duplicates = preview.counts.duplicate ?? 0;
+  const inFile = preview.counts.duplicate_in_file ?? 0;
+  const inDb = preview.counts.duplicate_in_database ?? 0;
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {FILTERS.map((key) => {
           const count = preview.counts[key] ?? 0;
           const badge = rowStatusBadges[key];
@@ -165,9 +170,24 @@ export default function PreviewStep({
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-xs text-[#596475]">
-          Rows that can&apos;t be imported are skipped — fix them in your sheet and
-          upload again. Nothing here has been saved yet.
+        <p className="max-w-2xl text-xs text-[#596475]">
+          {/* Accounts for every row the sheet had but the import won't write,
+              so the gap between "150 rows" and "142 imported" is never left
+              for the admin to work out. */}
+          {duplicates > 0 && (
+            <>
+              <strong className="font-medium text-[#7C3AED]">
+                {duplicates} duplicate{duplicates === 1 ? "" : "s"} won&apos;t be
+                imported
+              </strong>
+              {inFile > 0 && <> — {inFile} repeated inside this file</>}
+              {inFile > 0 && inDb > 0 && <>,</>}
+              {inDb > 0 && <> {inDb} already in the dashboard</>}
+              {". "}
+            </>
+          )}
+          Rows that can&apos;t be imported are skipped — fix them in your sheet
+          and upload again. Nothing here has been saved yet.
         </p>
         <button
           type="button"

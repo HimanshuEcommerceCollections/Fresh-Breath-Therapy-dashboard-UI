@@ -11,6 +11,9 @@ export const rowStatusBadges: Record<string, { bg: string; text: string }> = {
   updated: { bg: "#DCF4FF", text: "#2C7EA1" },
   skip: { bg: "#E2E8F0", text: "#475569" },
   pending: { bg: "#E2E8F0", text: "#475569" },
+  // Purple: not a failure (nothing to fix) and not a success (nothing was
+  // written) — a category of its own, and the reason a row count shrinks.
+  duplicate: { bg: "#F3E8FF", text: "#7C3AED" },
   needs_input: { bg: "#FFEDD5", text: "#9A611D" },
   error: { bg: "#FEE2E2", text: "#B91C1C" },
   failed: { bg: "#FEE2E2", text: "#B91C1C" },
