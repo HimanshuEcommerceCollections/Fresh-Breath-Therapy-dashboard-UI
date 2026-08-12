@@ -59,9 +59,12 @@ export default function ImportEntityGrid({
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Three across, so the nine entities land as three rows of three. The
+          count is driven by the registry, so the skeleton count below matches
+          it rather than being hardcoded to whatever it was last time. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {isLoading
-          ? Array.from({ length: 8 }).map((_, index) => (
+          ? Array.from({ length: 9 }).map((_, index) => (
               <SummaryCardSkeleton key={index} />
             ))
           : entities.map((entity) => (
