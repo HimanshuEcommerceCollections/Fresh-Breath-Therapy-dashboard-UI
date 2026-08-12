@@ -38,7 +38,7 @@ export default function LocationSelect({
   labelClassName?: string;
   shellClassName?: string;
 }) {
-  const { locations, createLocation } = useLocations();
+  const { locations, createLocation, isLoading } = useLocations();
   const { role } = useCurrentUser();
   const canAdd = isAdmin(role);
 
@@ -141,7 +141,9 @@ export default function LocationSelect({
           )}
           <div className="max-h-60 overflow-y-auto py-1">
             {locations.length === 0 ? (
-              <p className="px-4 py-3 text-sm text-[#94A3B8]">No locations yet</p>
+              <p className="px-4 py-3 text-sm text-[#94A3B8]">
+                {isLoading ? "Loading locations…" : "No locations yet"}
+              </p>
             ) : filtered.length === 0 ? (
               <p className="px-4 py-6 text-center text-sm text-[#94A3B8]">
                 Nothing matches &ldquo;{query}&rdquo;.

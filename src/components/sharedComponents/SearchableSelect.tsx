@@ -18,7 +18,7 @@
 // comes first.
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Search } from "lucide-react";
+import { Check, ChevronDown, Loader2, Search } from "lucide-react";
 
 export interface SelectOption {
   id: string;
@@ -39,6 +39,7 @@ export default function SearchableSelect({
   emptyOptionLabel,
   disabled = false,
   invalid = false,
+  isLoading = false,
   size = "md",
 }: {
   /** Currently selected option id ("" = nothing selected). */
@@ -52,6 +53,10 @@ export default function SearchableSelect({
   disabled?: boolean;
   /** Amber styling for a required answer that hasn't been given. */
   invalid?: boolean;
+  /** True while the caller is still fetching `options`. Distinguishes "no
+   *  matches" from "we don't know yet" — the two look identical otherwise and
+   *  only one of them is an answer. */
+  isLoading?: boolean;
   size?: "sm" | "md";
 }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -183,9 +188,16 @@ export default function SearchableSelect({
               </button>
             )}
 
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <p className="flex items-center justify-center gap-2 px-3 py-6 text-center text-sm text-[#596475]">
+                <Loader2 size={14} className="animate-spin" />
+                Loading…
+              </p>
+            ) : filtered.length === 0 ? (
               <p className="px-3 py-6 text-center text-sm text-[#596475]">
-                Nothing matches &ldquo;{query}&rdquo;.
+                {query
+                  ? `Nothing matches “${query}”.`
+                  : "Nothing to choose from."}
               </p>
             ) : (
               filtered.map((option, index) => (

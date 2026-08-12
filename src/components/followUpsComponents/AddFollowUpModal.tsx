@@ -9,6 +9,11 @@ import type { CreateFollowUpPayload } from "@/src/services/followUpsService";
 
 // This modal's palette (labels #434655, shells #F8F9FF/#EFF4FF, focus
 // #004AC6) is deliberately distinct from the Schedule Session modal's.
+// Mirrors MAX_NOTES_LENGTH in app/schemas/follow_up.py. The API rejects longer
+// independently — this is so the admin is stopped while typing rather than by
+// a 422 after pressing Create.
+const MAX_NOTES_LENGTH = 40;
+
 const LABEL_CLASS =
   "text-xs font-semibold leading-4 tracking-[0.6px] text-[#434655]";
 
@@ -79,12 +84,28 @@ export default function AddFollowUpModal({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className={LABEL_CLASS}>Notes</span>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className={LABEL_CLASS}>Notes</span>
+              {/* Shown always, not only when full: a counter that appears at the
+                  limit reads as an error, whereas one that is always there is
+                  just the rule. maxLength stops the typing; the API enforces
+                  the same 40 independently. */}
+              <span
+                className={`text-xs ${
+                  notes.length >= MAX_NOTES_LENGTH
+                    ? "font-medium text-[#9A611D]"
+                    : "text-[#6B7280]"
+                }`}
+              >
+                {notes.length}/{MAX_NOTES_LENGTH}
+              </span>
+            </div>
             <textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Enter clinical or administrative notes..."
-              className="h-30 w-full resize-none rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] p-3 text-sm font-normal leading-5 text-[#0B1C30] outline-none placeholder:text-[#6B7280] focus:border-[#004AC6]"
+              maxLength={MAX_NOTES_LENGTH}
+              onChange={(e) => setNotes(e.target.value.slice(0, MAX_NOTES_LENGTH))}
+              placeholder="Short reminder, e.g. call about rescheduling"
+              className="h-20 w-full resize-none rounded-lg border border-[#C3C6D7] bg-[#F8F9FF] p-3 text-sm font-normal leading-5 text-[#0B1C30] outline-none placeholder:text-[#6B7280] focus:border-[#004AC6]"
             />
           </div>
 

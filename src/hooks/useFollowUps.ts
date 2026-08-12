@@ -94,5 +94,11 @@ export const useFollowUps = (activeTab: FollowUpFilter) => {
     isLoading,
     createFollowUp,
     completeFollowUp,
+    // The ID currently being completed, not a bare boolean. Several rows share
+    // one mutation, so a boolean would spin every button at once and give no
+    // clue which row the admin actually clicked.
+    completingId: completeFollowUpMutation.isPending
+      ? (completeFollowUpMutation.variables as string | undefined) ?? null
+      : null,
   };
 };

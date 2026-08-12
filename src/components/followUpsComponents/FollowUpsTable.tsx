@@ -10,10 +10,12 @@ const COLUMNS = ["Client", "Due Date", "Notes", "Reminder", "Status", ""];
 export default function FollowUpsTable({
   followUps,
   onMarkDone,
+  completingId,
   isLoading,
 }: {
   followUps: FollowUpWithClient[];
   onMarkDone: (followUpId: string) => void;
+  completingId?: string | null;
   isLoading: boolean;
 }) {
   return (
@@ -33,7 +35,12 @@ export default function FollowUpsTable({
           <TableSkeleton gridClassName={FOLLOW_UPS_TABLE_GRID} columns={COLUMNS.length} />
         ) : (
           followUps.map((followUp) => (
-            <FollowUpTableRow key={followUp.id} followUp={followUp} onMarkDone={onMarkDone} />
+            <FollowUpTableRow
+              key={followUp.id}
+              followUp={followUp}
+              onMarkDone={onMarkDone}
+              isCompleting={completingId === followUp.id}
+            />
           ))
         )}
       </div>

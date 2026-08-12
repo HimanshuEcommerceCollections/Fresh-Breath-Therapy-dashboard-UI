@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import type { FollowUpWithClient } from "@/src/services/followUpsService";
 import { FOLLOW_UPS_TABLE_GRID } from "@/src/sections/followUpsSections/followUpsTableGrid";
 import StatusPill from "@/src/sections/followUpsSections/StatusPill";
@@ -9,9 +10,12 @@ import { canWrite } from "@/src/lib/permissions";
 export default function FollowUpTableRow({
   followUp,
   onMarkDone,
+  isCompleting = false,
 }: {
   followUp: FollowUpWithClient;
   onMarkDone: (followUpId: string) => void;
+  /** True only while THIS row's request is in flight. */
+  isCompleting?: boolean;
 }) {
   const { role } = useCurrentUser();
 
@@ -39,9 +43,13 @@ export default function FollowUpTableRow({
           <button
             type="button"
             onClick={() => onMarkDone(followUp.id)}
-            className="h-8 cursor-pointer rounded-xl border border-[#E0E5EB] bg-[#F7FBFD] px-3 text-xs font-medium leading-4 text-[#071123] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-colors hover:bg-white"
+            // Disabled as well as spinning: the round trip is long enough to
+            // click twice, and the second click fired a second request.
+            disabled={isCompleting}
+            className="flex h-8 cursor-pointer items-center gap-1.5 rounded-xl border border-[#E0E5EB] bg-[#F7FBFD] px-3 text-xs font-medium leading-4 text-[#071123] shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Mark done
+            {isCompleting && <Loader2 size={12} className="animate-spin" />}
+            {isCompleting ? "Marking…" : "Mark done"}
           </button>
         )}
       </div>

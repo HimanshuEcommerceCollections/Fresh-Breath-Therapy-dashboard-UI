@@ -18,6 +18,7 @@ export default function FollowUpsPage() {
     stats,
     createFollowUp,
     completeFollowUp,
+    completingId,
     isLoading,
   } = useFollowUps(activeTab);
 
@@ -29,6 +30,7 @@ export default function FollowUpsPage() {
       <FollowUpsTable
         followUps={followUps}
         onMarkDone={completeFollowUp}
+        completingId={completingId}
         isLoading={isLoading}
       />
 

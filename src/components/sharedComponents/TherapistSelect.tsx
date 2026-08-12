@@ -32,7 +32,7 @@ export default function TherapistSelect({
   labelClassName?: string;
   shellClassName?: string;
 }) {
-  const { therapists } = useTherapists();
+  const { therapists, isLoading } = useTherapists();
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
@@ -119,7 +119,11 @@ export default function TherapistSelect({
           )}
           <div className="max-h-[280px] overflow-y-auto">
           {therapists.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-[#94A3B8]">No therapists yet</p>
+            <p className="px-4 py-3 text-sm text-[#94A3B8]">
+              {/* "No therapists yet" is only true once we know. Until then it
+                  is a wrong answer that reads as authoritative. */}
+              {isLoading ? "Loading therapists…" : "No therapists yet"}
+            </p>
           ) : filtered.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-[#94A3B8]">
               Nothing matches &ldquo;{query}&rdquo;.

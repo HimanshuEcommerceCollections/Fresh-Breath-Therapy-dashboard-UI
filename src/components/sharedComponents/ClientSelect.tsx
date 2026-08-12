@@ -36,11 +36,19 @@ export default function ClientSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [clients, setClients] = useState<Client[]>([]);
+  // Starts true. Without it the list rendered "No clients found" for the whole
+  // duration of the fetch — a confident wrong answer to a question that had
+  // not been asked yet.
+  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    clientsService.fetchAllClients().then(setClients).catch(() => {});
+    clientsService
+      .fetchAllClients()
+      .then(setClients)
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
   }, []);
 
   // Derived display name for the currently selected client
@@ -140,7 +148,7 @@ export default function ClientSelect({
           <div className="max-h-[280px] overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <p className="px-4 py-3 text-sm text-[#94A3B8]">
-                No clients found
+                {isLoading ? "Loading clients…" : "No clients found"}
               </p>
             ) : (
               filtered.map((client) => {
