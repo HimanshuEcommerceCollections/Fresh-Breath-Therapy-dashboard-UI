@@ -19,6 +19,8 @@ import {
 } from "@/src/services/reportsService";
 import { useInView } from "@/src/hooks/useInView";
 import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
+import ChartPager from "@/src/components/ui/ChartPager";
+import { useChartPages } from "@/src/hooks/useChartPages";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 10 };
 
@@ -26,6 +28,9 @@ export default function TeamPerformanceChart({ filters }: { filters: ReportFilte
   const { ref, isInView } = useInView<HTMLDivElement>();
   const [data, setData] = useState<TeamPerformanceEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Y axis is scaled from the full dataset below, not from pageData —
+  // a per-page axis would make bars on different pages incomparable.
+  const pages = useChartPages(data);
 
   useEffect(() => {
     setIsLoading(true);
@@ -46,18 +51,29 @@ export default function TeamPerformanceChart({ filters }: { filters: ReportFilte
   return (
     <div className="h-[460px]">
       <ChartCard title="Team Performance" action={
-          <ExportButtons
-            path="/api/exports/reports/team"
-            params={{ range: filters.range, location_id: filters.locationId }}
-            formats={["csv"]}
-            baseName="fbt-team-report"
-          />
+        <div className="flex items-center gap-3">
+            <ChartPager
+              rangeLabel={pages.rangeLabel}
+              canPrev={pages.canPrev}
+              canNext={pages.canNext}
+              onPrev={pages.prev}
+              onNext={pages.next}
+              isPaged={pages.isPaged}
+              label="therapists"
+            />
+            <ExportButtons
+              path="/api/exports/reports/team"
+              params={{ range: filters.range, location_id: filters.locationId }}
+              formats={["csv"]}
+              baseName="fbt-team-report"
+            />
+        </div>
         }>
         <div ref={ref} className="min-h-0 flex-1">
           {isInView && (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={data}
+                data={pages.pageData}
                 margin={{ top: 8, right: 8, left: -16, bottom: 8 }}
               >
                 <CartesianGrid

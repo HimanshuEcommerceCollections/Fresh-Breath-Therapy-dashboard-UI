@@ -5,11 +5,14 @@
 // the bar chart and the location breakdown list, same as the two mock files
 // it replaces.
 //
-// Note: POST /api/pto/usage (record PTO usage, Admin only) exists on the
-// backend, but no "record usage" form/modal exists anywhere in this
-// frontend's current design — not built here, since inventing that UI from
-// scratch wasn't part of "replace mock data with real calls" and no mockup
-// exists to follow.
+// PTO arithmetic, in one place, because it isn't obvious from the UI:
+//
+//   accrued  — automatic. Every session marked Completed appends an `accrual`
+//              row of 0.04h to pto_transactions. Nobody types this.
+//   used     — manual. There is no signal in the system that a therapist took
+//              leave, so an admin records it via POST /api/pto/usage, which is
+//              what recordPTOUsage below drives.
+//   balance  — accrued minus used, derived on read. Never stored.
 
 import { apiClient } from "@/src/lib/apiClient";
 
@@ -108,9 +111,59 @@ function toPTODashboardData(raw: ApiPTO): PTODashboardData {
   };
 }
 
+export interface PTOTransaction {
+  id: string;
+  type: "accrual" | "usage";
+  hours: number;
+  date: string | null;
+  reason: string | null;
+  createdAt: string;
+}
+
+interface ApiPTOTransaction {
+  id: string;
+  type: "accrual" | "usage";
+  hours: number;
+  date: string | null;
+  reason: string | null;
+  created_at: string;
+}
+
+export interface RecordPTOUsagePayload {
+  therapistId: string;
+  hours: number;
+  date: string;
+  reason?: string;
+}
+
 export const ptoService = {
   async fetchPTODashboard(): Promise<PTODashboardData> {
     const res = await apiClient.get<ApiPTO>("/api/pto");
     return toPTODashboardData(res.data);
+  },
+
+  /** One therapist's PTO ledger, newest first — the rows behind their totals. */
+  async fetchTherapistTransactions(therapistId: string): Promise<PTOTransaction[]> {
+    const res = await apiClient.get<ApiPTOTransaction[]>(
+      `/api/pto/therapists/${therapistId}/transactions`,
+    );
+    return res.data.map((t) => ({
+      id: t.id,
+      type: t.type,
+      hours: Number(t.hours),
+      date: t.date,
+      reason: t.reason,
+      createdAt: t.created_at,
+    }));
+  },
+
+  /** Admin only. Rejected by the backend if hours exceed the current balance. */
+  async recordPTOUsage(payload: RecordPTOUsagePayload): Promise<void> {
+    await apiClient.post("/api/pto/usage", {
+      therapist_id: payload.therapistId,
+      hours: payload.hours,
+      date: payload.date,
+      reason: payload.reason || null,
+    });
   },
 };

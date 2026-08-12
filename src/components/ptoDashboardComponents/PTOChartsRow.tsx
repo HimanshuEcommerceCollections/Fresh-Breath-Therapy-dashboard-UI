@@ -11,9 +11,11 @@ import {
 } from "recharts";
 import ChartCard from "@/src/sections/dashboardSections/ChartCard";
 import { ChartSkeleton } from "@/src/components/ui/ChartSkeleton";
+import ChartPager from "@/src/components/ui/ChartPager";
 import LocationBreakdownList from "@/src/sections/ptoDashboardSections/LocationBreakdownList";
 import type { PTOLocationBreakdown } from "@/src/services/ptoService";
 import { useInView } from "@/src/hooks/useInView";
+import { useChartPages } from "@/src/hooks/useChartPages";
 
 const AXIS_TICK_STYLE = { fill: "#596475", fontSize: 11 };
 
@@ -26,6 +28,11 @@ function PTOByLocationChart({
 }) {
   // Chart animation only starts once the card scrolls into view.
   const { ref, isInView } = useInView<HTMLDivElement>();
+  const pages = useChartPages(data);
+
+  // Y axis scaled to the WHOLE dataset, not the visible page. Rescaling per
+  // page would redraw the axis on every click and make bars from different
+  // pages visually incomparable — a 2h bar could look taller than a 12h one.
   const maxHours = Math.max(1, ...data.map((d) => d.ptoHours));
   const yMax = Math.ceil(maxHours / 15) * 15 || 15;
 
@@ -43,12 +50,23 @@ function PTOByLocationChart({
     <ChartCard
       title="PTO Accrued by Location"
       subtitle="Driven by completed sessions × 0.04"
+      action={
+        <ChartPager
+          rangeLabel={pages.rangeLabel}
+          canPrev={pages.canPrev}
+          canNext={pages.canNext}
+          onPrev={pages.prev}
+          onNext={pages.next}
+          isPaged={pages.isPaged}
+          label="locations"
+        />
+      }
     >
       <div ref={ref} className="min-h-0 flex-1">
         {isInView && (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={data}
+              data={pages.pageData}
               margin={{ top: 8, right: 8, left: -16, bottom: 0 }}
             >
               <CartesianGrid
@@ -62,6 +80,16 @@ function PTOByLocationChart({
                 tickLine={false}
                 tick={AXIS_TICK_STYLE}
                 interval={0}
+                angle={-20}
+                textAnchor="end"
+                height={64}
+                // Six per page leaves real room, but FBT has location names
+                // like "Oakwood North Judithbury Clinic 1" that overrun it
+                // anyway. Truncated here rather than left to overlap; the
+                // tooltip carries the full name on hover.
+                tickFormatter={(name: string) =>
+                  name.length > 18 ? `${name.slice(0, 17)}…` : name
+                }
               />
               <YAxis
                 domain={[0, yMax]}
