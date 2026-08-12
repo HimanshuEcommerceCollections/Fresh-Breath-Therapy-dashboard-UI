@@ -14,7 +14,7 @@ export default function UpcomingSessionsList({
   return (
     <ChartCard
       title="Upcoming Sessions"
-      action={<CardHeaderLink label="View all" />}
+      action={<CardHeaderLink label="View all" href="/sessions" />}
     >
       <div className="flex flex-col gap-3">
         {isLoading

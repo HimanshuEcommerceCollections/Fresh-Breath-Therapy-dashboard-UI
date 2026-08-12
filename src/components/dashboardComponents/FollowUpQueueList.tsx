@@ -14,7 +14,7 @@ export default function FollowUpQueueList({
   return (
     <ChartCard
       title="Follow-Up Queue"
-      action={<CardHeaderLink label="Manage" />}
+      action={<CardHeaderLink label="Manage" href="/follow-ups" />}
     >
       <div className="flex flex-col gap-2">
         {isLoading

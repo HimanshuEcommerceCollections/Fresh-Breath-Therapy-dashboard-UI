@@ -24,7 +24,7 @@ export default function TherapistUtilizationList({
     <ChartCard
       title="Therapist Utilization"
       subtitle="Avg sessions/week vs target (8/wk)"
-      action={<CardHeaderLink label="All therapists" />}
+      action={<CardHeaderLink label="All therapists" href="/therapists" />}
     >
       <div ref={ref} className="flex flex-col gap-3">
         {isLoading
