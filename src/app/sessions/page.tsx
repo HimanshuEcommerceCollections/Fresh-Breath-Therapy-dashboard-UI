@@ -54,6 +54,7 @@ export default function SessionsPage() {
         onReset={sessions.resetFilter}
         onApply={sessions.applyFilter}
         filteredTherapists={sessions.filteredTherapists}
+        isTherapistsLoading={sessions.isTherapistsLoading}
       />
 
       <SessionSearchPanel

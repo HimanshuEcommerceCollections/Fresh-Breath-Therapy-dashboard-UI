@@ -85,13 +85,18 @@ export const useClients = () => {
 
   const debouncedLeadSearch = useDebouncedValue(leadSearchQuery, SEARCH_DEBOUNCE_MS);
 
-  const { data: filteredLeadsPage } = useQuery({
+  const { data: filteredLeadsPage, isFetching: isSearchingLeads } = useQuery({
     queryKey: ["leads", { search: debouncedLeadSearch || undefined }],
     queryFn: () => leadsService.fetchLeads({ search: debouncedLeadSearch || undefined }),
     // Only search leads while the "Add Client" panel is actually open.
     enabled: isAddingClient,
   });
   const filteredLeads = filteredLeadsPage?.items ?? [];
+  // True from the first keystroke until fresh results land — covers both the
+  // debounce window and the request itself, so "No leads match your search"
+  // never appears over a list that is about to change.
+  const isLeadSearchPending =
+    isSearchingLeads || leadSearchQuery !== debouncedLeadSearch;
 
   const openLeadSearch = () => setIsAddingClient(true);
   const cancelLeadSearch = () => {
@@ -138,6 +143,7 @@ export const useClients = () => {
     leadSearchQuery,
     setLeadSearchQuery,
     filteredLeads,
+    isLeadSearchPending,
     convertingLeadId,
     convertedLeadIds,
     handleAddLead,

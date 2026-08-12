@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import type { Lead } from "@/src/services/leadsService";
 import LeadSearchInput from "@/src/components/clientsComponents/LeadSearchInput";
 import LeadStatusBadge from "@/src/components/clientsComponents/LeadStatusBadge";
@@ -29,6 +30,7 @@ export default function LeadSearchSection({
   searchQuery,
   onSearchQueryChange,
   leads,
+  isSearching,
   onCancel,
   onAddLead,
   convertingLeadId,
@@ -38,6 +40,8 @@ export default function LeadSearchSection({
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   leads: Lead[];
+  /** True while a search is debouncing or in flight. */
+  isSearching: boolean;
   onCancel: () => void;
   onAddLead: (leadId: string) => void;
   convertingLeadId: string | null;
@@ -141,8 +145,15 @@ export default function LeadSearchSection({
             );
           })}
           {leads.length === 0 && (
-            <div className="px-6 py-10 text-center text-sm text-[#6B7280]">
-              No leads match your search.
+            <div className="flex items-center justify-center gap-2 px-6 py-10 text-center text-sm text-[#6B7280]">
+              {isSearching ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Searching leads…
+                </>
+              ) : (
+                "No leads match your search."
+              )}
             </div>
           )}
         </div>

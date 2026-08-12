@@ -7,7 +7,7 @@
 // in useSessionsPage — this component is fully controlled (no local open/close).
 
 import { useEffect, useRef } from "react";
-import { Check, ChevronDown, Users } from "lucide-react";
+import { Check, ChevronDown, Loader2, Users } from "lucide-react";
 import type { Therapist } from "@/src/services/therapistsService";
 
 // 6-colour avatar palette, cycled by therapist index in the roster.
@@ -50,6 +50,7 @@ export default function TherapistFilterDropdown({
   onApply,
   // Therapist roster (already filtered by search inside the hook)
   filteredTherapists,
+  isTherapistsLoading,
 }: {
   therapistFilterLabel: string;
   isAllTherapists: boolean;
@@ -65,6 +66,10 @@ export default function TherapistFilterDropdown({
   onReset: () => void;
   onApply: () => void;
   filteredTherapists: Therapist[];
+  /** True while the roster is still being fetched. "No therapists found"
+   *  is only an answer once we know; before that it is a guess that reads
+   *  as authoritative. */
+  isTherapistsLoading: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -234,9 +239,16 @@ export default function TherapistFilterDropdown({
             {filteredTherapists.length === 0 && (
               <p
                 style={{ fontSize: "12.5px" }}
-                className="px-3 py-4 text-center text-[#62748E]"
+                className="flex items-center justify-center gap-2 px-3 py-4 text-center text-[#62748E]"
               >
-                No therapists found
+                {isTherapistsLoading ? (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    Loading therapists…
+                  </>
+                ) : (
+                  "No therapists found"
+                )}
               </p>
             )}
           </div>

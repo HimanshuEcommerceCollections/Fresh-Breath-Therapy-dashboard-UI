@@ -11,9 +11,10 @@
 // Selected value is the client's `id` string (not the display name) so the
 // rest of the app can reference the client by their stable identifier.
 
-import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
-import { clientsService, type Client } from "@/src/services/clientsService";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Check, ChevronDown, Loader2 } from "lucide-react";
+import { clientsService } from "@/src/services/clientsService";
 
 export default function ClientSelect({
   label,
@@ -35,32 +36,36 @@ export default function ClientSelect({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [clients, setClients] = useState<Client[]>([]);
-  // Starts true. Without it the list rendered "No clients found" for the whole
-  // duration of the fetch — a confident wrong answer to a question that had
-  // not been asked yet.
-  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    clientsService
-      .fetchAllClients()
-      .then(setClients)
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, []);
+  // A shared, CACHED query rather than a fetch into local state on mount.
+  //
+  // Two problems with the old version. It reported "No clients found" for the
+  // whole duration of the fetch, which is a confident wrong answer to a
+  // question that hasn't been asked yet. And because the list lived in local
+  // state, every modal that mounts this component re-fetched every client from
+  // scratch — so the wait was paid again on each open, which is why it was
+  // noticeable enough to be confusing.
+  //
+  // The key is shared with the Clients page's own "all clients" query, so the
+  // list is usually already warm by the time a modal opens.
+  const { data: clients = [], isLoading } = useQuery({
+    queryKey: ["clients", "all", {}],
+    queryFn: () => clientsService.fetchAllClients(),
+    staleTime: 60_000,
+  });
 
   // Derived display name for the currently selected client
   const selectedClient = clients.find((c) => c.id === value) ?? null;
   const displayName = selectedClient?.name ?? "";
 
   // Filtered list based on current query
-  const filtered = query.trim()
-    ? clients.filter((c) =>
-        c.name.toLowerCase().includes(query.toLowerCase()),
-      )
-    : clients;
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return clients;
+    return clients.filter((c) => c.name.toLowerCase().includes(q));
+  }, [clients, query]);
 
   // Open dropdown and focus the filter input
   function openDropdown() {
@@ -148,7 +153,14 @@ export default function ClientSelect({
           <div className="max-h-[280px] overflow-y-auto py-1">
             {filtered.length === 0 ? (
               <p className="px-4 py-3 text-sm text-[#94A3B8]">
-                {isLoading ? "Loading clients…" : "No clients found"}
+                {isLoading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 size={14} className="animate-spin" />
+                    Loading clients…
+                  </span>
+                ) : (
+                  "No clients found"
+                )}
               </p>
             ) : (
               filtered.map((client) => {

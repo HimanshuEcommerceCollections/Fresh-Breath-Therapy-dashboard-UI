@@ -56,7 +56,7 @@ export function useSessionsPage() {
   const closeScheduleModal = () => setIsScheduleModalOpen(false);
 
   // ── Therapists (real) ────────────────────────────────────────────────────
-  const { therapists } = useTherapists();
+  const { therapists, isLoading: isTherapistsLoading } = useTherapists();
 
   // ── Therapist filter ──────────────────────────────────────────────────────
   const [therapistSearch, setTherapistSearch] = useState("");
@@ -304,6 +304,7 @@ export function useSessionsPage() {
     resetFilter,
     applyFilter,
     filteredTherapists,
+    isTherapistsLoading,
 
     // Sessions
     sessions,

@@ -28,6 +28,7 @@ export default function SessionsPageHeader({
   onReset,
   onApply,
   filteredTherapists,
+  isTherapistsLoading,
 }: {
   activeView: SessionsView;
   onViewChange: (view: SessionsView) => void;
@@ -47,6 +48,7 @@ export default function SessionsPageHeader({
   onReset: () => void;
   onApply: () => void;
   filteredTherapists: Therapist[];
+  isTherapistsLoading: boolean;
 }) {
   const { role } = useCurrentUser();
 
@@ -80,6 +82,7 @@ export default function SessionsPageHeader({
             onReset={onReset}
             onApply={onApply}
             filteredTherapists={filteredTherapists}
+            isTherapistsLoading={isTherapistsLoading}
           />
         )}
 

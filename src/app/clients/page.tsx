@@ -34,6 +34,7 @@ export default function ClientsPage() {
     leadSearchQuery,
     setLeadSearchQuery,
     filteredLeads,
+    isLeadSearchPending,
     convertingLeadId,
     convertedLeadIds,
     handleAddLead,
@@ -54,6 +55,7 @@ export default function ClientsPage() {
           searchQuery={leadSearchQuery}
           onSearchQueryChange={setLeadSearchQuery}
           leads={filteredLeads}
+          isSearching={isLeadSearchPending}
           onCancel={cancelLeadSearch}
           onAddLead={handleAddLead}
           convertingLeadId={convertingLeadId}
