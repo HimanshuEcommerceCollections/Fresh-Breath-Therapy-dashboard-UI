@@ -36,7 +36,7 @@ export const useOtpForm = ({
   expiresAt,
 }: UseOtpFormOptions) => {
   const router = useRouter();
-  const { refetch } = useCurrentUser();
+  const { refetch, adoptSession } = useCurrentUser();
   const [digits, setDigits] = useState<string[]>(Array(length).fill(""));
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,13 +95,19 @@ export const useOtpForm = ({
         return;
       }
 
-      // Login sets the session cookie server-side on verify — refetch so
-      // CurrentUserProvider picks it up before we navigate, otherwise
-      // ProtectedShell still sees user: null and bounces back to /login.
-      // Signup never sets a cookie (the account is still pending admin
-      // approval), so there's no session to refetch there.
+      // The session cookie is set server-side on verify, and the response
+      // carries the user — so adopt it and go. ProtectedShell needs a
+      // non-null user or it bounces back to /login, but satisfying that with
+      // refetch() meant a /me AND a therapists call had to finish before the
+      // redirect fired, which is the multi-second wait after "Login
+      // successful". refetch() remains the fallback for an older backend that
+      // doesn't return the user yet.
+      //
+      // Signup never sets a cookie (the account is pending admin approval),
+      // so there is no session to adopt there.
       if (flow === "login") {
-        await refetch();
+        if (res.user) adoptSession(res.user);
+        else await refetch();
       }
       router.push("/");
       // Deliberately NOT resetting isSubmitting here: router.push() only

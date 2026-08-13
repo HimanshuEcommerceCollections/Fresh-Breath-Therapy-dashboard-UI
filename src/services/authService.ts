@@ -18,6 +18,9 @@ export interface AuthResponse {
   message?: string;
   expiresAt?: string;
   otpRequired?: boolean;
+  /** Present on a successful LOGIN otp verification — lets the caller seed
+   *  the session and navigate without a further /me round trip. */
+  user?: CurrentUser;
 }
 
 export type RoleName = "Admin" | "Coordinator" | "Therapist";
@@ -38,6 +41,19 @@ interface ApiCurrentUser {
   avatar_url: string | null;
   is_active: boolean;
   role: { id: string; name: RoleName; permissions: Record<string, unknown> } | null;
+}
+
+// One mapper for both /api/auth/me and the user returned by
+// verify-login-otp, so the two can never disagree about the shape.
+export function toCurrentUser(raw: ApiCurrentUser): CurrentUser {
+  return {
+    id: raw.id,
+    name: raw.name,
+    email: raw.email,
+    avatarUrl: raw.avatar_url,
+    isActive: raw.is_active,
+    role: raw.role?.name ?? null,
+  };
 }
 
 export interface VerifyOtpPayload {
@@ -117,7 +133,11 @@ export const otpService = {
         { idempotent: true, idempotencyKey: newIdempotencyKey() }
       );
       showSuccessToast(res.data.detail);
-      return { success: true, message: res.data.detail };
+      return {
+        success: true,
+        message: res.data.detail,
+        user: res.data.user ? toCurrentUser(res.data.user) : undefined,
+      };
     } catch (err) {
       return { success: false, message: failureMessage(err, "That code didn't work. Please try again.") };
     }
@@ -142,14 +162,7 @@ export const sessionAuthService = {
     const res = await apiClient.get<ApiCurrentUser>("/api/auth/me", {
       skipErrorToast: true,
     });
-    return {
-      id: res.data.id,
-      name: res.data.name,
-      email: res.data.email,
-      avatarUrl: res.data.avatar_url,
-      isActive: res.data.is_active,
-      role: res.data.role?.name ?? null,
-    };
+    return toCurrentUser(res.data);
   },
 
   async logout(): Promise<AuthResponse> {
