@@ -57,13 +57,11 @@ export function toCurrentUser(raw: ApiCurrentUser): CurrentUser {
 }
 
 export interface VerifyOtpPayload {
-  email: string;
   code: string;
   flow: OtpFlow;
 }
 
 export interface ResendOtpPayload {
-  email: string;
   flow: OtpFlow;
 }
 
@@ -129,7 +127,11 @@ export const otpService = {
     try {
       const res = await apiClient.post(
         endpoint,
-        { email: payload.email, code: payload.code },
+        // No address in the body. The backend resolves the account from the
+        // httpOnly login-ticket cookie, which is authoritative — an email here
+        // was only ever a cross-check, and the client no longer knows it since
+        // it stopped travelling in the URL (audit item 4.4).
+        { code: payload.code },
         { idempotent: true, idempotencyKey: newIdempotencyKey() }
       );
       showSuccessToast(res.data.detail);
@@ -146,7 +148,6 @@ export const otpService = {
   async resendOtp(payload: ResendOtpPayload): Promise<AuthResponse> {
     try {
       const res = await apiClient.post("/api/auth/resend-otp", {
-        email: payload.email,
         purpose: payload.flow,
       });
       showSuccessToast(res.data.detail);
@@ -173,5 +174,36 @@ export const sessionAuthService = {
     } catch (err) {
       return { success: false, message: failureMessage(err, "Something went wrong. Please try again.") };
     }
+  },
+};
+
+// ---- pending login ----------------------------------------------------
+//
+// The OTP screen needs to say which inbox to check and when the code expires.
+// Both used to travel in the /verify-otp URL, which puts them in platform
+// access logs, browser history and any referrer (audit item 4.4).
+//
+// The httpOnly login ticket already identifies the attempt, so the screen asks
+// for what it needs instead of carrying it — and gets a MASKED address, which
+// is enough to recognise an inbox and harmless in a screenshot or a cache.
+
+export interface PendingLogin {
+  emailMasked: string;
+  expiresAt: string;
+  purpose: "login" | "signup";
+}
+
+export const pendingLoginService = {
+  async fetch(): Promise<PendingLogin> {
+    const res = await apiClient.get<{
+      email_masked: string;
+      expires_at: string;
+      purpose: "login" | "signup";
+    }>("/api/auth/pending-login", { skipErrorToast: true });
+    return {
+      emailMasked: res.data.email_masked,
+      expiresAt: res.data.expires_at,
+      purpose: res.data.purpose,
+    };
   },
 };

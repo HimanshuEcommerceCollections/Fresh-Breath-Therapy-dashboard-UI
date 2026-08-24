@@ -11,7 +11,6 @@ import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 export type { OtpFlow };
 
 interface UseOtpFormOptions {
-  email: string;
   flow: OtpFlow;
   length?: number;
   /**
@@ -30,7 +29,6 @@ function secondsUntil(expiresAt?: string): number {
 }
 
 export const useOtpForm = ({
-  email,
   flow,
   length = otpContent.otpLength,
   expiresAt,
@@ -61,13 +59,19 @@ export const useOtpForm = ({
     }, 1000);
   }, []);
 
+  // Keyed on expiresAt, not [] — which it used to be.
+  //
+  // The expiry now arrives ASYNCHRONOUSLY: it used to be a query parameter and
+  // is fetched from GET /api/auth/pending-login instead, so the first render
+  // has undefined and the real value lands a moment later. With [] deps the
+  // countdown would latch onto the static fallback and never correct itself,
+  // leaving "resend" enabled at the wrong moment.
   useEffect(() => {
     startCountdown(expiresAt);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [expiresAt, startCountdown]);
 
   const code = digits.join("");
   const isComplete = code.length === length && !digits.includes("");
@@ -87,7 +91,7 @@ export const useOtpForm = ({
 
     setIsSubmitting(true);
     try {
-      const res = await otpService.verifyOtp({ email, code, flow });
+      const res = await otpService.verifyOtp({ code, flow });
 
       if (!res.success) {
         setError(res.message ?? "That code didn't work. Please try again.");
@@ -130,7 +134,7 @@ export const useOtpForm = ({
 
     try {
       setIsResending(true);
-      const res = await otpService.resendOtp({ email, flow });
+      const res = await otpService.resendOtp({ flow });
       if (!res.success) {
         // 429 cooldown-not-elapsed detail is already toasted by apiClient;
         // don't restart the countdown since the resend didn't actually happen.
