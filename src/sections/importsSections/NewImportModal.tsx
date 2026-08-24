@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { AlertCircle, FileSpreadsheet, Link2, Loader2, Upload, X } from "lucide-react";
+import { AlertCircle, FileSpreadsheet, Loader2, Upload, X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import {
   ACCEPTED_FILE_TYPES,
@@ -10,7 +10,7 @@ import {
 import type { ImportEntity } from "@/src/services/importsService";
 
 /**
- * Pick a file (or paste a Google Sheets link) for one already-chosen entity.
+ * Pick a file for one already-chosen entity.
  *
  * The entity is chosen before this opens, which is what keeps the matching
  * job narrow: the server never has to infer *what* the sheet is, only where
@@ -27,19 +27,16 @@ export default function NewImportModal({
   onClose: () => void;
   onSubmit: (params: {
     file?: File;
-    sourceUrl?: string;
     migrationMode: boolean;
   }) => void;
 }) {
-  const [mode, setMode] = useState<"file" | "link">("file");
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const [sourceUrl, setSourceUrl] = useState("");
   const [migrationMode, setMigrationMode] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const canSubmit = mode === "file" ? Boolean(file) : sourceUrl.trim().length > 0;
+  const canSubmit = Boolean(file);
 
   /**
    * Accept a file from either the picker or a drop.
@@ -68,8 +65,7 @@ export default function NewImportModal({
   const handleSubmit = () => {
     if (!canSubmit || isSubmitting) return;
     onSubmit({
-      file: mode === "file" ? (file ?? undefined) : undefined,
-      sourceUrl: mode === "link" ? sourceUrl.trim() : undefined,
+      file: file ?? undefined,
       migrationMode,
     });
   };
@@ -104,28 +100,23 @@ export default function NewImportModal({
         </div>
 
         <div className="flex flex-col gap-4 px-6 py-5">
+          {/* Upload only. "Paste a link" pulled a Google Sheet through its
+              public CSV export endpoint, which requires the sheet to be shared
+              as "Anyone with the link (Viewer)" — so the documented way to
+              import client records was to publish a spreadsheet of them to the
+              open web. Removed; a file upload does the same job and exposes
+              nothing. */}
           <div className="flex gap-2">
             <button
               type="button"
-              // Opens the browse dialog as well as selecting the tab. Styled
-              // as a primary action it reads as "give me a file dialog", and
-              // only flipping an invisible mode is why it felt broken — the
-              // dashed zone below was the sole way to actually pick a file.
-              onClick={() => {
-                setMode("file");
-                openFilePicker();
-              }}
-              className={tabClass(mode === "file")}
+              onClick={openFilePicker}
+              className={tabClass(true)}
             >
               <Upload size={15} /> Upload a file
             </button>
-            <button type="button" onClick={() => setMode("link")} className={tabClass(mode === "link")}>
-              <Link2 size={15} /> Paste a link
-            </button>
           </div>
 
-          {mode === "file" ? (
-            <>
+          <>
             <div
               onDragOver={(e) => {
                 e.preventDefault();
@@ -184,24 +175,6 @@ export default function NewImportModal({
               </p>
             )}
             </>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <label className="text-sm font-medium text-[#071123]">
-                Google Sheets link
-              </label>
-              <input
-                type="url"
-                value={sourceUrl}
-                onChange={(e) => setSourceUrl(e.target.value)}
-                placeholder="https://docs.google.com/spreadsheets/d/..."
-                className="w-full rounded-xl border border-[#E0E5EB] px-3.5 py-2.5 text-sm text-[#071123] outline-none transition-colors placeholder:text-[#94A3B8] focus:border-[#376EF4]"
-              />
-              <p className="text-xs text-[#596475]">
-                The sheet must be shared as <strong>Anyone with the link (Viewer)</strong>{" "}
-                for us to read it.
-              </p>
-            </div>
-          )}
 
           <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#E0E5EB] bg-[#F7FBFD] px-3.5 py-3">
             <input

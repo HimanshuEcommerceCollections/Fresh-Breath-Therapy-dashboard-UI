@@ -346,12 +346,10 @@ export const importsService = {
   async createImport(params: {
     entity: string;
     file?: File;
-    sourceUrl?: string;
   }): Promise<ImportBatchDetail> {
     const form = new FormData();
     form.append("entity", params.entity);
     if (params.file) form.append("file", params.file);
-    if (params.sourceUrl) form.append("source_url", params.sourceUrl);
 
     const { data } = await apiClient.post<ApiBatchDetail>("/api/imports", form, {
       headers: { "Content-Type": undefined as unknown as string },
