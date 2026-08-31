@@ -37,6 +37,13 @@ export const useTherapistForm = ({
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
     therapist?.avatarUrl ?? undefined
   );
+  // Tracked alongside the URL so a newly uploaded file stays deletable once it
+  // is attached. Undefined for an existing therapist whose photo has not been
+  // re-uploaded in this session — the backend then falls back to deriving the
+  // key from the URL, so nothing is lost.
+  const [avatarStorageKey, setAvatarStorageKey] = useState<string | undefined>(
+    undefined
+  );
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -56,7 +63,9 @@ export const useTherapistForm = ({
   const handleAvatarUpload = async (file: File) => {
     setIsUploadingAvatar(true);
     try {
-      setAvatarUrl(await therapistsService.uploadAvatar(file));
+      const { url, storageKey } = await therapistsService.uploadAvatar(file);
+      setAvatarUrl(url);
+      setAvatarStorageKey(storageKey);
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -78,8 +87,13 @@ export const useTherapistForm = ({
           changes.employmentStatus = employmentStatus || null;
         if (locationId !== therapist.location.id) changes.locationId = locationId;
         if (isActive !== therapist.isActive) changes.isActive = isActive;
-        if ((avatarUrl ?? null) !== therapist.avatarUrl)
+        if ((avatarUrl ?? null) !== therapist.avatarUrl) {
           changes.avatarUrl = avatarUrl ?? null;
+          // Only when a new file was uploaded in this session. Sending it
+          // otherwise would overwrite a good key with undefined.
+          if (avatarStorageKey !== undefined)
+            changes.avatarStorageKey = avatarStorageKey;
+        }
 
         // Nothing edited — skip the round trip rather than PATCHing an empty body.
         if (Object.keys(changes).length > 0) {
@@ -94,6 +108,7 @@ export const useTherapistForm = ({
           locationId,
           email,
           avatarUrl,
+          avatarStorageKey,
         });
       }
       onSuccess();

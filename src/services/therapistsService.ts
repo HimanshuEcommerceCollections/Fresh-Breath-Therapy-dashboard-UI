@@ -43,6 +43,7 @@ export interface AddTherapistPayload {
   locationId: string;
   email: string;
   avatarUrl?: string;
+  avatarStorageKey?: string;
 }
 
 // Every field optional: PATCH sends only what changed. isActive is how a
@@ -56,6 +57,7 @@ export interface UpdateTherapistPayload {
   locationId?: string;
   email?: string;
   avatarUrl?: string | null;
+  avatarStorageKey?: string | null;
   isActive?: boolean;
 }
 
@@ -110,6 +112,7 @@ export const therapistsService = {
       location_id: payload.locationId,
       email: payload.email,
       avatar_url: payload.avatarUrl,
+      avatar_storage_key: payload.avatarStorageKey,
     });
     return toTherapist(res.data);
   },
@@ -129,6 +132,10 @@ export const therapistsService = {
     if (payload.locationId !== undefined) body.location_id = payload.locationId;
     if (payload.email !== undefined) body.email = payload.email;
     if (payload.avatarUrl !== undefined) body.avatar_url = payload.avatarUrl;
+    // Sent alongside the URL, never on its own: the pair is what lets the
+    // backend delete the old file when this one replaces it.
+    if (payload.avatarStorageKey !== undefined)
+      body.avatar_storage_key = payload.avatarStorageKey;
     if (payload.isActive !== undefined) body.is_active = payload.isActive;
 
     const res = await apiClient.patch<ApiTherapist>(`/api/therapists/${therapistId}`, body);
@@ -139,12 +146,23 @@ export const therapistsService = {
     await apiClient.delete(`/api/therapists/${therapistId}`);
   },
 
-  async uploadAvatar(file: File): Promise<string> {
+  /**
+   * Returns BOTH the URL and the storage key.
+   *
+   * The key is the provider's own handle for the file — a Cloudinary public_id
+   * today, an S3 object key after the migration — and it is what makes the file
+   * deletable later. Passing only the URL back is how uploaded images became
+   * undeletable and accumulated forever: a URL is a way to read a file, not a
+   * way to address it for removal.
+   */
+  async uploadAvatar(file: File): Promise<{ url: string; storageKey: string }> {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await apiClient.post<{ url: string }>("/api/uploads/avatar", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return res.data.url;
+    const res = await apiClient.post<{ url: string; storage_key: string }>(
+      "/api/uploads/avatar",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return { url: res.data.url, storageKey: res.data.storage_key };
   },
 };
