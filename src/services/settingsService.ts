@@ -85,3 +85,35 @@ export const rolesService = {
 };
 
 export type { ServicePackage };
+
+// ---- Security ---------------------------------------------------------
+//
+// Read-only, deliberately. The Security tab used to render a hardcoded array
+// of four toggles that all showed ON and that nothing read or enforced —
+// "Require MFA for Admins", "HIPAA audit logging", "Auto-logout after 30 min
+// idle", "7-year data retention". A screen asserting controls that do not
+// exist is worse than a screen showing none, because an auditor reading it
+// and then reading the code finds a claim rather than a to-do.
+//
+// It now reports what the backend is ACTUALLY configured with, computed from
+// the same settings the middleware reads, so the displayed value cannot drift
+// from the enforced one. There is no update call and there should not be: an
+// audit trail an Admin could switch off from a web page is not an audit trail.
+
+export interface SecurityControl {
+  key: string;
+  label: string;
+  /** true = on, false = off, null = enforced outside the app (e.g. at the
+   *  load balancer). null is NOT the same as off and must not render as it. */
+  enabled: boolean | null;
+  detail: string;
+}
+
+export const securitySettingsService = {
+  async fetchControls(): Promise<SecurityControl[]> {
+    const res = await apiClient.get<{ controls: SecurityControl[] }>(
+      "/api/settings/security"
+    );
+    return res.data.controls;
+  },
+};

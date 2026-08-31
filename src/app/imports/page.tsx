@@ -53,7 +53,6 @@ export default function ImportsPage() {
 
   const handleUpload = async (params: {
     file?: File;
-    sourceUrl?: string;
     migrationMode: boolean;
   }) => {
     if (!uploadingFor) return;
@@ -61,7 +60,6 @@ export default function ImportsPage() {
     const batch = await createImport({
       entity: entity.key,
       file: params.file,
-      sourceUrl: params.sourceUrl,
     });
     setUploadingFor(null);
     setWizard({ batchId: batch.id, entity, initialStep: "mapping" });

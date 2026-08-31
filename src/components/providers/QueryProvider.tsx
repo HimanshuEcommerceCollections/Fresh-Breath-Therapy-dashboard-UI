@@ -21,7 +21,12 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <ReactQueryDevtools initialIsOpen={false} />
+      {/* Development only. Rendered unconditionally, the devtools panel lets
+          anyone open the full React Query cache — i.e. every PHI response the
+          page has fetched — from a production build. */}
+      {process.env.NODE_ENV !== "production" && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
     </QueryClientProvider>
   );
 }

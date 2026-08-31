@@ -80,12 +80,8 @@ export const useSignupForm = () => {
         return;
       }
 
-      const expiresAtParam = res.expiresAt
-        ? `&expiresAt=${encodeURIComponent(res.expiresAt)}`
-        : "";
-      router.push(
-        `/verify-otp?email=${encodeURIComponent(values.email)}&flow=signup${expiresAtParam}`
-      );
+      // See useLoginForm: nothing identifying goes in the URL.
+      router.push("/verify-otp?flow=signup");
       // Leave isSubmitting true through the redirect — see useOtpForm's
       // handleSubmit for why resetting it here would let a second click
       // through before the route actually changes.

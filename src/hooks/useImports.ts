@@ -57,7 +57,7 @@ export const useImports = () => {
   };
 
   const createImportMutation = useMutation({
-    mutationFn: (params: { entity: string; file?: File; sourceUrl?: string }) =>
+    mutationFn: (params: { entity: string; file?: File }) =>
       importsService.createImport(params),
     onSuccess: invalidate,
   });

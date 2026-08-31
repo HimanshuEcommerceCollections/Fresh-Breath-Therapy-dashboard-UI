@@ -72,12 +72,12 @@ export const useLoginForm = () => {
       }
 
       if (res.otpRequired) {
-        const expiresAtParam = res.expiresAt
-          ? `&expiresAt=${encodeURIComponent(res.expiresAt)}`
-          : "";
-        router.push(
-          `/verify-otp?email=${encodeURIComponent(values.email)}&flow=login${expiresAtParam}`
-        );
+        // Only the flow, which is not PHI. The address and expiry used to ride
+        // here and a URL is recorded in platform access logs, browser history
+        // and any referrer (audit item 4.4). The OTP page asks
+        // GET /api/auth/pending-login instead, which answers from the httpOnly
+        // login-ticket cookie and returns a MASKED address.
+        router.push("/verify-otp?flow=login");
         // Leave isSubmitting true through the redirect — see useOtpForm's
         // handleSubmit for why resetting it here would let a second click
         // through before the route actually changes.
