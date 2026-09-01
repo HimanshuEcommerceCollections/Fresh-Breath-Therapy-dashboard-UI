@@ -83,7 +83,7 @@ export default function SessionSearchPanel({
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-[#071123]">
-                        {session.client}
+                        {session.subject.name}
                       </p>
                       <p className="truncate text-xs text-[#596475]">
                         {/* Date shown because results span every week — without

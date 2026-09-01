@@ -3,13 +3,14 @@
 // src/components/sessionsComponents/ScheduleSessionModal.tsx
 //
 // Schedule Session modal — fully wired to useScheduleSessionForm (form state
-// + validation + service stub). Reuses ModalOverlay from leadsSections.
-// Client and Therapist use the shared searchable comboboxes; Type stays a
-// native <select> because five options need no filtering.
+// + validation + service). Reuses ModalOverlay from leadsSections.
+// The subject (lead or client) and Therapist use shared searchable
+// comboboxes; Type stays a native <select> because five options need no
+// filtering.
 
 import { X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
-import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
+import SubjectSelect, { type SubjectValue } from "@/src/components/sharedComponents/SubjectSelect";
 import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
 import { useScheduleSessionForm } from "@/src/hooks/useScheduleSessionForm";
 import { sessionTypeOptions } from "@/src/data/sessionsData/sessionTypeOptions";
@@ -43,12 +44,22 @@ export default function ScheduleSessionModal({
   open,
   onClose,
   onSchedule,
+  initialSubject = null,
+  lockSubject = false,
+  lockedSubjectName,
 }: {
   open: boolean;
   onClose: () => void;
   onSchedule: (payload: ScheduleSessionPayload) => Promise<void>;
+  /** Pre-selects the person, for "schedule a session for them" straight after
+   *  adding a lead or client. */
+  initialSubject?: SubjectValue;
+  /** Renders the subject read-only. Used with initialSubject when the modal
+   *  was opened for one specific person. */
+  lockSubject?: boolean;
+  lockedSubjectName?: string;
 }) {
-  const form = useScheduleSessionForm(onSchedule, onClose);
+  const form = useScheduleSessionForm(onSchedule, onClose, initialSubject);
 
   if (!open) return null;
 
@@ -72,11 +83,14 @@ export default function ScheduleSessionModal({
 
         {/* Fields */}
         <div className="flex flex-col gap-4 p-6">
-          {/* Client — shared combobox */}
-          <ClientSelect
-            label="Client"
-            value={form.clientId}
-            onChange={form.setClientId}
+          {/* Lead or client — one picker with a toggle, defaulting to
+              clients. Only the selected side is fetched. */}
+          <SubjectSelect
+            label="Client or lead"
+            value={form.subject}
+            onChange={form.setSubject}
+            locked={lockSubject}
+            lockedName={lockedSubjectName}
           />
 
           {/* Therapist — the shared searchable combobox, not a native

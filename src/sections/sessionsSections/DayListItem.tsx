@@ -15,7 +15,7 @@ export default function DayListItem({
     <div className="flex items-center justify-between border-b border-[#E0E5EB] py-2 last:border-b-0">
       <div className="flex min-w-0 flex-col gap-1">
         <span className="truncate text-sm font-semibold leading-5 text-[#071123]">
-          {session.time} — {session.client}
+          {session.time} — {session.subject.name}
         </span>
         <span className="truncate text-xs font-normal leading-4 text-[#596475]">
           {session.type} · {session.therapist}
@@ -36,7 +36,7 @@ export default function DayListItem({
           <button
             type="button"
             onClick={() => onEdit(session)}
-            aria-label={`Edit ${session.client}'s session`}
+            aria-label={`Edit ${session.subject.name}'s session`}
             className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-[#376EF4] transition-colors hover:bg-[#F5F8FF]"
           >
             <Pencil size={12} />

@@ -1,9 +1,13 @@
 // src/services/sessionsService.ts
 //
 // Wired to the real backend per FBT_Backend_API_Reference.docx section 11.
-// Search response already includes joined client/therapist {id, name}
-// sub-objects, so — unlike Follow-Ups/Payments — no separate client-side
-// join is needed here.
+// Search response already includes joined subject/therapist sub-objects, so —
+// unlike Follow-Ups — no separate client-side join is needed here.
+//
+// A session's SUBJECT is a lead or a client. The API sends
+// `subject: {id, name, kind}` rather than a `client` object, and this service
+// keeps that shape: every consumer needs the name, and several need to know
+// which kind of record it is.
 //
 // searchSessions() powers all four Sessions page views (List, Day, Week,
 // Month) — there is no separate per-view endpoint. The List view calls it
@@ -53,12 +57,15 @@ const LABEL_TO_TYPE: Record<string, ApiSessionType> = {
   Consultation: "consultation",
 };
 
+/** Whether a session's subject is a lead or a client. */
+export type SubjectKind = "lead" | "client";
+
 export interface Session {
   id: string;
   date: string;
   time: string;
-  client: string;
-  clientId: string;
+  /** The lead or client this session is for. */
+  subject: { id: string; name: string; kind: SubjectKind };
   therapist: string;
   therapistId: string;
   type: string;
@@ -70,10 +77,11 @@ export interface Session {
 export interface SessionSearchFilters {
   therapistIds?: string[];
   clientId?: string;
+  leadId?: string;
   status?: SessionStatus;
   dateFrom?: string;
   dateTo?: string;
-  /** Free text matched server-side against the client's AND therapist's name. */
+  /** Free text matched server-side against the subject's AND therapist's name. */
   search?: string;
 }
 
@@ -84,7 +92,9 @@ interface ApiPage<T> {
 }
 
 export interface ScheduleSessionPayload {
-  clientId: string;
+  /** Exactly one of subjectId+subjectKind identifies who the session is for. */
+  subjectId: string;
+  subjectKind: SubjectKind;
   therapistId: string;
   date: string; // ISO "YYYY-MM-DD"
   time: string; // 24h "HH:MM"
@@ -100,7 +110,10 @@ export interface UpdateSessionPayload {
   // Reassignment. A session booked against the wrong clinician was previously
   // only fixable by deleting and re-creating it, losing its history and id.
   therapistId?: string;
-  clientId?: string;
+  /** Reassigning to a different person also switches their kind, so both
+   *  travel together — sending only an id would be ambiguous. */
+  subjectId?: string;
+  subjectKind?: SubjectKind;
 }
 
 interface ApiSession {
@@ -111,7 +124,7 @@ interface ApiSession {
   status: ApiSessionStatus;
   created_at: string;
   updated_at: string;
-  client: { id: string; name: string };
+  subject: { id: string; name: string; kind: SubjectKind };
   therapist: { id: string; name: string };
 }
 
@@ -120,8 +133,7 @@ function toSession(raw: ApiSession): Session {
     id: raw.id,
     date: raw.date,
     time: raw.time,
-    client: raw.client.name,
-    clientId: raw.client.id,
+    subject: raw.subject,
     therapist: raw.therapist.name,
     therapistId: raw.therapist.id,
     type: TYPE_TO_LABEL[raw.type],
@@ -140,6 +152,7 @@ export const sessionsService = {
     const res = await apiClient.post<ApiPage<ApiSession>>("/api/sessions/search", {
       therapist_ids: filters?.therapistIds?.length ? filters.therapistIds : null,
       client_id: filters?.clientId ?? null,
+      lead_id: filters?.leadId ?? null,
       status: filters?.status ? LABEL_TO_STATUS[filters.status] : null,
       date_from: filters?.dateFrom ?? null,
       date_to: filters?.dateTo ?? null,
@@ -158,7 +171,9 @@ export const sessionsService = {
     const res = await apiClient.post<ApiSession>(
       "/api/sessions",
       {
-        client_id: payload.clientId,
+        // Exactly one of these; the API 422s on both or neither.
+        client_id: payload.subjectKind === "client" ? payload.subjectId : undefined,
+        lead_id: payload.subjectKind === "lead" ? payload.subjectId : undefined,
         therapist_id: payload.therapistId,
         date: payload.date,
         time: payload.time,
@@ -179,7 +194,11 @@ export const sessionsService = {
         type: payload.type ? LABEL_TO_TYPE[payload.type] : undefined,
         status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,
         therapist_id: payload.therapistId,
-        client_id: payload.clientId,
+        // Reassignment clears the other side explicitly. Sending only the new
+        // id would leave the old one populated and trip the API's
+        // one-subject rule.
+        client_id: payload.subjectKind === "client" ? payload.subjectId : undefined,
+        lead_id: payload.subjectKind === "lead" ? payload.subjectId : undefined,
       },
       { idempotent: true, idempotencyKey: newIdempotencyKey() }
     );

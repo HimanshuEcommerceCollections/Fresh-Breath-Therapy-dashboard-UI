@@ -14,7 +14,7 @@
 import { useState } from "react";
 import { Loader2, X } from "lucide-react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
-import ClientSelect from "@/src/components/sharedComponents/ClientSelect";
+import SubjectSelect, { type SubjectValue } from "@/src/components/sharedComponents/SubjectSelect";
 import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
 import { sessionTypeOptions } from "@/src/data/sessionsData/sessionTypeOptions";
 import { statusOptionsData } from "@/src/data/sessionsData/statusOptionsData";
@@ -39,7 +39,10 @@ export default function EditSessionModal({
   onClose: () => void;
   onSave: (payload: UpdateSessionPayload) => Promise<unknown>;
 }) {
-  const [clientId, setClientId] = useState(session.clientId);
+  const [subject, setSubject] = useState<SubjectValue>({
+    id: session.subject.id,
+    kind: session.subject.kind,
+  });
   const [therapistId, setTherapistId] = useState(session.therapistId);
   const [date, setDate] = useState(session.date);
   // The API returns "HH:MM:SS"; <input type="time"> wants "HH:MM".
@@ -52,7 +55,12 @@ export default function EditSessionModal({
     // double-booking check re-run on an unchanged date/time and could reject
     // an edit that touches nothing about the schedule.
     const payload: UpdateSessionPayload = {};
-    if (clientId !== session.clientId) payload.clientId = clientId;
+    // Both travel together: reassigning to a different person can also change
+    // their kind, and an id alone would be ambiguous.
+    if (subject && subject.id !== session.subject.id) {
+      payload.subjectId = subject.id;
+      payload.subjectKind = subject.kind;
+    }
     if (therapistId !== session.therapistId) payload.therapistId = therapistId;
     if (date !== session.date) payload.date = date;
     if (time !== session.time.slice(0, 5)) payload.time = time;
@@ -76,7 +84,7 @@ export default function EditSessionModal({
               Edit session
             </h2>
             <p className="mt-0.5 text-sm text-[#596475]">
-              {session.client} · {session.date} at {session.time}
+              {session.subject.name} · {session.date} at {session.time}
             </p>
           </div>
           <button
@@ -90,7 +98,7 @@ export default function EditSessionModal({
         </div>
 
         <div className="flex flex-col gap-4 px-6 py-5">
-          <ClientSelect label="Client" value={clientId} onChange={setClientId} />
+          <SubjectSelect label="Client or lead" value={subject} onChange={setSubject} />
           <TherapistSelect
             label="Therapist"
             placeholder="Select a therapist…"

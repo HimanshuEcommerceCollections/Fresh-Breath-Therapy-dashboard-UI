@@ -36,7 +36,7 @@ export default function MonthDayCell({
           key={session.id}
           className="rounded-[4px] bg-[rgba(55,110,244,0.1)] px-1 py-0.5 text-[11px] font-normal leading-3.5 tracking-[0.12px] text-[#376EF4]"
         >
-          {session.time} {session.client}
+          {session.time} {session.subject.name}
         </div>
       ))}
       {moreCount > 0 && (

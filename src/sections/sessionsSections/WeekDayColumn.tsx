@@ -34,7 +34,7 @@ export default function WeekDayColumn({
               key={session.id}
               className="rounded-[4px] bg-[rgba(55,110,244,0.1)] p-1.5 text-[11px] font-semibold leading-4 text-[#376EF4]"
             >
-              {session.time} · {session.client}
+              {session.time} · {session.subject.name}
             </div>
           ))
         )}
