@@ -41,6 +41,9 @@ export interface Client {
   id: string;
   name: string;
   email: string;
+  /** The admin's own short note. Copied from the lead on conversion. Shown
+   *  on hover over the name in the clients table. Empty string when unset. */
+  note: string;
   therapist: string;
   therapistId: string;
   location: string;
@@ -60,6 +63,8 @@ export interface ClientFilters {
 export interface CreateClientPayload {
   name: string;
   email: string;
+  /** `null` clears the note. Omitting the key leaves it untouched on a PATCH. */
+  note?: string | null;
   therapistId: string;
   locationId: string;
   status?: ClientStatus;
@@ -75,6 +80,7 @@ interface ApiClient {
   id: string;
   name: string;
   email: string;
+  note: string | null;
   status: ApiClientStatus;
   created_at: string;
   location: { id: string; name: string };
@@ -88,6 +94,7 @@ function toClient(raw: ApiClient): Client {
     id: raw.id,
     name: raw.name,
     email: raw.email,
+    note: raw.note ?? "",
     therapist: raw.therapist.name,
     therapistId: raw.therapist.id,
     location: raw.location.name,
@@ -130,6 +137,7 @@ export const clientsService = {
       {
         name: payload.name,
         email: payload.email,
+        note: payload.note,
         therapist_id: payload.therapistId,
         location_id: payload.locationId,
         status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,
@@ -152,6 +160,7 @@ export const clientsService = {
     const res = await apiClient.patch<ApiClient>(`/api/clients/${clientId}`, {
       name: payload.name,
       email: payload.email,
+      note: payload.note,
       therapist_id: payload.therapistId,
       location_id: payload.locationId,
       status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,

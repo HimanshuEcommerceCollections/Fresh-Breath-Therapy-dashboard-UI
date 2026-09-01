@@ -59,6 +59,9 @@ export interface Lead {
   therapist: string;
   therapistId: string | null;
   source: string;
+  /** The admin's own short note about this person. Shown on hover over their
+   *  name in the leads table and pipeline cards. Empty string when unset. */
+  note: string;
   status: LeadStatus;
   convertedClientId: string | null;
   // Captured by the public website form and delivered via the lead webhook
@@ -92,6 +95,9 @@ export interface CreateLeadPayload {
   locationId: string;
   therapistId?: string;
   source?: string;
+  /** `null` clears the note. Omitting the key leaves it untouched on a PATCH,
+   *  so an empty box must send null rather than undefined. */
+  note?: string | null;
   status?: LeadStatus;
 }
 
@@ -109,6 +115,7 @@ interface ApiLead {
   email: string;
   phone: string;
   source: string | null;
+  note: string | null;
   status: ApiLeadStatus;
   converted_client_id: string | null;
   message: string | null;
@@ -136,6 +143,7 @@ function toLead(raw: ApiLead): Lead {
     therapist: raw.therapist?.name ?? "",
     therapistId: raw.therapist?.id ?? null,
     source: raw.source ?? "",
+    note: raw.note ?? "",
     status: STATUS_TO_LABEL[raw.status],
     convertedClientId: raw.converted_client_id,
     message: raw.message ?? "",
@@ -186,6 +194,7 @@ export const leadsService = {
         location_id: payload.locationId,
         therapist_id: payload.therapistId,
         source: payload.source,
+        note: payload.note,
         status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,
       },
       { idempotent: true, idempotencyKey: newIdempotencyKey() }
@@ -205,6 +214,7 @@ export const leadsService = {
         location_id: payload.locationId,
         therapist_id: payload.therapistId,
         source: payload.source,
+        note: payload.note,
         status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,
       },
       { idempotent: true, idempotencyKey: newIdempotencyKey() }

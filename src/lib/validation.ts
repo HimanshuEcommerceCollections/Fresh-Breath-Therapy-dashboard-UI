@@ -1,8 +1,9 @@
-// Client-side mirror of app/schemas/fields.py. These two numbers must match
-// the backend's MAX_NAME_LENGTH / MAX_EMAIL_LENGTH — if they drift, the form
-// happily accepts input the API then rejects with a 422.
+// Client-side mirror of app/schemas/fields.py. These numbers must match the
+// backend's MAX_NAME_LENGTH / MAX_EMAIL_LENGTH / MAX_NOTE_LENGTH — if they
+// drift, the form happily accepts input the API then rejects with a 422.
 export const MAX_NAME_LENGTH = 50;
 export const MAX_EMAIL_LENGTH = 50;
+export const MAX_NOTE_LENGTH = 100;
 
 /** Trimmed, because the backend strips whitespace before measuring. */
 export function isNameWithinLimit(value: string): boolean {

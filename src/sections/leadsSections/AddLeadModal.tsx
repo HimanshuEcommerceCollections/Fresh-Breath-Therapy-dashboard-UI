@@ -10,6 +10,7 @@ import FormField from "@/src/sections/leadsSections/FormField";
 import FormSelect from "@/src/sections/leadsSections/FormSelect";
 import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
 import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
+import NoteField from "@/src/components/sharedComponents/NoteField";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, emailError, nameError } from "@/src/lib/validation";
 
@@ -60,6 +61,7 @@ export default function AddLeadModal({
   const [locationId, setLocationId] = useState(lead?.locationId ?? "");
   const [source, setSource] = useState(lead?.source ?? "");
   const [therapistId, setTherapistId] = useState(lead?.therapistId ?? "");
+  const [note, setNote] = useState(lead?.note ?? "");
   const [status, setStatus] = useState<LeadStatus>(lead?.status ?? "New Lead");
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,6 +88,10 @@ export default function AddLeadModal({
       // omitted from the request instead of being sent as an invalid UUID.
       therapistId: therapistId || undefined,
       source: source || undefined,
+      // null, not undefined: this modal doubles as Edit Lead, and undefined
+      // would be dropped from the PATCH body, silently leaving the old note in
+      // place when the admin has just emptied the box.
+      note: note.trim() || null,
       status,
     };
 
@@ -273,6 +279,7 @@ export default function AddLeadModal({
               </div>
             </div>
           </div>
+          <NoteField value={note} onChange={setNote} />
         </div>
 
         <div className="flex items-center justify-end gap-4 rounded-b-2xl border-t border-[#C3C6D7] bg-[#F8F9FF] px-6 py-4">

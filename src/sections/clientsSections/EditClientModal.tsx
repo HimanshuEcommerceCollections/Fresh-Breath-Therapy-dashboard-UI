@@ -6,6 +6,7 @@ import FormField from "@/src/sections/leadsSections/FormField";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
 import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
+import NoteField from "@/src/components/sharedComponents/NoteField";
 import type { ClientStatus } from "@/src/data/clientsData/clientsData";
 import type { Client, CreateClientPayload } from "@/src/services/clientsService";
 import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, emailError, nameError } from "@/src/lib/validation";
@@ -30,6 +31,7 @@ export default function EditClientModal({
   const [email, setEmail] = useState(client.email);
   const [locationId, setLocationId] = useState(client.locationId);
   const [therapistId, setTherapistId] = useState(client.therapistId);
+  const [note, setNote] = useState(client.note ?? "");
   const [status, setStatus] = useState<ClientStatus>(client.status);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,6 +52,9 @@ export default function EditClientModal({
         email,
         locationId,
         therapistId,
+        // null, not undefined — undefined is dropped from the PATCH body and
+        // would leave the old note in place when the box has been emptied.
+        note: note.trim() || null,
         status,
       });
       onClose();
@@ -101,6 +106,8 @@ export default function EditClientModal({
             <LocationSelect value={locationId} onChange={setLocationId} />
             <TherapistSelect value={therapistId} onChange={setTherapistId} />
           </div>
+
+          <NoteField value={note} onChange={setNote} />
 
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold tracking-[0.6px] text-[#434655]">Status</span>
