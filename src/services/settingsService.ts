@@ -1,7 +1,7 @@
 // src/services/settingsService.ts
 //
 // Wired to the real backend per FBT_Backend_API_Reference.docx section 14
-// (Organization, Roles — Packages already live in packagesService.ts,
+// (Organization, Roles
 // extended here with create/update/delete). Notifications, SaaS, and
 // Security tabs are all static design UI, not backed by an API. Note the
 // backend's feature_flags table/router still exists and still gates the
@@ -21,7 +21,6 @@
 //   than guessing a rendering for an unspecified object.
 
 import { apiClient } from "@/src/lib/apiClient";
-import type { ServicePackage } from "@/src/services/packagesService";
 
 // ---- Organization -----------------------------------------------------
 
@@ -84,7 +83,6 @@ export const rolesService = {
   },
 };
 
-export type { ServicePackage };
 
 // ---- Security ---------------------------------------------------------
 //

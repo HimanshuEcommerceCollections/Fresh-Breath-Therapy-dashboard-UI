@@ -181,7 +181,6 @@ export interface CommitResult {
 export interface RollbackResult {
   deleted: number;
   reverted: number;
-  enrollmentsRecomputed: number;
   batch: ImportBatch;
 }
 
@@ -526,13 +525,12 @@ export const importsService = {
 
   async rollback(batchId: string): Promise<RollbackResult> {
     const { data } = await apiClient.post<{
-      deleted: number; reverted: number; enrollments_recomputed: number;
+      deleted: number; reverted: number;
       batch: ApiBatch;
     }>(`/api/imports/${batchId}/rollback`);
     return {
       deleted: data.deleted,
       reverted: data.reverted,
-      enrollmentsRecomputed: data.enrollments_recomputed,
       batch: toBatch(data.batch),
     };
   },

@@ -6,55 +6,56 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   paymentsService,
   type Payment,
-  type CreatePaymentPayload,
-  type CreatePaymentResult,
+  type PaymentFilters,
+  type UpdatePaymentPayload,
 } from "@/src/services/paymentsService";
-import {
-  enrollmentsService,
-  PAYMENT_STATUS_LABELS,
-  type Invoice,
-  type PaymentStatus,
-} from "@/src/services/enrollmentsService";
+import { useDebouncedValue } from "@/src/hooks/useDebouncedValue";
 import { showSuccessToast } from "@/src/lib/toast";
+import {
+  LABEL_TO_STATUS,
+  isCollected,
+  isOutstanding,
+  paymentStatusColors,
+  STATUS_TO_LABEL,
+  type PaymentMethod,
+  type PaymentStatus,
+} from "@/src/data/paymentsData/paymentVocabulary";
 import type { PaymentStat } from "@/src/data/paymentsData/paymentsStatsData";
 import type { RevenueBarPoint } from "@/src/data/paymentsData/revenueTrendBarData";
 import type { PaymentStatusSlice } from "@/src/data/dashboardData/paymentStatusData";
 
-// Green paid / yellow partially paid / blue pending / red overdue — matches
-// PaymentStatusSelect so the donut and the row badges agree.
-const STATUS_COLORS: Record<PaymentStatus, string> = {
-  paid: "#16A34A",
-  partially_paid: "#F2A618",
-  pending: "#376EF4",
-  overdue: "#EF4444",
-};
+const SEARCH_DEBOUNCE_MS = 350;
 
-function formatCurrency(value: number): string {
-  return `$${Math.round(value).toLocaleString()}`;
-}
+const formatCurrency = (value: number) => `$${Math.round(value).toLocaleString()}`;
 
-// Totals come from invoices — a ledger row only knows what was handed over,
-// not what the package costs or what's still outstanding.
-function computeStats(invoices: Invoice[], payments: Payment[]): PaymentStat[] {
-  const totalRevenue = invoices.reduce((s, e) => s + e.packagePriceSnapshot, 0);
-  const collected = invoices.reduce((s, e) => s + e.totalPaid, 0);
-  const pendingRevenue = invoices
-    .filter((e) => e.paymentStatus !== "paid")
-    .reduce((s, e) => s + e.amountDue, 0);
+const sumWhere = (payments: Payment[], keep: (p: Payment) => boolean) =>
+  payments.reduce((total, p) => (keep(p) ? total + p.amount : total), 0);
+
+// Collected / Outstanding / Cancelled, computed exactly as the backend does
+// (see COLLECTED_STATUSES and OUTSTANDING_STATUSES in enums.py). Cancelled is
+// shown as its own card rather than hidden: money deliberately written off is
+// worth seeing, and its absence from the other two is then obvious instead of
+// looking like the numbers fail to add up.
+function computeStats(payments: Payment[]): PaymentStat[] {
+  const collected = sumWhere(payments, (p) => isCollected(LABEL_TO_STATUS[p.status]));
+  const outstanding = sumWhere(payments, (p) => isOutstanding(LABEL_TO_STATUS[p.status]));
+  const cancelled = sumWhere(payments, (p) => p.status === "Cancelled");
 
   const now = new Date();
-  const monthlyRevenue = payments
-    .filter((p) => {
-      const d = new Date(p.date);
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-    })
-    .reduce((s, p) => s + p.amountPaid, 0);
+  const thisMonth = sumWhere(payments, (p) => {
+    const d = new Date(p.date);
+    return (
+      isCollected(LABEL_TO_STATUS[p.status]) &&
+      d.getFullYear() === now.getFullYear() &&
+      d.getMonth() === now.getMonth()
+    );
+  });
 
   return [
-    { label: "Total Revenue", value: formatCurrency(totalRevenue), iconColor: "#3FC168", iconBg: "rgba(63,193,104,0.1)" },
-    { label: "Monthly Revenue", value: formatCurrency(monthlyRevenue), iconColor: "#376EF4", iconBg: "rgba(55,110,244,0.1)" },
-    { label: "Pending Revenue", value: formatCurrency(pendingRevenue), iconColor: "#F2A618", iconBg: "rgba(242,166,24,0.1)" },
     { label: "Collected", value: formatCurrency(collected), iconColor: "#3FC168", iconBg: "rgba(63,193,104,0.1)" },
+    { label: "This Month", value: formatCurrency(thisMonth), iconColor: "#376EF4", iconBg: "rgba(55,110,244,0.1)" },
+    { label: "Outstanding", value: formatCurrency(outstanding), iconColor: "#F2A618", iconBg: "rgba(242,166,24,0.1)" },
+    { label: "Cancelled", value: formatCurrency(cancelled), iconColor: "#64748B", iconBg: "rgba(100,116,139,0.1)" },
   ];
 }
 
@@ -69,118 +70,99 @@ function computeRevenueTrend(payments: Payment[]): RevenueBarPoint[] {
     });
   }
 
-  return months.map(({ key, label }) => {
-    const revenue = payments
-      .filter((p) => {
-        const d = new Date(p.date);
-        return `${d.getFullYear()}-${d.getMonth()}` === key;
-      })
-      .reduce((s, p) => s + p.amountPaid, 0);
-    return { month: label, revenue };
-  });
+  return months.map(({ key, label }) => ({
+    month: label,
+    revenue: sumWhere(payments, (p) => {
+      const d = new Date(p.date);
+      return (
+        isCollected(LABEL_TO_STATUS[p.status]) &&
+        `${d.getFullYear()}-${d.getMonth()}` === key
+      );
+    }),
+  }));
 }
 
-function computeStatusDistribution(invoices: Invoice[]): PaymentStatusSlice[] {
-  const counts: Record<PaymentStatus, number> = {
-    paid: 0, partially_paid: 0, pending: 0, overdue: 0,
-  };
-  for (const e of invoices) counts[e.paymentStatus] += 1;
-
-  return (Object.keys(counts) as PaymentStatus[])
-    .filter((s) => counts[s] > 0)
-    .map((s) => ({
-      status: PAYMENT_STATUS_LABELS[s],
-      value: counts[s],
-      color: STATUS_COLORS[s],
-    }));
+// By AMOUNT, not by count. The donut used to slice invoice counts, which made
+// one $30 copay look the same size as one $400 self-pay session.
+function computeStatusDistribution(payments: Payment[]): PaymentStatusSlice[] {
+  return (Object.keys(STATUS_TO_LABEL) as (keyof typeof STATUS_TO_LABEL)[])
+    .map((value) => ({
+      status: STATUS_TO_LABEL[value],
+      value: sumWhere(payments, (p) => LABEL_TO_STATUS[p.status] === value),
+      color: paymentStatusColors[value].text,
+    }))
+    .filter((slice) => slice.value > 0);
 }
 
 export const usePayments = () => {
   const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | null>(null);
+  const [methodFilter, setMethodFilter] = useState<PaymentMethod | null>(null);
 
-  // The full invoice list is already fetched once (needed for stats and the
-  // status donut regardless of any filter), so the status tabs filter it
-  // client-side instead of re-querying the server on every tab click — the
-  // list is complete, there's nothing a second fetch would add.
-  const { data: allInvoices = [], isLoading: isLoadingAll } = useQuery({
-    queryKey: ["enrollments", "all"],
-    queryFn: () => enrollmentsService.fetchAllInvoices(),
-  });
+  const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
 
-  const invoices = useMemo(
-    () =>
-      statusFilter
-        ? allInvoices.filter((e) => e.paymentStatus === statusFilter)
-        : allInvoices,
-    [allInvoices, statusFilter]
+  const filters: PaymentFilters = useMemo(
+    () => ({
+      search: debouncedSearch || undefined,
+      status: statusFilter ?? undefined,
+      method: methodFilter ?? undefined,
+    }),
+    [debouncedSearch, statusFilter, methodFilter],
   );
 
-  // Monthly revenue and the 6-month trend need the payment ledger's dates.
-  const { data: allPayments = [], isLoading: isLoadingPayments } = useQuery({
-    queryKey: ["payments", "all"],
+  // The filtered list the table shows.
+  const { data: payments = [], isLoading } = useQuery({
+    queryKey: ["payments", "all", filters],
+    queryFn: () => paymentsService.fetchAllPayments(filters),
+  });
+
+  // The stat cards and charts describe the whole practice, not the current
+  // filter — otherwise clicking "Pending" would make Collected read $0.
+  const { data: allPayments = [], isLoading: isLoadingAll } = useQuery({
+    queryKey: ["payments", "all", {}],
     queryFn: () => paymentsService.fetchAllPayments(),
   });
 
-  const isLoading = isLoadingAll || isLoadingPayments;
-
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["enrollments"] });
     queryClient.invalidateQueries({ queryKey: ["payments"] });
     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
-    // Lifetime value on the Clients page is derived from this same ledger.
+    // Lifetime value on the Clients page is derived from these same rows.
     queryClient.invalidateQueries({ queryKey: ["clients"] });
   };
 
-  const createPaymentMutation = useMutation({
-    mutationFn: (payload: CreatePaymentPayload) => paymentsService.createPayment(payload),
-    onSuccess: (result: CreatePaymentResult) => {
-      showSuccessToast(result.isNewCycle ? "Started a new payment cycle" : "Payment recorded");
-      if (result.enrollment.status === "completed") {
-        showSuccessToast("Package completed ✅");
-      }
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: UpdatePaymentPayload }) =>
+      paymentsService.updatePayment(id, payload),
+    onSuccess: (updated) => {
+      showSuccessToast(`Payment updated — ${updated.status}`);
       invalidate();
     },
   });
 
-  const createInvoiceMutation = useMutation({
-    mutationFn: ({ clientId, packageId }: { clientId: string; packageId: string }) =>
-      enrollmentsService.createInvoice(clientId, packageId),
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => paymentsService.deletePayment(id),
     onSuccess: () => {
-      showSuccessToast("Invoice created");
-      invalidate();
-    },
-  });
-
-  const setStatusMutation = useMutation({
-    mutationFn: ({ invoiceId, status }: { invoiceId: string; status: PaymentStatus }) =>
-      enrollmentsService.setPaymentStatus(invoiceId, status),
-    onSuccess: (updated, variables) => {
-      // The server re-derives anything other than Overdue, so report what it
-      // actually settled on rather than what was clicked.
-      if (variables.status !== "overdue" && updated.paymentStatus !== variables.status) {
-        showSuccessToast(
-          `Overdue cleared — now ${PAYMENT_STATUS_LABELS[updated.paymentStatus]} (from the amount paid)`
-        );
-      } else {
-        showSuccessToast(`Marked ${PAYMENT_STATUS_LABELS[updated.paymentStatus]}`);
-      }
+      showSuccessToast("Payment deleted");
       invalidate();
     },
   });
 
   return {
-    invoices,
-    isLoading,
+    payments,
+    isLoading: isLoading || isLoadingAll,
+    search,
+    setSearch,
     statusFilter,
     setStatusFilter,
-    stats: computeStats(allInvoices, allPayments),
+    methodFilter,
+    setMethodFilter,
+    stats: computeStats(allPayments),
     revenueTrend: computeRevenueTrend(allPayments),
-    statusDistribution: computeStatusDistribution(allInvoices),
-    createPayment: createPaymentMutation.mutateAsync,
-    createInvoice: (clientId: string, packageId: string) =>
-      createInvoiceMutation.mutateAsync({ clientId, packageId }),
-    setPaymentStatus: (invoiceId: string, status: PaymentStatus) =>
-      setStatusMutation.mutateAsync({ invoiceId, status }),
+    statusDistribution: computeStatusDistribution(allPayments),
+    updatePayment: (id: string, payload: UpdatePaymentPayload) =>
+      updateMutation.mutateAsync({ id, payload }),
+    deletePayment: deleteMutation.mutateAsync,
+    isUpdating: updateMutation.isPending,
   };
 };

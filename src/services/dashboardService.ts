@@ -22,6 +22,11 @@
 
 import { apiClient } from "@/src/lib/apiClient";
 import { STATUS_TO_LABEL, shortLabel } from "@/src/data/leadsData/contactStatus";
+import {
+  PAYMENT_STATUS_VALUES,
+  STATUS_TO_LABEL as PAYMENT_STATUS_TO_LABEL,
+  paymentStatusColors,
+} from "@/src/data/paymentsData/paymentVocabulary";
 import type { StatCardData } from "@/src/sections/dashboardSections/StatCard";
 import type { RevenuePoint } from "@/src/data/dashboardData/revenueTrendData";
 import type { PaymentStatusSlice } from "@/src/data/dashboardData/paymentStatusData";
@@ -50,17 +55,16 @@ const LEAD_FUNNEL_STAGE_LABELS: Record<string, string> = Object.fromEntries(
   ]),
 );
 
-// Backend now sends Enrollment status (active/completed), not a per-payment
-// status — a ledger row has no status of its own, see paymentStatusData.ts.
-// Same four states, labels and colours as the Payments page's donut and its
-// row badges (PaymentStatusSelect) — the two charts read the same backend
-// derivation, so they must not diverge in presentation either.
-const PAYMENT_STATUS_LABELS: Record<string, { label: PaymentStatusSlice["status"]; color: string }> = {
-  paid: { label: "Paid", color: "#16A34A" },
-  partially_paid: { label: "Partially Paid", color: "#F2A618" },
-  pending: { label: "Pending", color: "#376EF4" },
-  overdue: { label: "Overdue", color: "#EF4444" },
-};
+// Derived from the shared payment vocabulary, not a third copy of it. The
+// dashboard donut and the Payments page donut now read the same labels and
+// the same colours by construction.
+const PAYMENT_STATUS_LABELS: Record<string, { label: PaymentStatusSlice["status"]; color: string }> =
+  Object.fromEntries(
+    PAYMENT_STATUS_VALUES.map((value) => [
+      value,
+      { label: PAYMENT_STATUS_TO_LABEL[value], color: paymentStatusColors[value].text },
+    ]),
+  );
 
 const FOLLOW_UP_STATUS_LABELS: Record<string, FollowUpStatus> = {
   pending: "Pending",
