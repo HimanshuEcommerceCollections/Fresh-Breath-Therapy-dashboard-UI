@@ -21,6 +21,7 @@
 //   "Rescheduled") — that old type didn't match section 11's real enum.
 
 import { apiClient } from "@/src/lib/apiClient";
+import { STATUS_TO_LABEL, shortLabel } from "@/src/data/leadsData/contactStatus";
 import type { StatCardData } from "@/src/sections/dashboardSections/StatCard";
 import type { RevenuePoint } from "@/src/data/dashboardData/revenueTrendData";
 import type { PaymentStatusSlice } from "@/src/data/dashboardData/paymentStatusData";
@@ -38,16 +39,16 @@ const GREEN = { iconColor: "#3FC168", iconBgColor: "rgba(63,193,104,0.1)" };
 const ORANGE = { iconColor: "#F2A618", iconBgColor: "rgba(242,166,24,0.1)" };
 const RED = { iconColor: "#F22A36", iconBgColor: "rgba(242,42,54,0.1)" };
 
-const LEAD_FUNNEL_STAGE_LABELS: Record<string, string> = {
-  new_lead: "New Lead",
-  contacted: "Contacted",
-  consultation_scheduled: "Consult Scheduled",
-  consultation_completed: "Consult Completed",
-  therapy_session_booked: "Therapy Session Booked",
-  ongoing_therapy: "Ongoing Therapy",
-  completed_program: "Completed Program",
-  inactive_client: "Inactive Client",
-};
+// Derived from the shared vocabulary rather than restated, and shortened
+// where a full label would not fit a funnel bar. A literal copy here is how
+// the funnel ended up the one screen still saying "Consult Scheduled" after
+// the status was renamed everywhere else.
+const LEAD_FUNNEL_STAGE_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(STATUS_TO_LABEL).map(([value, label]) => [
+    value,
+    shortLabel(label),
+  ]),
+);
 
 // Backend now sends Enrollment status (active/completed), not a per-payment
 // status — a ledger row has no status of its own, see paymentStatusData.ts.

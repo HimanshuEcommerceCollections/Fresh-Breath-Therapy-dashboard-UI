@@ -15,27 +15,12 @@
 
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
 import { fetchAllPages, type Page } from "@/src/lib/pagination";
-import type { ClientStatus } from "@/src/data/clientsData/clientsData";
-
-type ApiClientStatus =
-  | "consultation_completed"
-  | "therapy_session_booked"
-  | "ongoing_therapy"
-  | "completed_program";
-
-const STATUS_TO_LABEL: Record<ApiClientStatus, ClientStatus> = {
-  consultation_completed: "Consultation Completed",
-  therapy_session_booked: "Therapy Session Booked",
-  ongoing_therapy: "Ongoing Therapy",
-  completed_program: "Completed Program",
-};
-
-const LABEL_TO_STATUS: Record<ClientStatus, ApiClientStatus> = {
-  "Consultation Completed": "consultation_completed",
-  "Therapy Session Booked": "therapy_session_booked",
-  "Ongoing Therapy": "ongoing_therapy",
-  "Completed Program": "completed_program",
-};
+import {
+  LABEL_TO_STATUS,
+  STATUS_TO_LABEL,
+  type ApiContactStatus,
+  type ContactStatus,
+} from "@/src/data/leadsData/contactStatus";
 
 export interface Client {
   id: string;
@@ -50,12 +35,12 @@ export interface Client {
   locationId: string;
   sessions: number;
   lifetimeValue: number;
-  status: ClientStatus;
+  status: ContactStatus;
   createdAt: string;
 }
 
 export interface ClientFilters {
-  statusFilter?: ClientStatus;
+  statusFilter?: ContactStatus;
   locationId?: string;
   search?: string;
 }
@@ -67,7 +52,7 @@ export interface CreateClientPayload {
   note?: string | null;
   therapistId: string;
   locationId: string;
-  status?: ClientStatus;
+  status?: ContactStatus;
 }
 
 interface ApiPage<T> {
@@ -81,7 +66,7 @@ interface ApiClient {
   name: string;
   email: string;
   note: string | null;
-  status: ApiClientStatus;
+  status: ApiContactStatus;
   created_at: string;
   location: { id: string; name: string };
   therapist: { id: string; name: string };

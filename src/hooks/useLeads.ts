@@ -7,7 +7,7 @@ import { leadsService, type CreateLeadPayload, type LeadFilters } from "@/src/se
 import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { useDebouncedValue } from "@/src/hooks/useDebouncedValue";
 import { showSuccessToast } from "@/src/lib/toast";
-import type { LeadStatus } from "@/src/data/leadsData/leadsData";
+import type { ContactStatus } from "@/src/data/leadsData/contactStatus";
 import type { LeadsView } from "@/src/sections/leadsSections/ViewToggleTabs";
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -15,7 +15,7 @@ const SEARCH_DEBOUNCE_MS = 350;
 export const useLeads = (activeView: LeadsView = "table") => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<LeadStatus | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ContactStatus | null>(null);
   const [locationId, setLocationId] = useState<string | null>(null);
 
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);

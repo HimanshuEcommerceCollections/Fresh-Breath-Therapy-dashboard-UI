@@ -1,8 +1,8 @@
-import type { ClientStatus } from "@/src/data/clientsData/clientsData";
-import { statusColorData } from "@/src/data/clientsData/statusColorData";
+import type { ContactStatus } from "@/src/data/leadsData/contactStatus";
+import { contactStatusColors } from "@/src/data/leadsData/contactStatusColors";
 
-export default function StatusPill({ status }: { status: ClientStatus }) {
-  const colors = statusColorData[status];
+export default function StatusPill({ status }: { status: ContactStatus }) {
+  const colors = contactStatusColors[status];
 
   return (
     <span

@@ -2,7 +2,7 @@
 
 import type { Lead } from "@/src/services/leadsService";
 import { LEADS_TABLE_GRID } from "@/src/sections/leadsSections/leadsTableGrid";
-import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
+import { contactStatusOptions } from "@/src/data/leadsData/contactStatus";
 import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { canWrite } from "@/src/lib/permissions";
@@ -58,7 +58,7 @@ export default function LeadsTableRow({
       <div className="px-2 py-2.5">
         <StatusCombobox
           status={lead.status}
-          options={leadStatusOptions}
+          options={contactStatusOptions}
           readOnly={!canWrite(role)}
         />
       </div>

@@ -9,39 +9,12 @@
 
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
 import { fetchAllPages, type Page } from "@/src/lib/pagination";
-import type { LeadStatus } from "@/src/data/leadsData/leadsData";
-
-type ApiLeadStatus =
-  | "new_lead"
-  | "contacted"
-  | "consultation_scheduled"
-  | "consultation_completed"
-  | "therapy_session_booked"
-  | "ongoing_therapy"
-  | "completed_program"
-  | "inactive_client";
-
-const STATUS_TO_LABEL: Record<ApiLeadStatus, LeadStatus> = {
-  new_lead: "New Lead",
-  contacted: "Contacted",
-  consultation_scheduled: "Consultation Scheduled",
-  consultation_completed: "Consultation Completed",
-  therapy_session_booked: "Therapy Session Booked",
-  ongoing_therapy: "Ongoing Therapy",
-  completed_program: "Completed Program",
-  inactive_client: "Inactive Client",
-};
-
-const LABEL_TO_STATUS: Record<LeadStatus, ApiLeadStatus> = {
-  "New Lead": "new_lead",
-  Contacted: "contacted",
-  "Consultation Scheduled": "consultation_scheduled",
-  "Consultation Completed": "consultation_completed",
-  "Therapy Session Booked": "therapy_session_booked",
-  "Ongoing Therapy": "ongoing_therapy",
-  "Completed Program": "completed_program",
-  "Inactive Client": "inactive_client",
-};
+import {
+  LABEL_TO_STATUS,
+  STATUS_TO_LABEL,
+  type ApiContactStatus,
+  type ContactStatus,
+} from "@/src/data/leadsData/contactStatus";
 
 // MISMATCH (flagged, not guessed): section 7 shows the lead list item's
 // therapist field only as `"therapist": {...} | null` — the sub-object's
@@ -62,7 +35,7 @@ export interface Lead {
   /** The admin's own short note about this person. Shown on hover over their
    *  name in the leads table and pipeline cards. Empty string when unset. */
   note: string;
-  status: LeadStatus;
+  status: ContactStatus;
   convertedClientId: string | null;
   // Captured by the public website form and delivered via the lead webhook
   // (POST /api/webhooks/leads). Empty for leads added by hand.
@@ -81,7 +54,7 @@ export interface Lead {
 }
 
 export interface LeadFilters {
-  statusFilter?: LeadStatus;
+  statusFilter?: ContactStatus;
   locationId?: string;
   search?: string;
 }
@@ -98,7 +71,7 @@ export interface CreateLeadPayload {
   /** `null` clears the note. Omitting the key leaves it untouched on a PATCH,
    *  so an empty box must send null rather than undefined. */
   note?: string | null;
-  status?: LeadStatus;
+  status?: ContactStatus;
 }
 
 interface ApiPage<T> {
@@ -116,7 +89,7 @@ interface ApiLead {
   phone: string;
   source: string | null;
   note: string | null;
-  status: ApiLeadStatus;
+  status: ApiContactStatus;
   converted_client_id: string | null;
   message: string | null;
   preferred_datetime: string | null;

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
-import type { LeadStatus } from "@/src/data/leadsData/leadsData";
+import type { ContactStatus } from "@/src/data/leadsData/contactStatus";
 import type { CreateLeadPayload, Lead } from "@/src/services/leadsService";
-import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
+import { contactStatusOptions } from "@/src/data/leadsData/contactStatus";
 import { referralSourceOptions } from "@/src/data/leadsData/referralSourceOptions";
 import FormField from "@/src/sections/leadsSections/FormField";
 import FormSelect from "@/src/sections/leadsSections/FormSelect";
@@ -62,7 +62,7 @@ export default function AddLeadModal({
   const [source, setSource] = useState(lead?.source ?? "");
   const [therapistId, setTherapistId] = useState(lead?.therapistId ?? "");
   const [note, setNote] = useState(lead?.note ?? "");
-  const [status, setStatus] = useState<LeadStatus>(lead?.status ?? "New Lead");
+  const [status, setStatus] = useState<ContactStatus>(lead?.status ?? "New Lead");
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -270,9 +270,9 @@ export default function AddLeadModal({
                 </button>
                 {statusMenuOpen && (
                   <StatusDropdownMenu
-                    options={leadStatusOptions}
+                    options={contactStatusOptions}
                     selected={status}
-                    onSelect={(value) => setStatus(value as LeadStatus)}
+                    onSelect={(value) => setStatus(value as ContactStatus)}
                     onClose={() => setStatusMenuOpen(false)}
                   />
                 )}

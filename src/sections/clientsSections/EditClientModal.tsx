@@ -7,16 +7,16 @@ import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu"
 import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
 import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
 import NoteField from "@/src/components/sharedComponents/NoteField";
-import type { ClientStatus } from "@/src/data/clientsData/clientsData";
+import {
+  contactStatusOptions,
+  type ContactStatus,
+} from "@/src/data/leadsData/contactStatus";
 import type { Client, CreateClientPayload } from "@/src/services/clientsService";
 import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, emailError, nameError } from "@/src/lib/validation";
 
-const CLIENT_STATUS_OPTIONS: ClientStatus[] = [
-  "Consultation Completed",
-  "Therapy Session Booked",
-  "Ongoing Therapy",
-  "Completed Program",
-];
+// Clients share the leads' vocabulary, so there is no separate client list
+// to keep in step - a client can sit at any status, including the early ones
+// (someone re-enquiring after being closed).
 
 export default function EditClientModal({
   client,
@@ -32,7 +32,7 @@ export default function EditClientModal({
   const [locationId, setLocationId] = useState(client.locationId);
   const [therapistId, setTherapistId] = useState(client.therapistId);
   const [note, setNote] = useState(client.note ?? "");
-  const [status, setStatus] = useState<ClientStatus>(client.status);
+  const [status, setStatus] = useState<ContactStatus>(client.status);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -125,9 +125,9 @@ export default function EditClientModal({
               </button>
               {statusMenuOpen && (
                 <StatusDropdownMenu
-                  options={CLIENT_STATUS_OPTIONS}
+                  options={contactStatusOptions}
                   selected={status}
-                  onSelect={(value) => setStatus(value as ClientStatus)}
+                  onSelect={(value) => setStatus(value as ContactStatus)}
                   onClose={() => setStatusMenuOpen(false)}
                 />
               )}
