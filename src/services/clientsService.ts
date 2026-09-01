@@ -61,7 +61,7 @@ interface ApiPage<T> {
   has_more: boolean;
 }
 
-interface ApiClient {
+export interface ApiClient {
   id: string;
   name: string;
   email: string;
@@ -74,7 +74,9 @@ interface ApiClient {
   sessions_count: number;
 }
 
-function toClient(raw: ApiClient): Client {
+// Exported so leadsService can map the client that POST /api/leads returns
+// alongside the lead. One mapper, so the two entry points cannot disagree.
+export function toClient(raw: ApiClient): Client {
   return {
     id: raw.id,
     name: raw.name,

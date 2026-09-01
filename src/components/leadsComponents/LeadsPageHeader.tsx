@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { Lead, CreateLeadPayload } from "@/src/services/leadsService";
+import type { Lead, CreateLeadPayload, LeadCreateResult } from "@/src/services/leadsService";
 import AddLeadModal from "@/src/sections/leadsSections/AddLeadModal";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { canWrite } from "@/src/lib/permissions";
@@ -11,7 +11,7 @@ export default function LeadsPageHeader({
   onCreate,
 }: {
   leads: Lead[];
-  onCreate: (payload: CreateLeadPayload) => Promise<Lead>;
+  onCreate: (payload: CreateLeadPayload) => Promise<LeadCreateResult>;
 }) {
   const { role } = useCurrentUser();
   const [isModalOpen, setIsModalOpen] = useState(false);

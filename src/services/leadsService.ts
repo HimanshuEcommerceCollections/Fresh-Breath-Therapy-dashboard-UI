@@ -9,6 +9,7 @@
 
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
 import { fetchAllPages, type Page } from "@/src/lib/pagination";
+import { toClient, type ApiClient, type Client } from "@/src/services/clientsService";
 import {
   LABEL_TO_STATUS,
   STATUS_TO_LABEL,
@@ -68,10 +69,26 @@ export interface CreateLeadPayload {
   locationId: string;
   therapistId?: string;
   source?: string;
+  /** "Add as client too". The API writes both records in one transaction, so
+   *  either both exist or neither does. Requires therapistId — a client
+   *  cannot be saved without one. */
+  createAsClient?: boolean;
   /** `null` clears the note. Omitting the key leaves it untouched on a PATCH,
    *  so an empty box must send null rather than undefined. */
   note?: string | null;
   status?: ContactStatus;
+}
+
+/** POST /api/leads always returns this shape; `client` is null unless
+ *  createAsClient was set. */
+export interface LeadCreateResult {
+  lead: Lead;
+  client: Client | null;
+}
+
+interface ApiLeadCreateResult {
+  lead: ApiLead;
+  client: ApiClient | null;
 }
 
 interface ApiPage<T> {
@@ -155,8 +172,8 @@ export const leadsService = {
     return fetchAllPages((cursor) => leadsService.fetchLeads(filters, cursor, 100));
   },
 
-  async createLead(payload: CreateLeadPayload): Promise<Lead> {
-    const res = await apiClient.post<ApiLead>(
+  async createLead(payload: CreateLeadPayload): Promise<LeadCreateResult> {
+    const res = await apiClient.post<ApiLeadCreateResult>(
       "/api/leads",
       {
         name: payload.name,
@@ -169,10 +186,14 @@ export const leadsService = {
         source: payload.source,
         note: payload.note,
         status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,
+        create_as_client: payload.createAsClient || undefined,
       },
       { idempotent: true, idempotencyKey: newIdempotencyKey() }
     );
-    return toLead(res.data);
+    return {
+      lead: toLead(res.data.lead),
+      client: res.data.client ? toClient(res.data.client) : null,
+    };
   },
 
   async updateLead(leadId: string, payload: Partial<CreateLeadPayload>): Promise<Lead> {

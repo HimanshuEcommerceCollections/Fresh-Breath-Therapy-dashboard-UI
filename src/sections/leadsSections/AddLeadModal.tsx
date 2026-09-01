@@ -3,7 +3,7 @@
 import { useState } from "react";
 import ModalOverlay from "@/src/sections/leadsSections/ModalOverlay";
 import type { ContactStatus } from "@/src/data/leadsData/contactStatus";
-import type { CreateLeadPayload, Lead } from "@/src/services/leadsService";
+import type { CreateLeadPayload, Lead, LeadCreateResult } from "@/src/services/leadsService";
 import { contactStatusOptions } from "@/src/data/leadsData/contactStatus";
 import { referralSourceOptions } from "@/src/data/leadsData/referralSourceOptions";
 import FormField from "@/src/sections/leadsSections/FormField";
@@ -11,6 +11,9 @@ import FormSelect from "@/src/sections/leadsSections/FormSelect";
 import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
 import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
 import NoteField from "@/src/components/sharedComponents/NoteField";
+import ScheduleSessionModal from "@/src/components/sessionsComponents/ScheduleSessionModal";
+import { useScheduleSession } from "@/src/hooks/useScheduleSession";
+import type { SubjectValue } from "@/src/components/sharedComponents/SubjectSelect";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, emailError, nameError } from "@/src/lib/validation";
 
@@ -45,7 +48,7 @@ export default function AddLeadModal({
   onUpdate,
 }: {
   onClose: () => void;
-  onCreate: (payload: CreateLeadPayload) => Promise<Lead>;
+  onCreate: (payload: CreateLeadPayload) => Promise<LeadCreateResult>;
   /** When provided, the modal opens in edit mode: prefilled from this lead,
    * "Edit Lead" heading, and submits via `onUpdate` instead of `onCreate`. */
   lead?: Lead | null;
@@ -64,15 +67,27 @@ export default function AddLeadModal({
   const [note, setNote] = useState(lead?.note ?? "");
   const [status, setStatus] = useState<ContactStatus>(lead?.status ?? "New Lead");
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [createAsClient, setCreateAsClient] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Set once the record(s) exist. The modal then shows the confirmation step
+  // instead of the form, offering to schedule a session for whoever was just
+  // created — which is the next thing an admin does in practice.
+  const [created, setCreated] = useState<LeadCreateResult | null>(null);
+  const [isSchedulerOpen, setSchedulerOpen] = useState(false);
+  const { scheduleSession } = useScheduleSession();
 
   const isPhoneValid = PHONE_PATTERN.test(phone.trim());
   const isAgeValid = age.trim().length === 0 || (Number(age) >= 0 && Number(age) <= MAX_AGE);
   const nameErr = nameError(fullName);
   const emailErr = emailError(email);
+  // A client cannot be saved without a therapist (Client.therapist_id is NOT
+  // NULL), and the API rejects the combination outright — so the form asks for
+  // one the moment the box is ticked rather than letting it 422.
+  const needsTherapist = createAsClient && !therapistId;
   const isFormValid =
     Boolean(fullName.trim()) && Boolean(locationId) && isPhoneValid && isAgeValid
-    && !nameErr && !emailErr;
+    && !nameErr && !emailErr && !needsTherapist;
 
   async function handleAddLead() {
     if (!isFormValid) return;
@@ -93,19 +108,93 @@ export default function AddLeadModal({
       // place when the admin has just emptied the box.
       note: note.trim() || null,
       status,
+      createAsClient: createAsClient || undefined,
     };
 
     setIsSubmitting(true);
     try {
       if (isEditMode && onUpdate) {
         await onUpdate(lead.id, payload);
+        onClose();
       } else {
-        await onCreate(payload);
+        // Stay open on create: the confirmation step below offers to schedule
+        // a session for the person who was just added.
+        setCreated(await onCreate(payload));
       }
-      onClose();
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  // ── confirmation step ───────────────────────────────────────────────────
+  // Shown after a successful create, in place of the form. The person is
+  // already saved at this point, so closing loses nothing — this is an offer,
+  // not a required next step.
+  if (created) {
+    const asClient = created.client !== null;
+    // SubjectValue is only {id, kind} — the picker resolves names itself — so
+    // the display name is held alongside it rather than crammed in.
+    const subject: SubjectValue = asClient
+      ? { id: created.client!.id, kind: "client" }
+      : { id: created.lead.id, kind: "lead" };
+    const subjectName = asClient ? created.client!.name : created.lead.name;
+
+    return (
+      <>
+        <ModalOverlay onClose={onClose}>
+          <div className="flex w-full max-w-md flex-col items-center gap-5 rounded-2xl border border-[#C3C6D7] bg-white p-8 text-center shadow-[0px_25px_50px_-12px_rgba(0,0,0,0.25)]">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#DCFCE7]">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+                <path d="M5 13L9 17L19 7" stroke="#15803D" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+
+            <div className="flex flex-col gap-1.5">
+              <h2 className="text-[20px] font-bold leading-7 text-[#0F172A]">
+                {subjectName} has been added as a{asClient ? " client" : " lead"}
+              </h2>
+              <p className="text-sm leading-5 text-[#596475]">
+                {asClient
+                  ? "Saved as both a lead and a client. Schedule their first session now, or do it later from the Sessions page."
+                  : "Schedule a session for them now, or do it later from the Sessions page."}
+              </p>
+            </div>
+
+            <div className="flex w-full flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => setSchedulerOpen(true)}
+                className="h-11 w-full cursor-pointer rounded-lg bg-[#325A5E] text-xs font-semibold tracking-[0.6px] text-white shadow-[0px_1px_2px_rgba(0,0,0,0.05)] transition-opacity hover:opacity-90"
+              >
+                Schedule a session
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="h-11 w-full cursor-pointer rounded-lg text-xs font-semibold tracking-[0.6px] text-[#434655] transition-colors hover:bg-black/4"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </ModalOverlay>
+
+        {/* Pre-selected AND locked: this modal exists to book a session for
+            the person just added, so letting the picker change to someone
+            else would silently do something the admin did not ask for. */}
+        <ScheduleSessionModal
+          open={isSchedulerOpen}
+          onClose={onClose}
+          onSchedule={scheduleSession}
+          initialSubject={subject}
+          lockSubject
+          // Passed explicitly: the person was created a moment ago, so the
+          // picker's cached list may not contain them yet and the locked
+          // field would render blank until it refetched.
+          lockedSubjectName={subjectName}
+        />
+      </>
+    );
   }
 
   return (
@@ -279,6 +368,34 @@ export default function AddLeadModal({
               </div>
             </div>
           </div>
+          {/* Create mode only. An existing lead is promoted from the Clients
+              page's lead search, which is a different flow with its own
+              confirmation. */}
+          {!isEditMode && (
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#C3C6D7] bg-[#F8F9FF] p-4">
+              <input
+                type="checkbox"
+                checked={createAsClient}
+                onChange={(e) => setCreateAsClient(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[#325A5E]"
+              />
+              <span className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium leading-5 text-[#0B1C30]">
+                  Also add as a client
+                </span>
+                <span className="text-xs leading-4 text-[#6B7280]">
+                  Creates both records together. If either fails, neither is
+                  saved. Requires a therapist.
+                </span>
+                {needsTherapist && (
+                  <span className="mt-1 text-xs text-red-500">
+                    Select a therapist above to add this person as a client.
+                  </span>
+                )}
+              </span>
+            </label>
+          )}
+
           <NoteField value={note} onChange={setNote} />
         </div>
 
@@ -302,7 +419,9 @@ export default function AddLeadModal({
                 : "Adding…"
               : isEditMode
                 ? "Save Changes"
-                : "Add Lead"}
+                : createAsClient
+                  ? "Add Lead & Client"
+                  : "Add Lead"}
           </button>
         </div>
       </div>
