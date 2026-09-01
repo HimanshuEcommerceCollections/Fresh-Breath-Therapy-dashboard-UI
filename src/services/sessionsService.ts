@@ -18,6 +18,11 @@
 import type { SessionStatus } from "@/src/data/sessionsData/sessionsData";
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
 import type { Page } from "@/src/lib/pagination";
+import {
+  LABEL_TO_METHOD,
+  LABEL_TO_STATUS as PAYMENT_LABEL_TO_STATUS,
+} from "@/src/data/paymentsData/paymentVocabulary";
+import type { PaymentDetails } from "@/src/services/paymentsService";
 
 type ApiSessionStatus = "scheduled" | "completed" | "cancelled" | "no_show" | "rescheduled";
 type ApiSessionType =
@@ -100,6 +105,10 @@ export interface ScheduleSessionPayload {
   time: string; // 24h "HH:MM"
   type: string; // Title Case, from sessionTypeOptions
   status?: SessionStatus;
+  /** REQUIRED. Scheduling and recording what the session costs are one
+   *  action, written in one backend transaction — a failed payment means no
+   *  session. An unbilled session is `status: Pending`, not a missing block. */
+  payment: PaymentDetails;
 }
 
 export interface UpdateSessionPayload {
@@ -179,6 +188,11 @@ export const sessionsService = {
         time: payload.time,
         type: LABEL_TO_TYPE[payload.type],
         status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,
+        payment: {
+          amount: payload.payment.amount,
+          method: LABEL_TO_METHOD[payload.payment.method],
+          status: PAYMENT_LABEL_TO_STATUS[payload.payment.status],
+        },
       },
       { idempotent: true, idempotencyKey: newIdempotencyKey() }
     );

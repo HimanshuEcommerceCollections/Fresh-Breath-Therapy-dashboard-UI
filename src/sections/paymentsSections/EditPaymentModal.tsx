@@ -57,7 +57,9 @@ export default function EditPaymentModal({
         <div className="flex items-center justify-between border-b border-[#C3C6D7] px-6 py-4">
           <div className="flex flex-col">
             <h2 className="text-[22px] font-bold text-[#0F172A]">Edit Payment</h2>
-            <span className="text-sm text-[#596475]">{payment.client}</span>
+            <span className="text-sm text-[#596475]">
+              {payment.subject.name} · {payment.session.type} on {payment.session.date}
+            </span>
           </div>
           <button
             type="button"

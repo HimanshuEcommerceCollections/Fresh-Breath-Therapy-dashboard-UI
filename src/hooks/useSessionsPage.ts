@@ -229,7 +229,16 @@ export function useSessionsPage() {
   const sessions = isListView ? listSessions : calendarSessionsPage?.items ?? [];
   const isLoadingSessions = isListView ? isLoadingListSessions : isLoadingCalendarSessions;
 
-  const invalidateSessions = () => queryClient.invalidateQueries({ queryKey: ["sessions"] });
+  const invalidateSessions = () => {
+    queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    // Scheduling writes a PAYMENT too, in the same transaction. Without this
+    // the Payments page and the dashboard's revenue figures keep serving a
+    // cache that predates the money.
+    queryClient.invalidateQueries({ queryKey: ["payments"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    // Session counts and lifetime value on the Clients page derive from both.
+    queryClient.invalidateQueries({ queryKey: ["clients"] });
+  };
 
   const scheduleSessionMutation = useMutation({
     mutationFn: (payload: ScheduleSessionPayload) => sessionsService.scheduleSession(payload),

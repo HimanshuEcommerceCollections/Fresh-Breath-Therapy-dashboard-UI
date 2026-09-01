@@ -25,8 +25,17 @@ export default function PaymentsTableRow({
     <div
       className={`${PAYMENTS_TABLE_GRID} min-h-[52px] border-b border-[#E0E5EB] px-4 last:border-b-0`}
     >
-      <div className="truncate px-2 py-3 text-sm font-medium leading-5 text-[#071123]">
-        {payment.client}
+      {/* The lead badge matters here: an admin scanning payments needs to
+          know which of these people is not a client yet. */}
+      <div className="flex min-w-0 items-center gap-2 px-2 py-3">
+        <span className="truncate text-sm font-medium leading-5 text-[#071123]">
+          {payment.subject.name}
+        </span>
+        {payment.subject.kind === "lead" && (
+          <span className="shrink-0 rounded-full bg-[#E8EDF4] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.4px] text-[#596475]">
+            Lead
+          </span>
+        )}
       </div>
       <div className="px-2 py-3 text-sm font-normal leading-5 text-[#071123]">
         {money(payment.amount)}
@@ -58,7 +67,7 @@ export default function PaymentsTableRow({
         {canEdit && (
           <button
             type="button"
-            aria-label={`Edit payment for ${payment.client}`}
+            aria-label={`Edit payment for ${payment.subject.name}`}
             onClick={() => onEdit(payment)}
             className="flex h-9 w-9 items-center justify-center rounded-xl text-[#071123] transition-colors hover:bg-black/4"
           >

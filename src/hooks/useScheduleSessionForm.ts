@@ -10,6 +10,11 @@
 import { useMemo, useState } from "react";
 import type { ScheduleSessionPayload } from "@/src/services/sessionsService";
 import type { SubjectValue } from "@/src/components/sharedComponents/SubjectSelect";
+import {
+  paymentMethodOptions,
+  type PaymentMethod,
+  type PaymentStatus,
+} from "@/src/data/paymentsData/paymentVocabulary";
 
 export const useScheduleSessionForm = (
   onSchedule: (payload: ScheduleSessionPayload) => Promise<void>,
@@ -25,7 +30,22 @@ export const useScheduleSessionForm = (
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [type, setType] = useState("");
+
+  // ── the session's payment ───────────────────────────────────────────────
+  // Not optional. The backend writes both rows in one transaction, so there
+  // is no such thing as a session without one. An unbilled session is
+  // Pending, which is the default here.
+  const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState<PaymentMethod>(paymentMethodOptions[0]);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("Pending");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Mirrors the API's gt=0. A zero-amount Pending row would sit in the
+  // outstanding figure forever contributing nothing.
+  const numericAmount = Number(amount);
+  const isAmountValid =
+    amount.trim() !== "" && Number.isFinite(numericAmount) && numericAmount > 0;
 
   const isValid = useMemo(
     () =>
@@ -33,8 +53,9 @@ export const useScheduleSessionForm = (
       therapistId.trim().length > 0 &&
       date.trim().length > 0 &&
       time.trim().length > 0 &&
-      type.trim().length > 0,
-    [subject, therapistId, date, time, type],
+      type.trim().length > 0 &&
+      isAmountValid,
+    [subject, therapistId, date, time, type, isAmountValid],
   );
 
   const handleSubmit = async () => {
@@ -49,6 +70,7 @@ export const useScheduleSessionForm = (
         date,
         time,
         type,
+        payment: { amount: numericAmount, method, status: paymentStatus },
       });
       onSuccess();
     } finally {
@@ -62,6 +84,9 @@ export const useScheduleSessionForm = (
     setDate("");
     setTime("");
     setType("");
+    setAmount("");
+    setMethod(paymentMethodOptions[0]);
+    setPaymentStatus("Pending");
   };
 
   return {
@@ -75,6 +100,13 @@ export const useScheduleSessionForm = (
     setTime,
     type,
     setType,
+    amount,
+    setAmount,
+    isAmountValid,
+    method,
+    setMethod,
+    paymentStatus,
+    setPaymentStatus,
     isValid,
     isSubmitting,
     handleSubmit,
