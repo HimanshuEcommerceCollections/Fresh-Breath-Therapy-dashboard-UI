@@ -7,7 +7,7 @@ import { leadsService, type CreateLeadPayload, type LeadFilters } from "@/src/se
 import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { useDebouncedValue } from "@/src/hooks/useDebouncedValue";
 import { showSuccessToast } from "@/src/lib/toast";
-import type { LeadStatus } from "@/src/data/leadsData/leadsData";
+import type { ContactStatus } from "@/src/data/leadsData/contactStatus";
 import type { LeadsView } from "@/src/sections/leadsSections/ViewToggleTabs";
 
 const SEARCH_DEBOUNCE_MS = 350;
@@ -15,7 +15,7 @@ const SEARCH_DEBOUNCE_MS = 350;
 export const useLeads = (activeView: LeadsView = "table") => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<LeadStatus | null>(null);
+  const [statusFilter, setStatusFilter] = useState<ContactStatus | null>(null);
   const [locationId, setLocationId] = useState<string | null>(null);
 
   const debouncedSearch = useDebouncedValue(search, SEARCH_DEBOUNCE_MS);
@@ -51,11 +51,19 @@ export const useLeads = (activeView: LeadsView = "table") => {
 
   const createLeadMutation = useMutation({
     mutationFn: (payload: CreateLeadPayload) => leadsService.createLead(payload),
-    onSuccess: () => {
-      showSuccessToast("Lead created");
+    onSuccess: (result) => {
+      showSuccessToast(
+        result.client ? "Lead and client created" : "Lead created",
+      );
       // A new lead also changes Dashboard's total-leads stat card.
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      // "Add as client" writes a client in the same transaction, so the
+      // Clients page and every client picker are stale without this — the
+      // Schedule Session modal that opens next reads exactly that cache.
+      if (result.client) {
+        queryClient.invalidateQueries({ queryKey: ["clients"] });
+      }
     },
   });
 

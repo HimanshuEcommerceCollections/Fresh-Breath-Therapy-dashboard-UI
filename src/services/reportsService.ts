@@ -10,6 +10,7 @@
 // ReportsToolbar.tsx) rather than sending an unsupported value.
 
 import { apiClient } from "@/src/lib/apiClient";
+import { STATUS_TO_LABEL } from "@/src/data/leadsData/contactStatus";
 
 export type ReportRange = "last_30_days" | "last_3_months" | "last_6_months" | "last_12_months";
 
@@ -18,16 +19,9 @@ export interface ReportFilters {
   locationId?: string;
 }
 
-const LEAD_STATUS_LABELS: Record<string, string> = {
-  new_lead: "New Lead",
-  contacted: "Contacted",
-  consultation_scheduled: "Consultation Scheduled",
-  consultation_completed: "Consultation Completed",
-  therapy_session_booked: "Therapy Session Booked",
-  ongoing_therapy: "Ongoing Therapy",
-  completed_program: "Completed Program",
-  inactive_client: "Inactive Client",
-};
+// The shared vocabulary, not a copy of it. Reports show full labels (there is
+// room here, unlike the dashboard funnel bars).
+const LEAD_STATUS_LABELS: Record<string, string> = STATUS_TO_LABEL;
 
 export interface SalesReportPoint {
   month: string;

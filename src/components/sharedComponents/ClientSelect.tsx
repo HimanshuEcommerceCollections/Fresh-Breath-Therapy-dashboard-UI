@@ -3,8 +3,8 @@
 // src/components/sharedComponents/ClientSelect.tsx
 //
 // Reusable searchable client combobox — type to filter, click to select.
-// Used in: ScheduleSessionModal, AddFollowUpModal, RecordPaymentModal.
-// All three modals share this single implementation; the optional
+// Used in: ScheduleSessionModal, AddFollowUpModal.
+// Both modals share this single implementation; the optional
 // labelClassName / shellClassName props let each modal apply its own
 // palette without forking the component.
 //

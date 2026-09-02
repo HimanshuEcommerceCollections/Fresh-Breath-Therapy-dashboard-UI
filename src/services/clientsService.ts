@@ -15,44 +15,32 @@
 
 import { apiClient, newIdempotencyKey } from "@/src/lib/apiClient";
 import { fetchAllPages, type Page } from "@/src/lib/pagination";
-import type { ClientStatus } from "@/src/data/clientsData/clientsData";
-
-type ApiClientStatus =
-  | "consultation_completed"
-  | "therapy_session_booked"
-  | "ongoing_therapy"
-  | "completed_program";
-
-const STATUS_TO_LABEL: Record<ApiClientStatus, ClientStatus> = {
-  consultation_completed: "Consultation Completed",
-  therapy_session_booked: "Therapy Session Booked",
-  ongoing_therapy: "Ongoing Therapy",
-  completed_program: "Completed Program",
-};
-
-const LABEL_TO_STATUS: Record<ClientStatus, ApiClientStatus> = {
-  "Consultation Completed": "consultation_completed",
-  "Therapy Session Booked": "therapy_session_booked",
-  "Ongoing Therapy": "ongoing_therapy",
-  "Completed Program": "completed_program",
-};
+import {
+  LABEL_TO_STATUS,
+  STATUS_TO_LABEL,
+  type ApiContactStatus,
+  type ContactStatus,
+} from "@/src/data/leadsData/contactStatus";
 
 export interface Client {
   id: string;
   name: string;
   email: string;
+  /** The admin's own short note. Copied from the lead on conversion. Shown
+   *  on hover over the name in the clients table. Empty string when unset. */
+  note: string;
   therapist: string;
   therapistId: string;
   location: string;
   locationId: string;
   sessions: number;
   lifetimeValue: number;
-  status: ClientStatus;
+  status: ContactStatus;
   createdAt: string;
 }
 
 export interface ClientFilters {
-  statusFilter?: ClientStatus;
+  statusFilter?: ContactStatus;
   locationId?: string;
   search?: string;
 }
@@ -60,9 +48,11 @@ export interface ClientFilters {
 export interface CreateClientPayload {
   name: string;
   email: string;
+  /** `null` clears the note. Omitting the key leaves it untouched on a PATCH. */
+  note?: string | null;
   therapistId: string;
   locationId: string;
-  status?: ClientStatus;
+  status?: ContactStatus;
 }
 
 interface ApiPage<T> {
@@ -71,11 +61,12 @@ interface ApiPage<T> {
   has_more: boolean;
 }
 
-interface ApiClient {
+export interface ApiClient {
   id: string;
   name: string;
   email: string;
-  status: ApiClientStatus;
+  note: string | null;
+  status: ApiContactStatus;
   created_at: string;
   location: { id: string; name: string };
   therapist: { id: string; name: string };
@@ -83,11 +74,14 @@ interface ApiClient {
   sessions_count: number;
 }
 
-function toClient(raw: ApiClient): Client {
+// Exported so leadsService can map the client that POST /api/leads returns
+// alongside the lead. One mapper, so the two entry points cannot disagree.
+export function toClient(raw: ApiClient): Client {
   return {
     id: raw.id,
     name: raw.name,
     email: raw.email,
+    note: raw.note ?? "",
     therapist: raw.therapist.name,
     therapistId: raw.therapist.id,
     location: raw.location.name,
@@ -130,6 +124,7 @@ export const clientsService = {
       {
         name: payload.name,
         email: payload.email,
+        note: payload.note,
         therapist_id: payload.therapistId,
         location_id: payload.locationId,
         status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,
@@ -152,6 +147,7 @@ export const clientsService = {
     const res = await apiClient.patch<ApiClient>(`/api/clients/${clientId}`, {
       name: payload.name,
       email: payload.email,
+      note: payload.note,
       therapist_id: payload.therapistId,
       location_id: payload.locationId,
       status: payload.status ? LABEL_TO_STATUS[payload.status] : undefined,

@@ -1,8 +1,11 @@
-import type { ContactStatus } from "@/src/data/leadsData/contactStatus";
-import { contactStatusColors } from "@/src/data/leadsData/contactStatusColors";
+import {
+  LABEL_TO_STATUS,
+  paymentStatusColors,
+  type PaymentStatus,
+} from "@/src/data/paymentsData/paymentVocabulary";
 
-export default function StatusPill({ status }: { status: ContactStatus }) {
-  const colors = contactStatusColors[status];
+export default function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
+  const colors = paymentStatusColors[LABEL_TO_STATUS[status]];
 
   return (
     <span

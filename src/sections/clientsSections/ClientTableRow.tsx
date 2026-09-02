@@ -5,6 +5,7 @@ import { CLIENTS_TABLE_GRID } from "@/src/sections/clientsSections/clientsTableG
 import StatusPill from "@/src/sections/clientsSections/StatusPill";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { canWrite } from "@/src/lib/permissions";
+import HoverNote from "@/src/components/sharedComponents/HoverNote";
 
 export default function ClientTableRow({
   client,
@@ -22,9 +23,11 @@ export default function ClientTableRow({
       className={`${CLIENTS_TABLE_GRID} min-h-13.5 border-b border-[#E0E5EB] px-4 last:border-b-0`}
     >
       <div className="flex flex-col px-2 py-2">
-        <span className="truncate text-sm font-medium leading-5 tracking-[-0.154px] text-[#071123]">
-          {client.name}
-        </span>
+        <HoverNote note={client.note}>
+          <span className="truncate text-sm font-medium leading-5 tracking-[-0.154px] text-[#071123]">
+            {client.name}
+          </span>
+        </HoverNote>
         <span className="truncate text-xs font-normal leading-4 text-[#596475]">
           {client.email}
         </span>

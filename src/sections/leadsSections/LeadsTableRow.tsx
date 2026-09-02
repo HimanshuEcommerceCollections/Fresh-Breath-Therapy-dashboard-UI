@@ -2,10 +2,11 @@
 
 import type { Lead } from "@/src/services/leadsService";
 import { LEADS_TABLE_GRID } from "@/src/sections/leadsSections/leadsTableGrid";
-import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
+import { contactStatusOptions } from "@/src/data/leadsData/contactStatus";
 import StatusCombobox from "@/src/sections/leadsSections/StatusCombobox";
 import { useCurrentUser } from "@/src/hooks/useCurrentUser";
 import { canWrite } from "@/src/lib/permissions";
+import HoverNote from "@/src/components/sharedComponents/HoverNote";
 
 export default function LeadsTableRow({
   lead,
@@ -23,9 +24,11 @@ export default function LeadsTableRow({
       className={`${LEADS_TABLE_GRID} border-b border-[#E0E5EB] px-4 last:border-b-0`}
     >
       <div className="flex flex-col px-2 py-2.5">
-        <span className="truncate text-sm font-medium text-[#071123]">
-          {lead.name}
-        </span>
+        <HoverNote note={lead.note}>
+          <span className="truncate text-sm font-medium text-[#071123]">
+            {lead.name}
+          </span>
+        </HoverNote>
         <span className="truncate text-xs font-normal text-[#596475]">
           {lead.age} · {lead.genderOrPronoun}
         </span>
@@ -55,7 +58,7 @@ export default function LeadsTableRow({
       <div className="px-2 py-2.5">
         <StatusCombobox
           status={lead.status}
-          options={leadStatusOptions}
+          options={contactStatusOptions}
           readOnly={!canWrite(role)}
         />
       </div>

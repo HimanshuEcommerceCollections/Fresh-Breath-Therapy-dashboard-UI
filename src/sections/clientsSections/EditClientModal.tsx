@@ -6,16 +6,17 @@ import FormField from "@/src/sections/leadsSections/FormField";
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 import LocationSelect from "@/src/components/sharedComponents/LocationSelect";
 import TherapistSelect from "@/src/components/sharedComponents/TherapistSelect";
-import type { ClientStatus } from "@/src/data/clientsData/clientsData";
+import NoteField from "@/src/components/sharedComponents/NoteField";
+import {
+  contactStatusOptions,
+  type ContactStatus,
+} from "@/src/data/leadsData/contactStatus";
 import type { Client, CreateClientPayload } from "@/src/services/clientsService";
 import { MAX_EMAIL_LENGTH, MAX_NAME_LENGTH, emailError, nameError } from "@/src/lib/validation";
 
-const CLIENT_STATUS_OPTIONS: ClientStatus[] = [
-  "Consultation Completed",
-  "Therapy Session Booked",
-  "Ongoing Therapy",
-  "Completed Program",
-];
+// Clients share the leads' vocabulary, so there is no separate client list
+// to keep in step - a client can sit at any status, including the early ones
+// (someone re-enquiring after being closed).
 
 export default function EditClientModal({
   client,
@@ -30,7 +31,8 @@ export default function EditClientModal({
   const [email, setEmail] = useState(client.email);
   const [locationId, setLocationId] = useState(client.locationId);
   const [therapistId, setTherapistId] = useState(client.therapistId);
-  const [status, setStatus] = useState<ClientStatus>(client.status);
+  const [note, setNote] = useState(client.note ?? "");
+  const [status, setStatus] = useState<ContactStatus>(client.status);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -50,6 +52,9 @@ export default function EditClientModal({
         email,
         locationId,
         therapistId,
+        // null, not undefined — undefined is dropped from the PATCH body and
+        // would leave the old note in place when the box has been emptied.
+        note: note.trim() || null,
         status,
       });
       onClose();
@@ -102,6 +107,8 @@ export default function EditClientModal({
             <TherapistSelect value={therapistId} onChange={setTherapistId} />
           </div>
 
+          <NoteField value={note} onChange={setNote} />
+
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-semibold tracking-[0.6px] text-[#434655]">Status</span>
             <div className="relative">
@@ -118,9 +125,9 @@ export default function EditClientModal({
               </button>
               {statusMenuOpen && (
                 <StatusDropdownMenu
-                  options={CLIENT_STATUS_OPTIONS}
+                  options={contactStatusOptions}
                   selected={status}
-                  onSelect={(value) => setStatus(value as ClientStatus)}
+                  onSelect={(value) => setStatus(value as ContactStatus)}
                   onClose={() => setStatusMenuOpen(false)}
                 />
               )}

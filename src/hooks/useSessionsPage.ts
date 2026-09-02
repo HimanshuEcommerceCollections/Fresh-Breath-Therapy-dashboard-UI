@@ -25,6 +25,7 @@ import {
 } from "@/src/services/sessionsService";
 import { useInfiniteList } from "@/src/hooks/useInfiniteList";
 import { showSuccessToast } from "@/src/lib/toast";
+import { invalidateAfterScheduling } from "@/src/hooks/useScheduleSession";
 import type { SessionsView } from "@/src/sections/sessionsSections/ViewToggle";
 import {
   addDays,
@@ -229,7 +230,9 @@ export function useSessionsPage() {
   const sessions = isListView ? listSessions : calendarSessionsPage?.items ?? [];
   const isLoadingSessions = isListView ? isLoadingListSessions : isLoadingCalendarSessions;
 
-  const invalidateSessions = () => queryClient.invalidateQueries({ queryKey: ["sessions"] });
+  // Shared with useScheduleSession, so the modal opened from the Leads page
+  // and the one opened here invalidate exactly the same caches.
+  const invalidateSessions = () => invalidateAfterScheduling(queryClient);
 
   const scheduleSessionMutation = useMutation({
     mutationFn: (payload: ScheduleSessionPayload) => sessionsService.scheduleSession(payload),

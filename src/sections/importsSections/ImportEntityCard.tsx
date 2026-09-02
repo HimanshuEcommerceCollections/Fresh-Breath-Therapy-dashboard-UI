@@ -72,10 +72,9 @@ export default function ImportEntityCard({
           </p>
           {/* The registry has always produced per-entity notes and nothing
               rendered them, so guidance written for the admin — including
-              "import enrollments BEFORE payments", which prevents historical
-              purchases being snapshotted at today's list price — was reaching
-              the browser and being dropped. Shown here, before the choice is
-              made, since that is when it can still change the decision. */}
+              ordering and append-only warnings — was reaching the browser
+              and being dropped. Shown here, before the choice is made, since
+              that is when it can still change the decision. */}
           {entity.notes.length > 0 && (
             <ul className="flex flex-col gap-1 border-t border-[#F1F5F9] pt-2">
               {entity.notes.map((note) => (

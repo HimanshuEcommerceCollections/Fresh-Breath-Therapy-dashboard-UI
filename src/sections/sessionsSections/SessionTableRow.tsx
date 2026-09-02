@@ -28,7 +28,7 @@ export default function SessionTableRow({
         {session.time}
       </div>
       <div className="truncate px-2 py-3.5 text-sm font-normal leading-5 text-[#071123]">
-        {session.client}
+        {session.subject.name}
       </div>
       <div className="truncate px-2 py-3.5 text-sm font-normal leading-5 text-[#071123]">
         {session.therapist}

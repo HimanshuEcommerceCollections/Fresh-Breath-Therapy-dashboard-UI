@@ -129,7 +129,6 @@ export const useImportBatch = (batchId: string | null, previewEnabled: boolean) 
       queryClient.invalidateQueries({ queryKey: ["imports", "preview", batchId] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["therapists"] });
-      queryClient.invalidateQueries({ queryKey: ["packages"] });
     },
   });
 

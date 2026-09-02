@@ -20,7 +20,7 @@ export default function PaymentStatusChart({
   if (isLoading) {
     return (
       <ChartSkeleton
-        title="Package Status"
+        title="Payment Status"
         subtitle="Active vs completed payment cycles"
         heightClassName="h-full"
       />
@@ -29,7 +29,7 @@ export default function PaymentStatusChart({
 
   return (
     <ChartCard
-      title="Package Status"
+      title="Payment Status"
       subtitle="Active vs completed payment cycles"
     >
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4">

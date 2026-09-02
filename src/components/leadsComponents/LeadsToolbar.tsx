@@ -7,8 +7,8 @@ import ViewToggleTabs, {
 import StatusDropdownMenu from "@/src/sections/leadsSections/StatusDropdownMenu";
 import SearchInput from "@/src/sections/leadsSections/SearchInput";
 import LocationFilterCombobox from "@/src/sections/leadsSections/LocationFilterCombobox";
-import { leadStatusOptions } from "@/src/data/leadsData/leadStatusOptions";
-import type { LeadStatus } from "@/src/data/leadsData/leadsData";
+import { contactStatusOptions } from "@/src/data/leadsData/contactStatus";
+import type { ContactStatus } from "@/src/data/leadsData/contactStatus";
 
 const ALL_STATUSES = "All statuses";
 
@@ -26,8 +26,8 @@ export default function LeadsToolbar({
   onViewChange: (view: LeadsView) => void;
   search: string;
   onSearchChange: (value: string) => void;
-  statusFilter: LeadStatus | null;
-  onStatusFilterChange: (value: LeadStatus | null) => void;
+  statusFilter: ContactStatus | null;
+  onStatusFilterChange: (value: ContactStatus | null) => void;
   locationName: string;
   onLocationNameChange: (value: string) => void;
 }) {
@@ -72,10 +72,10 @@ export default function LeadsToolbar({
           </button>
           {statusMenuOpen && (
             <StatusDropdownMenu
-              options={[ALL_STATUSES, ...leadStatusOptions]}
+              options={[ALL_STATUSES, ...contactStatusOptions]}
               selected={statusFilter ?? ALL_STATUSES}
               onSelect={(value) =>
-                onStatusFilterChange(value === ALL_STATUSES ? null : (value as LeadStatus))
+                onStatusFilterChange(value === ALL_STATUSES ? null : (value as ContactStatus))
               }
               onClose={() => setStatusMenuOpen(false)}
             />

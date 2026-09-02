@@ -19,7 +19,7 @@ export function canSetTerminalSessionStatus(role: RoleName | null): boolean {
   return role === "Admin";
 }
 
-// Matrix: "Locations/Therapists/Packages/Feature Flags/Integrations/Organization:
+// Matrix: "Locations/Therapists/Feature Flags/Integrations/Organization:
 // Admin Full R/W, Coordinator Read only, Therapist Read only."
 export function canManageOrgSettings(role: RoleName | null): boolean {
   return role === "Admin";
