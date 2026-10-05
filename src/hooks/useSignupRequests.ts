@@ -2,12 +2,13 @@
 
 // src/hooks/useSignupRequests.ts
 //
-// Manages the signup requests list plus the approve (role-select modal) and
-// reject (confirm-delete) flows. Approvals/rejections can fail for reasons
-// the UI can't predict up front (missing Therapist record, another admin
-// already reviewed the request in another tab) — so both flows invalidate
-// the list from the server afterward instead of optimistically mutating
-// local state, which would drift from reality on any of those failures.
+// Manages the signup requests list plus the approve / change-role (shared
+// role-select modal) and remove (confirm-delete) flows. These can fail for
+// reasons the UI can't predict up front (missing Therapist record, another
+// admin already reviewed the request in another tab, a linked therapist
+// still active) — so every flow invalidates the list from the server
+// afterward instead of optimistically mutating local state, which would
+// drift from reality on any of those failures.
 //
 // Query key is ["role-requests"] (no status filter) for this page's full
 // list — the Sidebar's pending-count badge (SidebarSignupRequestsItem) uses
@@ -17,8 +18,16 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { SignupRequest } from "@/src/data/signupRequestsData/signupRequestsData";
-import { signupRequestsService } from "@/src/services/signupRequestsService";
+import {
+  signupRequestsService,
+  TherapistStillActiveError,
+} from "@/src/services/signupRequestsService";
 import { rolesService } from "@/src/services/settingsService";
+import { showSuccessToast } from "@/src/lib/toast";
+
+// "approve" assigns the first role to a pending request; "change" moves an
+// already-approved account to a different one. Same modal, same role list.
+export type RoleModalMode = "approve" | "change";
 
 export function useSignupRequests() {
   const queryClient = useQueryClient();
@@ -33,45 +42,69 @@ export function useSignupRequests() {
     queryFn: () => rolesService.fetchRoles(),
   });
 
-  // Approve flow — holds the request being approved, or null when the
-  // modal is closed.
-  const [approveTarget, setApproveTarget] = useState<SignupRequest | null>(null);
+  // Role modal — the request being approved / re-roled, or null when closed.
+  const [roleTarget, setRoleTarget] = useState<{
+    request: SignupRequest;
+    mode: RoleModalMode;
+  } | null>(null);
 
-  // Reject flow — holds the ID to delete, or null when closed.
+  // Remove flow — holds the ID to delete, or null when closed.
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  // Set when the backend refuses to revoke an account because its linked
+  // therapist is still active — drives the "request failed" popup.
+  const [blockedRemoval, setBlockedRemoval] = useState<{
+    message: string;
+    therapistName: string;
+  } | null>(null);
 
   const invalidateRoleRequests = () =>
     queryClient.invalidateQueries({ queryKey: ["role-requests"] });
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
 
-  // Step 1: user clicks Approve → open role-select modal
-  const handleApproveClick = (request: SignupRequest) => setApproveTarget(request);
-  const handleCancelApprove = () => setApproveTarget(null);
+  // Step 1: user clicks Approve / Change role → open role-select modal
+  const handleApproveClick = (request: SignupRequest) =>
+    setRoleTarget({ request, mode: "approve" });
+  const handleChangeRoleClick = (request: SignupRequest) =>
+    setRoleTarget({ request, mode: "change" });
+  const handleCancelRole = () => setRoleTarget(null);
 
-  // Step 2a: user picks a role and confirms
-  const approveMutation = useMutation({
+  // Step 2: user picks a role and confirms
+  const roleMutation = useMutation({
     mutationFn: (roleId: string) => {
-      if (!approveTarget) throw new Error("No request selected");
-      return signupRequestsService.approveRequest(approveTarget.id, roleId);
+      if (!roleTarget) throw new Error("No request selected");
+      return roleTarget.mode === "approve"
+        ? signupRequestsService.approveRequest(roleTarget.request.id, roleId)
+        : signupRequestsService.changeRole(roleTarget.request.id, roleId);
+    },
+    onSuccess: (updated) => {
+      if (roleTarget?.mode === "change") {
+        showSuccessToast(`${updated.user.name} is now ${updated.requestedRole?.name ?? "updated"}.`);
+      }
     },
     onSettled: () => {
       // Refetch regardless of success/failure — errors (e.g. "No therapist
       // record found...", "Request already reviewed.") are surfaced
       // verbatim by the apiClient toast interceptor, and the list should
       // reflect whatever the server's real state ended up being either way.
-      setApproveTarget(null);
+      setRoleTarget(null);
       invalidateRoleRequests();
     },
   });
 
   // Step 1: user clicks trash → open confirm dialog
-  const handleRejectClick = (id: string) => setConfirmDeleteId(id);
-  const handleCancelReject = () => setConfirmDeleteId(null);
+  const handleRemoveClick = (id: string) => setConfirmDeleteId(id);
+  const handleCancelRemove = () => setConfirmDeleteId(null);
 
-  // Step 2a: user confirms → permanently deletes the user account
-  const rejectMutation = useMutation({
-    mutationFn: (requestId: string) => signupRequestsService.rejectRequest(requestId),
+  // Step 2: user confirms → permanently deletes the user account
+  const removeMutation = useMutation({
+    mutationFn: (requestId: string) => signupRequestsService.removeRequest(requestId),
+    onError: (error) => {
+      if (error instanceof TherapistStillActiveError) {
+        setBlockedRemoval({ message: error.message, therapistName: error.therapist.name });
+      }
+    },
     onSettled: () => {
       setConfirmDeleteId(null);
       invalidateRoleRequests();
@@ -83,18 +116,21 @@ export function useSignupRequests() {
     roles,
     isLoading,
     pendingCount,
-    // Approve flow
-    approveTarget,
-    isApproving: approveMutation.isPending,
+    // Approve / change-role flow
+    roleTarget,
+    isSavingRole: roleMutation.isPending,
     handleApproveClick,
-    handleConfirmApprove: (roleId: string) => approveMutation.mutateAsync(roleId).catch(() => {}),
-    handleCancelApprove,
-    // Reject flow
+    handleChangeRoleClick,
+    handleConfirmRole: (roleId: string) => roleMutation.mutateAsync(roleId).catch(() => {}),
+    handleCancelRole,
+    // Reject / revoke flow
     confirmDeleteId,
-    isDeleting: rejectMutation.isPending,
-    handleRejectClick,
-    handleConfirmReject: () =>
-      confirmDeleteId ? rejectMutation.mutateAsync(confirmDeleteId).catch(() => {}) : undefined,
-    handleCancelReject,
+    isDeleting: removeMutation.isPending,
+    handleRemoveClick,
+    handleConfirmRemove: () =>
+      confirmDeleteId ? removeMutation.mutateAsync(confirmDeleteId).catch(() => {}) : undefined,
+    handleCancelRemove,
+    blockedRemoval,
+    dismissBlockedRemoval: () => setBlockedRemoval(null),
   };
 }

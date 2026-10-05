@@ -1,12 +1,13 @@
 "use client";
 
 // SignupRequestRow — one table row for the Signup Requests page.
-// Renders avatar + name, email, role (assigned pill once approved, an
-// Approve button while pending), status badge, and a reject action with a
-// two-step confirm dialog. Reject permanently deletes the user account —
-// there is no soft "rejected" status in the API.
+// Renders avatar + name, email, role (assigned pill plus a change-role
+// action once approved, an Approve button while pending), status badge, and
+// a remove action with a two-step confirm dialog. Removing — rejecting a
+// pending request or revoking an approved one — permanently deletes the user
+// account; there is no soft "rejected" status in the API.
 
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import RolePill from "@/src/components/signupRequestsComponents/RolePill";
 import StatusBadge from "@/src/components/signupRequestsComponents/StatusBadge";
 import {
@@ -31,9 +32,10 @@ export default function SignupRequestRow({
   isConfirmingDelete,
   isDeleting,
   onApproveClick,
-  onRejectClick,
-  onConfirmReject,
-  onCancelReject,
+  onChangeRoleClick,
+  onRemoveClick,
+  onConfirmRemove,
+  onCancelRemove,
 }: {
   request: SignupRequest;
   index: number;
@@ -41,9 +43,10 @@ export default function SignupRequestRow({
   isConfirmingDelete: boolean;
   isDeleting: boolean;
   onApproveClick: (request: SignupRequest) => void;
-  onRejectClick: (id: string) => void;
-  onConfirmReject: () => void;
-  onCancelReject: () => void;
+  onChangeRoleClick: (request: SignupRequest) => void;
+  onRemoveClick: (id: string) => void;
+  onConfirmRemove: () => void;
+  onCancelRemove: () => void;
 }) {
   const avatar = getAvatarColor(index);
   const isPending = request.status === "pending";
@@ -68,15 +71,37 @@ export default function SignupRequestRow({
           </span>
         </div>
 
-        {/* Email */}
-        <span className="truncate text-sm font-medium text-[#64748B]">
-          {request.user.email}
-        </span>
+        {/* Email, plus the linked therapist record when there is one */}
+        <div className="flex min-w-0 flex-col">
+          <span className="truncate text-sm font-medium text-[#64748B]">
+            {request.user.email}
+          </span>
+          {request.linkedTherapist && (
+            <span className="truncate text-[11px] text-[#94A3B8]">
+              Therapist: {request.linkedTherapist.name}
+              {request.linkedTherapist.isActive ? "" : " (inactive)"}
+            </span>
+          )}
+        </div>
 
-        {/* Role — assigned pill once approved, Approve action while pending */}
+        {/* Role — assigned pill + change action once approved, Approve
+            action while pending */}
         <div>
           {request.requestedRole ? (
-            <RolePill roleName={request.requestedRole.name} />
+            <div className="flex items-center gap-1.5">
+              <RolePill roleName={request.requestedRole.name} />
+              {!isPending && (
+                <button
+                  type="button"
+                  aria-label={`Change role for ${request.user.name}`}
+                  title="Change role"
+                  onClick={() => onChangeRoleClick(request)}
+                  className="cursor-pointer rounded-lg p-1.5 text-[#94A3B8] transition-colors hover:bg-[#EFF6FF] hover:text-[#2563EB]"
+                >
+                  <Pencil size={14} strokeWidth={1.75} />
+                </button>
+              )}
+            </div>
           ) : (
             <button
               type="button"
@@ -93,19 +118,17 @@ export default function SignupRequestRow({
           <StatusBadge status={request.status} />
         </div>
 
-        {/* Actions — reject (pending only; an approved request is already
-            reviewed, so DELETE would just 400) */}
+        {/* Actions — reject a pending request, or revoke an approved one */}
         <div className="flex justify-center">
-          {isPending && (
-            <button
-              type="button"
-              aria-label={`Reject ${request.user.name}`}
-              onClick={() => onRejectClick(request.id)}
-              className="cursor-pointer rounded-lg p-1.5 text-[#94A3B8] transition-colors hover:bg-red-50 hover:text-red-500"
-            >
-              <Trash2 size={16} strokeWidth={1.5} />
-            </button>
-          )}
+          <button
+            type="button"
+            aria-label={`${isPending ? "Reject" : "Remove access for"} ${request.user.name}`}
+            title={isPending ? "Reject request" : "Remove access"}
+            onClick={() => onRemoveClick(request.id)}
+            className="cursor-pointer rounded-lg p-1.5 text-[#94A3B8] transition-colors hover:bg-red-50 hover:text-red-500"
+          >
+            <Trash2 size={16} strokeWidth={1.5} />
+          </button>
         </div>
       </div>
 
@@ -113,13 +136,15 @@ export default function SignupRequestRow({
       {isConfirmingDelete && (
         <div className="border-b border-[#F1F5F9] bg-[#FFF7ED] px-6 py-3">
           <p className="mb-2 text-sm font-medium text-[#92400E]">
-            Reject this request? This will permanently delete this user&apos;s
-            account. This cannot be undone.
+            {isPending
+              ? "Reject this request? This will permanently delete this user’s account."
+              : "Remove this user’s access? Their approval is revoked and their account permanently deleted."}{" "}
+            This cannot be undone.
           </p>
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={onCancelReject}
+              onClick={onCancelRemove}
               disabled={isDeleting}
               className="cursor-pointer rounded-lg border border-[#E2E8F0] bg-white px-4 py-1.5 text-xs font-semibold text-[#64748B] transition-colors hover:bg-[#F8FAFC] disabled:opacity-50"
             >
@@ -127,11 +152,11 @@ export default function SignupRequestRow({
             </button>
             <button
               type="button"
-              onClick={onConfirmReject}
+              onClick={onConfirmRemove}
               disabled={isDeleting}
               className="cursor-pointer rounded-lg bg-red-600 px-4 py-1.5 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
             >
-              {isDeleting ? "Deleting…" : "Yes, reject & delete"}
+              {isDeleting ? "Deleting…" : isPending ? "Yes, reject & delete" : "Yes, remove access"}
             </button>
           </div>
         </div>

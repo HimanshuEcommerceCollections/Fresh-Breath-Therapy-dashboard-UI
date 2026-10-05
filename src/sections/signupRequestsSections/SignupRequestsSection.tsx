@@ -2,11 +2,14 @@
 
 // src/sections/signupRequestsSections/SignupRequestsSection.tsx
 //
-// Composes the page header + table card with all rows, plus the approve
-// role-select modal. Uses useSignupRequests for data and action handlers.
+// Composes the page header + table card with all rows, plus the role-select
+// modal (approve / change role) and the "therapist still active" popup shown
+// when revoking an account is refused. Uses useSignupRequests for data and
+// action handlers.
 
 import SignupRequestRow from "@/src/components/signupRequestsComponents/SignupRequestRow";
 import ApproveRequestModal from "@/src/sections/signupRequestsSections/ApproveRequestModal";
+import RemovalBlockedModal from "@/src/sections/signupRequestsSections/RemovalBlockedModal";
 import { useSignupRequests } from "@/src/hooks/useSignupRequests";
 import { ListSkeleton } from "@/src/components/ui/ListItemSkeleton";
 
@@ -18,16 +21,19 @@ export default function SignupRequestsSection() {
     requests,
     isLoading,
     roles,
-    approveTarget,
-    isApproving,
+    roleTarget,
+    isSavingRole,
     handleApproveClick,
-    handleConfirmApprove,
-    handleCancelApprove,
+    handleChangeRoleClick,
+    handleConfirmRole,
+    handleCancelRole,
     confirmDeleteId,
     isDeleting,
-    handleRejectClick,
-    handleConfirmReject,
-    handleCancelReject,
+    handleRemoveClick,
+    handleConfirmRemove,
+    handleCancelRemove,
+    blockedRemoval,
+    dismissBlockedRemoval,
   } = useSignupRequests();
 
   return (
@@ -40,7 +46,7 @@ export default function SignupRequestsSection() {
         <h1 className="text-2xl font-bold text-[#1E293B]">Signup Requests</h1>
         <p className="text-sm text-[#64748B]">
           Review and approve new users requesting access to Fresh Breath Therapy
-          clinics.
+          clinics, and change or remove access for approved accounts.
         </p>
       </div>
 
@@ -73,21 +79,32 @@ export default function SignupRequestsSection() {
               isConfirmingDelete={confirmDeleteId === request.id}
               isDeleting={isDeleting}
               onApproveClick={handleApproveClick}
-              onRejectClick={handleRejectClick}
-              onConfirmReject={handleConfirmReject}
-              onCancelReject={handleCancelReject}
+              onChangeRoleClick={handleChangeRoleClick}
+              onRemoveClick={handleRemoveClick}
+              onConfirmRemove={handleConfirmRemove}
+              onCancelRemove={handleCancelRemove}
             />
           ))
         )}
       </div>
 
-      {approveTarget && (
+      {roleTarget && (
         <ApproveRequestModal
-          request={approveTarget}
+          key={`${roleTarget.mode}-${roleTarget.request.id}`}
+          request={roleTarget.request}
+          mode={roleTarget.mode}
           roles={roles}
-          isApproving={isApproving}
-          onConfirm={handleConfirmApprove}
-          onClose={handleCancelApprove}
+          isSaving={isSavingRole}
+          onConfirm={handleConfirmRole}
+          onClose={handleCancelRole}
+        />
+      )}
+
+      {blockedRemoval && (
+        <RemovalBlockedModal
+          message={blockedRemoval.message}
+          therapistName={blockedRemoval.therapistName}
+          onClose={dismissBlockedRemoval}
         />
       )}
     </div>

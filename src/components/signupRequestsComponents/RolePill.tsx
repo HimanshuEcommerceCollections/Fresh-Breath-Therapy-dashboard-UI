@@ -1,6 +1,6 @@
 // RolePill — static colored pill showing an already-assigned role.
-// Read-only: a role is only ever assigned at approval time (via
-// ApproveRequestModal), it can't be changed afterward through this API.
+// Read-only: the role is assigned at approval and changed afterward through
+// ApproveRequestModal in "change" mode, never by editing the pill itself.
 
 import {
   roleStyleConfig,
