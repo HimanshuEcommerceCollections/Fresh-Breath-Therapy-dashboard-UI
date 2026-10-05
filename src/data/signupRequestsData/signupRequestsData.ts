@@ -15,9 +15,14 @@ export interface SignupRequest {
     name: string;
     email: string;
   };
-  // null until the request is approved — it records the role actually
-  // assigned at approval time, not something the user requested at signup.
+  // null until the request is approved — it records the role the account
+  // currently holds (set at approval, updated by a later role change), not
+  // something the user requested at signup.
   requestedRole: SignupRequestRole | null;
+  // The therapist record linked to this account by email, if any. Any role
+  // can have one — e.g. a therapist who also holds Admin access. Revoking
+  // access is refused while this therapist is still active.
+  linkedTherapist: { id: string; name: string; isActive: boolean } | null;
 }
 
 // Role pill visual config, keyed by role name. Admin/Coordinator/Therapist
