@@ -25,6 +25,10 @@ export interface CommitProgress {
   queuedBehind?: string | null;
 }
 
+// How often a queued import asks whether the entity has freed up. Matches the
+// import history's own polling interval.
+const QUEUE_POLL_MS = 2000;
+
 /**
  * Drives one import through the wizard.
  *
@@ -170,6 +174,22 @@ export const useImportBatch = (batchId: string | null, previewEnabled: boolean) 
     try {
       while (!done) {
         const result = await importsService.commitChunk(batchId);
+
+        // Another import of this entity is writing. Nothing was processed and
+        // nothing failed — show the place in line and ask again shortly; the
+        // server starts this run on whichever poll finds the entity free.
+        if (result.queued) {
+          total = result.remaining;
+          setCommitProgress({
+            processed, total, created, updated, failed, done: false,
+            queued: true,
+            queuePosition: result.queuePosition,
+            queuedBehind: result.queuedBehind,
+          });
+          await new Promise((resolve) => setTimeout(resolve, QUEUE_POLL_MS));
+          continue;
+        }
+
         created += result.created;
         updated += result.updated;
         failed += result.failed;
