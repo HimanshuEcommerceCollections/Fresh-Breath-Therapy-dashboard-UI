@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Pencil } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import type { Therapist } from "@/src/services/therapistsService";
 
 // e.g. 600 → "$0.6k", 1100 → "$1.1k", 0 → "$0.0k"
@@ -14,15 +14,31 @@ export default function TherapistCard({
   therapist,
   canEdit = false,
   onEdit,
+  justAdded = false,
 }: {
   therapist: Therapist;
   canEdit?: boolean;
   onEdit?: (therapist: Therapist) => void;
+  /** Shows a success tick — set for a few seconds after the therapist is added. */
+  justAdded?: boolean;
 }) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="group relative flex flex-col gap-3 rounded-[18px] border border-[#E0E5EB] bg-white p-5 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)]">
+    <div
+      className={`group relative flex flex-col gap-3 rounded-[18px] border bg-white p-5 shadow-[0px_1px_3px_rgba(0,0,0,0.1),0px_1px_2px_-1px_rgba(0,0,0,0.1)] transition-colors ${
+        justAdded ? "border-[#86EFAC]" : "border-[#E0E5EB]"
+      }`}
+    >
+      {justAdded && (
+        <span
+          role="status"
+          aria-label="Therapist added"
+          className="absolute -right-2 -top-2 flex h-7 w-7 items-center justify-center rounded-full bg-[#16A34A] text-white shadow-md"
+        >
+          <Check size={16} strokeWidth={3} />
+        </span>
+      )}
       <div className="flex flex-row items-start gap-3">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[rgba(55,110,244,0.1)]">
           {imgError || !therapist.avatarUrl ? (

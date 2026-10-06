@@ -16,7 +16,7 @@ const ALL_LOCATIONS = "All locations";
 export default function TherapistsPage() {
   const { isChecking } = useRequireRole(["Admin", "Coordinator"], "/leads");
   const { role } = useCurrentUser();
-  const { therapists, isLoading, addTherapist, updateTherapist } = useTherapists();
+  const { therapists, isLoading, addTherapist, updateTherapist, recentAdds } = useTherapists();
   const [editingTherapist, setEditingTherapist] = useState<Therapist | null>(null);
   const [search, setSearch] = useState("");
   const [locationName, setLocationName] = useState(ALL_LOCATIONS);
@@ -56,6 +56,7 @@ export default function TherapistsPage() {
         isLoading={isLoading}
         canEdit={canWrite(role)}
         onEdit={setEditingTherapist}
+        recentAdds={recentAdds}
       />
 
       {/* Keyed on the therapist id so switching straight from one card's Edit

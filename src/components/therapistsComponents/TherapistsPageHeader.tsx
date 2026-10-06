@@ -65,7 +65,13 @@ export default function TherapistsPageHeader({
       {isModalOpen && (
         <AddTherapistModal
           onClose={() => setIsModalOpen(false)}
-          onCreate={onCreate}
+          // Closes on submit rather than on success: progress is shown on the
+          // grid instead, as a placeholder card that spins until the
+          // therapist is saved (see useTherapists' recentAdds).
+          onCreate={(payload) => {
+            setIsModalOpen(false);
+            return onCreate(payload);
+          }}
         />
       )}
     </div>
