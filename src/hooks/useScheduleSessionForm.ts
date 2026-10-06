@@ -25,8 +25,17 @@ export const useScheduleSessionForm = (
   // fight the admin if they changed the selection.
   initialSubject: SubjectValue = null,
 ) => {
-  const [subject, setSubject] = useState<SubjectValue>(initialSubject);
-  const [therapistId, setTherapistId] = useState("");
+  const [subject, setSubjectState] = useState<SubjectValue>(initialSubject);
+  // Starts as the person's assigned therapist, when they have one.
+  const [therapistId, setTherapistId] = useState(initialSubject?.therapistId ?? "");
+
+  // Picking a person pre-fills their assigned therapist. Someone with no
+  // therapist on record leaves the current choice alone rather than wiping
+  // it; the admin can still change it either way.
+  const setSubject = (next: SubjectValue) => {
+    setSubjectState(next);
+    if (next?.therapistId) setTherapistId(next.therapistId);
+  };
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [type, setType] = useState("");
@@ -79,8 +88,8 @@ export const useScheduleSessionForm = (
   };
 
   const reset = () => {
-    setSubject(initialSubject);
-    setTherapistId("");
+    setSubjectState(initialSubject);
+    setTherapistId(initialSubject?.therapistId ?? "");
     setDate("");
     setTime("");
     setType("");

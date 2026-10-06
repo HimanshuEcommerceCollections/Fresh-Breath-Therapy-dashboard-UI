@@ -132,11 +132,12 @@ export default function AddLeadModal({
   // not a required next step.
   if (created) {
     const asClient = created.client !== null;
-    // SubjectValue is only {id, kind} — the picker resolves names itself — so
-    // the display name is held alongside it rather than crammed in.
+    // SubjectValue is {id, kind} plus the assigned therapist (so the
+    // scheduler opens with it filled in) — the picker resolves names itself,
+    // so the display name is held alongside it rather than crammed in.
     const subject: SubjectValue = asClient
-      ? { id: created.client!.id, kind: "client" }
-      : { id: created.lead.id, kind: "lead" };
+      ? { id: created.client!.id, kind: "client", therapistId: created.client!.therapistId }
+      : { id: created.lead.id, kind: "lead", therapistId: created.lead.therapistId };
     const subjectName = asClient ? created.client!.name : created.lead.name;
 
     return (

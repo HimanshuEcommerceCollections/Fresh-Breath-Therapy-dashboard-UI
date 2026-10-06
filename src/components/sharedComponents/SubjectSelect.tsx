@@ -20,7 +20,14 @@ import { clientsService } from "@/src/services/clientsService";
 import { leadsService } from "@/src/services/leadsService";
 import type { SubjectKind } from "@/src/services/sessionsService";
 
-export type SubjectValue = { id: string; kind: SubjectKind } | null;
+// therapistId is the person's assigned therapist, carried along so the
+// Schedule Session form can pre-fill it. Optional: absent means "unknown",
+// not "none".
+export type SubjectValue = {
+  id: string;
+  kind: SubjectKind;
+  therapistId?: string | null;
+} | null;
 
 export default function SubjectSelect({
   label,
@@ -203,7 +210,7 @@ export default function SubjectSelect({
                     key={person.id}
                     type="button"
                     onClick={() => {
-                      onChange({ id: person.id, kind });
+                      onChange({ id: person.id, kind, therapistId: person.therapistId });
                       setIsOpen(false);
                       setQuery("");
                     }}
